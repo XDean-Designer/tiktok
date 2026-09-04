@@ -1,0 +1,149 @@
+{
+  "finishedAt": "2026-09-03T10:27:36.603Z",
+  "results": [
+    {
+      "capture": "scan",
+      "name": "S2-扫码核销",
+      "captureId": "b117eed4-32b4-47fb-9b54-fd2637c6977d",
+      "pageUrl": "http://127.0.0.1:8770/index.html?capture=scan&view=desktop",
+      "ok": false,
+      "status": "pending",
+      "error": "captureForDesign timeout"
+    },
+    {
+      "capture": "input",
+      "name": "S3-输码验券",
+      "captureId": "5baadcbb-1880-4d29-8626-7083580b98e4",
+      "pageUrl": "http://127.0.0.1:8770/index.html?capture=input&view=desktop",
+      "ok": false,
+      "status": "pending",
+      "error": "captureForDesign timeout"
+    },
+    {
+      "capture": "result",
+      "name": "S4-验券结果",
+      "captureId": "8e8d15b6-7331-4d86-b323-cdcf0c2c8b96",
+      "pageUrl": "http://127.0.0.1:8770/index.html?capture=result&view=desktop",
+      "ok": false,
+      "status": "pending",
+      "error": "captureForDesign timeout"
+    },
+    {
+      "capture": "confirm",
+      "name": "S5-核销确认",
+      "captureId": "9cf08ac3-3d99-4fe3-9d25-a1757d87bc80",
+      "pageUrl": "http://127.0.0.1:8770/index.html?capture=confirm&view=desktop",
+      "ok": false,
+      "status": "pending",
+      "error": "captureForDesign timeout"
+    },
+    {
+      "capture": "success",
+      "name": "S6-核销成功",
+      "captureId": "da9fd452-d082-4216-9d01-a6686e11a406",
+      "pageUrl": "http://127.0.0.1:8770/index.html?capture=success&view=desktop",
+      "ok": false,
+      "status": "pending",
+      "error": "captureForDesign timeout"
+    },
+    {
+      "capture": "orders",
+      "name": "S7-核销明细",
+      "captureId": "567799f9-9072-4715-a0d0-1021a6c6a906",
+      "pageUrl": "http://127.0.0.1:8770/index.html?capture=orders&view=desktop",
+      "ok": false,
+      "status": "pending",
+      "error": "captureForDesign timeout"
+    },
+    {
+      "capture": "detail-ok",
+      "name": "S8-订单详情-可撤销",
+      "captureId": "40aa5db2-f806-4f2f-8239-d05ac060c84c",
+      "pageUrl": "http://127.0.0.1:8770/index.html?capture=detail-ok&view=desktop",
+      "ok": false,
+      "status": "pending",
+      "error": "captureForDesign timeout"
+    },
+    {
+      "capture": "detail-timeout",
+      "name": "S8b-订单详情-超时客服",
+      "captureId": "ed1305f7-048c-4afe-b695-d462cc70cf89",
+      "pageUrl": "http://127.0.0.1:8770/index.html?capture=detail-timeout&view=desktop",
+      "ok": false,
+      "status": "pending",
+      "error": "captureForDesign timeout"
+    },
+    {
+      "capture": "revoke-ok",
+      "name": "S9-撤销成功",
+      "captureId": "8b3a7f11-2883-4c30-a812-0f164f41cdad",
+      "pageUrl": "http://127.0.0.1:8770/index.html?capture=revoke-ok&view=desktop",
+      "ok": false,
+      "status": "pending",
+      "error": "captureForDesign timeout"
+    },
+    {
+      "capture": "cam-denied",
+      "name": "E1-相机无权限",
+      "captureId": "74cdbb26-37df-4804-98e3-50373b584c97",
+      "pageUrl": "http://127.0.0.1:8770/index.html?capture=cam-denied&view=desktop",
+      "ok": false,
+      "status": "pending",
+      "error": "captureForDesign timeout"
+    },
+    {
+      "capture": "tpl-offline",
+      "name": "E2-断网模板",
+      "captureId": "0fe46302-b947-41df-bbd1-78f7aaf0a5fa",
+      "pageUrl": "http://127.0.0.1:8770/index.html?capture=tpl-offline&view=desktop",
+      "ok": false,
+      "status": "pending",
+      "error": "captureForDesign timeout"
+    },
+    {
+      "capture": "tpl-timeout",
+      "name": "E3-超时模板",
+      "captureId": "04e07e7d-7c65-48ef-b3e9-4b6607c887bb",
+      "pageUrl": "http://127.0.0.1:8770/index.html?capture=tpl-timeout&view=desktop",
+      "ok": false,
+      "status": "pending",
+      "error": "captureForDesign timeout"
+    },
+    {
+      "capture": "tpl-noperm",
+      "name": "E4-无权限模板",
+      "captureId": "6e14f60c-ebb5-4f5a-ab6d-7ce46fd9410f",
+      "pageUrl": "http://127.0.0.1:8770/index.html?capture=tpl-noperm&view=desktop",
+      "ok": false,
+      "status": "pending",
+      "error": "captureForDesign timeout"
+    },
+    {
+      "capture": "verify-fail",
+      "name": "E5-验券失败",
+      "captureId": "faa3cae7-5c01-4966-a6ac-f1fd3b468f99",
+      "pageUrl": "http://127.0.0.1:8770/index.html?capture=verify-fail&view=desktop",
+      "ok": false,
+      "status": "pending",
+      "error": "captureForDesign timeout"
+    },
+    {
+      "capture": "fail",
+      "name": "E6-核销失败",
+      "captureId": "cf328f83-3159-417c-98e9-5c8eb519be6a",
+      "pageUrl": "http://127.0.0.1:8770/index.html?capture=fail&view=desktop",
+      "ok": false,
+      "status": "pending",
+      "error": "captureForDesign timeout"
+    },
+    {
+      "capture": "owner-auth",
+      "name": "A-授权指引",
+      "captureId": "a490c5e6-2dad-49ef-9f92-b2f8281c4bf8",
+      "pageUrl": "http://127.0.0.1:8770/index.html?capture=owner-auth&view=desktop",
+      "ok": false,
+      "status": "pending",
+      "error": "captureForDesign timeout"
+    }
+  ]
+}

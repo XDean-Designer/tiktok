@@ -1,0 +1,96 @@
+/* Shell: left nav + 390×844 phone — aligned with 提成设置 */
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body {
+  background: #e9e9eb;
+  display: flex;
+  align-items: flex-start;
+  font-family: "Source Han Sans SC", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.site-nav {
+  position: fixed; left: 0; top: 0; bottom: 0; width: 200px; z-index: 200;
+  background: #1c1c1e; color: #e8e8e8;
+  display: flex; flex-direction: column; overflow-y: auto;
+}
+.site-nav .nav-brand { padding: 18px 18px 14px; border-bottom: 1px solid rgba(255,255,255,.08); margin-bottom: 8px; }
+.site-nav .nav-brand .t { font-size: 15px; font-weight: 700; color: #fff; line-height: 1.4; }
+.site-nav .nav-brand .s { font-size: 11px; color: #9a9a9a; margin-top: 4px; }
+.site-nav .nav-group { padding: 0 10px; margin-bottom: 6px; }
+.site-nav .nav-group.grow { margin-top: auto; }
+.site-nav .g-t { font-size: 11px; color: #9a9a9a; padding: 8px 8px 4px; }
+.site-nav .nav-item {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 9px 8px; border: none; background: transparent; color: #c8c8c8;
+  font-family: inherit; font-size: 13px; text-align: left; cursor: pointer; border-radius: 8px;
+}
+.site-nav .nav-item:hover { background: rgba(255,255,255,.06); color: #fff; }
+.site-nav .nav-item.on { background: rgba(243,47,65,.2); color: #fff; font-weight: 600; }
+.site-nav .nav-item .idx {
+  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(255,255,255,.12); color: #fff; font-size: 11px;
+  display: flex; align-items: center; justify-content: center;
+}
+.site-nav .nav-item.on .idx { background: #F32F41; }
+.site-nav .nav-arrow { padding: 0 8px 2px; font-size: 12px; color: #6b6b6b; line-height: 1; }
+
+.stage {
+  flex: 1; min-width: 0;
+  display: flex; justify-content: center; align-items: flex-start;
+  margin-left: 200px; padding: 24px 20px 40px;
+}
+@media (max-width: 760px) {
+  html:not(.view-desktop) .site-nav { display: none; }
+  html:not(.view-desktop) .stage { margin-left: 0; padding: 0; }
+}
+
+#frame {
+  width: var(--phone-w, 390px);
+  height: var(--phone-h, 844px);
+  box-shadow: 0 0 40px rgba(0,0,0,.25);
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg-page, #F7F7F7);
+  border: 1px solid var(--border, #D7D7D5);
+  display: flex;
+  flex-direction: column;
+}
+.phone-inner {
+  display: flex; flex-direction: column; height: 100%; overflow: hidden; position: relative;
+  background: var(--bg-page, #F7F7F7);
+}
+
+html.view-mobile, html.view-mobile body {
+  height: 100%; width: 100%; overflow: hidden; overscroll-behavior: none;
+  touch-action: manipulation; background: var(--bg-page, #F7F7F7);
+  position: fixed; inset: 0;
+}
+html.view-mobile .site-nav { display: none !important; }
+html.view-mobile .stage {
+  margin-left: 0; padding: 0; width: var(--app-w, 100%); height: var(--app-h, 100%);
+  display: block; position: fixed; top: var(--app-top, 0); left: var(--app-left, 0); overflow: hidden;
+}
+html.view-mobile #frame { box-shadow: none; border: none; width: 100%; height: 100%; max-width: none; }
+html.view-mobile { --safe-bottom: env(safe-area-inset-bottom, 0px); }
+html.view-mobile .status-bar { display: none !important; }
+
+/* run-to-figma：隐藏左侧导航，固定桌面 390 壳 */
+html.figma-capture .site-nav { display: none !important; }
+html.figma-capture .stage {
+  margin-left: 0 !important; padding: 0 !important;
+  display: block; width: 390px; height: 844px;
+}
+html.figma-capture #frame {
+  box-shadow: none; border: none;
+  width: 390px; height: 844px;
+}
+html.figma-capture body { background: var(--bg-page, #F7F7F7); }
+
+.toast-msg {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  z-index: 120; background: rgba(0,0,0,.78); color: #fff;
+  padding: 12px 18px; border-radius: 10px; font-size: 14px; max-width: 260px;
+  text-align: center; pointer-events: none; opacity: 0; transition: opacity .2s;
+}
+.toast-msg.show { opacity: 1; }
