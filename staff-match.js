@@ -262,7 +262,7 @@
     var s = this.api.session;
     var ids = (s.selectedEmpIds && s.selectedEmpIds.length)
       ? s.selectedEmpIds.slice()
-      : (s.selectedEmpId ? [s.selectedEmpId] : ['st0']);
+      : (s.selectedEmpId ? [s.selectedEmpId] : []);
     this.staffRow = {
       id: '__verify__',
       staffIds: ids,
@@ -529,8 +529,7 @@
         self.commitStaffToSession();
         self.api.closeMasks();
         self.api.syncConfirmUI();
-        var a = document.getElementById('attrDefaultEmp');
-        if (a) a.textContent = self.api.staffName() + ' ▸';
+        if (self.api.refreshAttrEmp) self.api.refreshAttrEmp();
         self.api.toast('已选择：' + self.empSummaryText());
         return;
       }

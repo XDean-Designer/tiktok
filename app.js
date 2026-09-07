@@ -4,16 +4,19 @@
   var filterState = { status: 'all', time: 'all' };
   var filterDraft = { status: 'all', time: 'all' };
   var empPickCtx = 'confirm'; // confirm | attr
+  /* 无核销权限时禁止进入的主链路（防绕过） */
+  var CONSUME_ENTRY = { scan: 1, input: 1, result: 1, confirm: 1, success: 1 };
   var session = {
     offline: false,
     camDenied: false,
     auth: 'ok', // none | pending | ok | expired
     rolePerm: true, // 账号是否有核销操作权限（16B：进页可，动作时拦）
     allowReassign: true,
-    selectedEmpId: 'st0',
-    selectedEmpIds: ['st0'],
-    staffRoles: { st0: 'senior' },
-    staffDesignated: { st0: false },
+    selectedEmpId: null, // 业绩归属默认空：不默认店主，核销时点击选择
+    selectedEmpIds: [],
+    staffRoles: {},
+    staffDesignated: {},
+    opName: '顾清扬', // 当前操作账号（成功页“操作人”），与业绩归属解耦
     selectedProdId: null,
     selectedMatchIds: [],
     matchMemory: {},
@@ -159,7 +162,8 @@
   function $all(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
 
   function staffById(id) {
-    return seed.staff.filter(function (s) { return s.id === id; })[0] || seed.staff[0];
+    if (id == null) return undefined;
+    return seed.staff.filter(function (s) { return s.id === id; })[0];
   }
   function prodById(id) {
     var all = [].concat(seed.projects || [], seed.shopProducts || [], seed.products || []);
@@ -167,7 +171,14 @@
   }
   function staffName() {
     var s = staffById(session.selectedEmpId);
-    return s ? s.name : '顾清扬';
+    return s ? s.name : '';
+  }
+  function refreshAttrEmp() {
+    var a = $('#attrDefaultEmp');
+    if (!a) return;
+    var nm = staffName();
+    a.textContent = (nm ? nm : '未选') + ' ▸';
+    a.style.color = nm ? 'var(--info)' : '#B9B9B9';
   }
   function applyMemoryForCoupon(name) {
     var mem = session.matchMemory && session.matchMemory[name];
@@ -282,6 +293,15 @@
     return true;
   }
 
+  /* 无权限：进核销链路前即拦（扫码/输码/结果/确认/成功等入口） */
+  function gateConsumeEntry() {
+    if (!session.rolePerm) {
+      showScreen('tpl-noperm');
+      return false;
+    }
+    return true;
+  }
+
   function applyAuthUI() {
     var ui = AUTH_UI[session.auth] || AUTH_UI.ok;
     $all('#authStateBar button').forEach(function (b) {
@@ -314,6 +334,10 @@
   }
 
   function ensureScanThen(fn) {
+    if (!session.rolePerm) {
+      showScreen('tpl-noperm');
+      return;
+    }
     if (isScanActive()) {
       fn();
       return;
@@ -340,8 +364,10 @@
   function syncConfirmUI() {
     var empBtn = $('#confirmEmpBtn');
     if (empBtn) {
-      var empText = matchStaff ? matchStaff.empSummaryText() : (staffById(session.selectedEmpId) || {}).name || '未选';
+      var empText = matchStaff ? matchStaff.empSummaryText() : (staffName() || '未选');
+      var hasEmp = empText !== '未选';
       empBtn.textContent = empText + (session.allowReassign ? ' ▸' : '（不可改派）');
+      empBtn.style.color = hasEmp ? 'var(--info)' : '#B9B9B9';
     }
 
     var ids = session.selectedMatchIds && session.selectedMatchIds.length
@@ -400,7 +426,7 @@
     syncMatchStatusTags();
 
     var so = $('#successOp');
-    if (so) so.textContent = staffName();
+    if (so) so.textContent = session.opName || '顾清扬';
   }
 
   function applyCouponToResult(name, price, code, prodId, mismatched) {
@@ -487,8 +513,7 @@
     if (flow === 'confirm') syncConfirmUI();
     if (flow === 'owner-auth') applyAuthUI();
     if (flow === 'owner-attr') {
-      var a = $('#attrDefaultEmp');
-      if (a) a.textContent = staffName() + ' ▸';
+      refreshAttrEmp();
     }
     if (flow !== 'scan') {
       var entry = $('#scanInputEntry');
@@ -504,6 +529,7 @@
   }
 
   function tryEnterScan() {
+    if (!gateConsumeEntry()) return;
     if (session.camDenied) {
       showScreen('cam-denied');
       return;
@@ -769,8 +795,14 @@
   document.addEventListener('click', function (e) {
     var t = e.target.closest('[data-flow]');
     if (t && t.classList.contains('nav-item')) {
-      historyStack = [t.getAttribute('data-flow')];
-      showScreen(t.getAttribute('data-flow'), false);
+      var navFlow = t.getAttribute('data-flow');
+      if (CONSUME_ENTRY[navFlow] && !session.rolePerm) {
+        historyStack = ['tpl-noperm'];
+        showScreen('tpl-noperm', false);
+        return;
+      }
+      historyStack = [navFlow];
+      showScreen(navFlow, false);
       return;
     }
 
@@ -782,6 +814,7 @@
         return;
       }
       if (target === 'confirm' && !gateOnAction()) return;
+      if (target === 'input' && !gateConsumeEntry()) return;
       showScreen(target);
       return;
     }
@@ -843,6 +876,7 @@
 
     if (e.target.closest('#btnOfflineEnterScan')) {
       closeMasks();
+      if (!gateConsumeEntry()) return;
       showScreen('scan');
       return;
     }
@@ -926,9 +960,8 @@
       session.selectedEmpIds = [session.selectedEmpId];
       closeMasks();
       syncConfirmUI();
-      var a = $('#attrDefaultEmp');
-      if (a) a.textContent = staffName() + ' ▸';
-      toast('已选择：' + staffName());
+      refreshAttrEmp();
+      toast('已选择：' + (staffName() || '已选择'));
       return;
     }
 
@@ -1107,6 +1140,7 @@
     goBack: goBack,
     closeMasks: closeMasks,
     syncConfirmUI: syncConfirmUI,
+    refreshAttrEmp: refreshAttrEmp,
     staffName: staffName
   });
   matchStaff.bindEvents();

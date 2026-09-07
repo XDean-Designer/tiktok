@@ -345,7 +345,7 @@
                 <span class="k">匹配项目</span>
                 <div class="v match-row-block" id="confirmMatchBlock">
                   <button type="button" class="match-pick-cta" id="btnPickMatch">
-                    <span>选择匹配项</span>
+                    <span>选择消费项</span>
                     <img src="assets/icons/match-chevron.svg" alt="" width="16" height="16">
                   </button>
                   <div class="match-row-head" id="confirmMatchHead" hidden>
@@ -361,12 +361,12 @@
               <div class="kv"><span class="k">开单金额</span><span class="v" id="confirmPrice">¥268.00</span></div>
               <div class="kv">
                 <span class="k">业绩归属</span>
-                <span class="v" style="color:var(--info);cursor:pointer;" id="confirmEmpBtn">顾清扬 ▸</span>
+                <span class="v" style="color:#B9B9B9;cursor:pointer;" id="confirmEmpBtn">未选 ▸</span>
               </div>
               <div class="kv"><span class="k">支付方式</span><span class="v">抖音团购</span></div>
             </div>
           </div>
-          <p class="confirm-tip" id="confirmUnmatchTip" hidden>未匹配价目时，将按券面额开单，业绩计入所选员工。</p>
+          <p class="confirm-tip" id="confirmUnmatchTip" hidden>未匹配价目时，将按券面额开单；业绩归属未选则该单不计业绩。</p>
         </div>
         <div class="footer-actions">
           <button type="button" class="btn-ghost" data-back>取消</button>
@@ -380,7 +380,7 @@
           <button type="button" class="btn-back" id="btnMatchPickBack" aria-label="返回">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
-          <span class="title">选择匹配项</span>
+          <span class="title">选择消费项</span>
         </div>
         <div class="page-body">
           <div class="match-pick-types" id="matchPickTypes" role="tablist">
@@ -645,7 +645,7 @@
           <div class="info-card">
             <div class="form-row">
               <span class="label">默认归属员工</span>
-              <span class="val" style="color:var(--info);cursor:pointer;" id="attrDefaultEmp">顾清扬 ▸</span>
+              <span class="val" style="color:#B9B9B9;cursor:pointer;" id="attrDefaultEmp">未选 ▸</span>
             </div>
             <div class="form-row">
               <span class="label">核销时允许改派</span>
