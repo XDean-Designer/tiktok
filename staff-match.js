@@ -529,7 +529,6 @@
         self.commitStaffToSession();
         self.api.closeMasks();
         self.api.syncConfirmUI();
-        if (self.api.refreshAttrEmp) self.api.refreshAttrEmp();
         self.api.toast('已选择：' + self.empSummaryText());
         return;
       }

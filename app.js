@@ -3,15 +3,64 @@
   var currentOrder = null;
   var filterState = { status: 'all', time: 'all' };
   var filterDraft = { status: 'all', time: 'all' };
-  var empPickCtx = 'confirm'; // confirm | attr
   /* 无核销权限时禁止进入的主链路（防绕过） */
   var CONSUME_ENTRY = { scan: 1, input: 1, result: 1, confirm: 1, success: 1 };
+  /* 页面/弹层 → PRD 屏级锚点（PRD-抖音团购核销.html） */
+  var PRD_ANCHOR = {
+    home: 'home',
+    scan: 'scan',
+    input: 'input',
+    result: 'result',
+    confirm: 'confirm',
+    'match-pick': 'match-pick',
+    success: 'success',
+    fail: 'fail',
+    orders: 'orders',
+    detail: 'detail',
+    'revoke-ok': 'revoke-ok',
+    'owner-auth': 'owner-auth',
+    'cam-denied': 'cam-denied',
+    'tpl-offline': 'tpl-offline',
+    'tpl-timeout': 'tpl-timeout',
+    'tpl-noperm': 'tpl-noperm',
+    'verify-fail': 'verify-fail'
+  };
+  var PRD_MASK_ANCHOR = {
+    empMask: 'empMask',
+    phoneMask: 'success',
+    filterMask: 'orders',
+    revokeMask: 'detail',
+    dupMask: 'scan',
+    offlineMask: 'tpl-offline',
+    loadingMask: null
+  };
+  var PRD_TITLE = {
+    howto: '怎么读这份 PRD',
+    home: '6.1 演示首页（占位）',
+    scan: '6.2 扫码核销',
+    input: '6.3 输码验券',
+    result: '6.4 验券结果',
+    confirm: '6.5 核销确认',
+    'match-pick': '6.6 选择消费项',
+    empMask: '6.7 选择服务员工',
+    success: '6.8 核销成功',
+    fail: '6.9 核销失败',
+    orders: '6.10 核销明细',
+    detail: '6.11 订单详情与撤销',
+    'revoke-ok': '6.12 撤销成功',
+    'owner-auth': '6.13 授权指引',
+    'cam-denied': '6.14 相机无权限',
+    'tpl-offline': '6.15 断网模板',
+    'tpl-timeout': '6.15 超时模板',
+    'tpl-noperm': '6.15 无权限模板',
+    'verify-fail': '6.16 验券失败',
+    masks: '6.17 弹层汇总'
+  };
   var session = {
     offline: false,
     camDenied: false,
     auth: 'ok', // none | pending | ok | expired
     rolePerm: true, // 账号是否有核销操作权限（16B：进页可，动作时拦）
-    allowReassign: true,
     selectedEmpId: null, // 业绩归属默认空：不默认店主，核销时点击选择
     selectedEmpIds: [],
     staffRoles: {},
@@ -173,13 +222,6 @@
     var s = staffById(session.selectedEmpId);
     return s ? s.name : '';
   }
-  function refreshAttrEmp() {
-    var a = $('#attrDefaultEmp');
-    if (!a) return;
-    var nm = staffName();
-    a.textContent = (nm ? nm : '未选') + ' ▸';
-    a.style.color = nm ? 'var(--info)' : '#B9B9B9';
-  }
   function applyMemoryForCoupon(name) {
     var mem = session.matchMemory && session.matchMemory[name];
     if (mem && mem.length) {
@@ -237,6 +279,18 @@
   function openMask(id) {
     var m = document.getElementById(id);
     if (m) m.classList.add('open');
+    if (id && PRD_MASK_ANCHOR[id]) syncPrdPanel(PRD_MASK_ANCHOR[id]);
+  }
+
+  function syncPrdPanel(anchor) {
+    if (!anchor) return;
+    var titleEl = $('#prdPaneTitle');
+    if (titleEl) titleEl.textContent = PRD_TITLE[anchor] || anchor;
+    var frame = $('#prdFrame');
+    if (!frame || !frame.contentWindow) return;
+    try {
+      frame.contentWindow.postMessage({ type: 'prd-goto', anchor: anchor }, '*');
+    } catch (err) { /* ignore */ }
   }
 
   function showLoading(text) {
@@ -366,7 +420,7 @@
     if (empBtn) {
       var empText = matchStaff ? matchStaff.empSummaryText() : (staffName() || '未选');
       var hasEmp = empText !== '未选';
-      empBtn.textContent = empText + (session.allowReassign ? ' ▸' : '（不可改派）');
+      empBtn.textContent = empText + ' ▸';
       empBtn.style.color = hasEmp ? 'var(--info)' : '#B9B9B9';
     }
 
@@ -493,7 +547,6 @@
       detail: 'screen-detail',
       'revoke-ok': 'screen-revoke-ok',
       'owner-auth': 'screen-owner-auth',
-      'owner-attr': 'screen-owner-attr',
       'cam-denied': 'screen-cam-denied',
       'tpl-offline': 'screen-tpl-offline',
       'tpl-timeout': 'screen-tpl-timeout',
@@ -512,14 +565,12 @@
     if (flow === 'orders') renderOrders();
     if (flow === 'confirm') syncConfirmUI();
     if (flow === 'owner-auth') applyAuthUI();
-    if (flow === 'owner-attr') {
-      refreshAttrEmp();
-    }
     if (flow !== 'scan') {
       var entry = $('#scanInputEntry');
       if (entry) entry.classList.remove('pulse');
     }
     closeMasks();
+    syncPrdPanel(PRD_ANCHOR[flow] || flow);
   }
 
   function goBack() {
@@ -777,8 +828,7 @@
     $('#inputPanelMeituan').hidden = plat !== 'meituan';
   }
 
-  function openEmpPicker(ctx) {
-    empPickCtx = ctx || 'confirm';
+  function openEmpPicker() {
     if (!matchStaff) return;
     matchStaff.syncStaffFromSession();
     var root = $('#empPickRoot');
@@ -936,16 +986,7 @@
     }
 
     if (e.target.closest('#confirmEmpBtn')) {
-      if (!session.allowReassign) {
-        toast('店长已关闭「核销时允许改派」');
-        return;
-      }
-      openEmpPicker('confirm');
-      return;
-    }
-
-    if (e.target.closest('#attrDefaultEmp')) {
-      openEmpPicker('attr');
+      openEmpPicker();
       return;
     }
 
@@ -960,7 +1001,6 @@
       session.selectedEmpIds = [session.selectedEmpId];
       closeMasks();
       syncConfirmUI();
-      refreshAttrEmp();
       toast('已选择：' + (staffName() || '已选择'));
       return;
     }
@@ -1108,23 +1148,6 @@
       return;
     }
 
-    if (e.target.closest('#swReassign')) {
-      var sw = e.target.closest('#swReassign');
-      sw.classList.toggle('on');
-      session.allowReassign = sw.classList.contains('on');
-      syncConfirmUI();
-      return;
-    }
-    if (e.target.closest('#swStoreOnly')) {
-      e.target.closest('.switch').classList.toggle('on');
-      return;
-    }
-
-    if (e.target.closest('#btnSaveAttr')) {
-      toast('配置已保存');
-      return;
-    }
-
     if (e.target.classList.contains('picker-mask') || e.target.classList.contains('dialog-mask')) {
       closeMasks();
     }
@@ -1140,7 +1163,6 @@
     goBack: goBack,
     closeMasks: closeMasks,
     syncConfirmUI: syncConfirmUI,
-    refreshAttrEmp: refreshAttrEmp,
     staffName: staffName
   });
   matchStaff.bindEvents();

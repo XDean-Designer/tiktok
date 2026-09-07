@@ -32,16 +32,83 @@ body {
   display: flex; align-items: center; justify-content: center;
 }
 .site-nav .nav-item.on .idx { background: #F32F41; }
+.site-nav a.nav-link.nav-item { text-decoration: none; color: #c8c8c8; }
+.site-nav a.nav-link.nav-item:hover { color: #fff; }
 .site-nav .nav-arrow { padding: 0 8px 2px; font-size: 12px; color: #6b6b6b; line-height: 1; }
 
+:root {
+  --nav-w: 200px;
+  --prd-w: 420px;
+  --prd-gap: 16px;
+  --stage-pad-y: 24px;
+  --stage-pad-x: 20px;
+}
+
+/* 真机在「导航右缘 ↔ PRD 左缘」之间居中；PRD 固定贴右 */
 .stage {
   flex: 1; min-width: 0;
-  display: flex; justify-content: center; align-items: flex-start;
-  margin-left: 200px; padding: 24px 20px 40px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  margin-left: var(--nav-w);
+  padding: var(--stage-pad-y) var(--stage-pad-x) 40px;
+  /* 为右侧固定 PRD 预留宽度，使 #frame 在剩余区间内居中 */
+  padding-right: calc(var(--stage-pad-x) + var(--prd-w) + var(--prd-gap));
+  box-sizing: border-box;
+  min-height: 100vh;
 }
 @media (max-width: 760px) {
   html:not(.view-desktop) .site-nav { display: none; }
   html:not(.view-desktop) .stage { margin-left: 0; padding: 0; }
+  html:not(.view-desktop) .prd-pane { display: none !important; }
+}
+@media (max-width: 1100px) {
+  html.view-desktop .prd-pane { display: none !important; }
+  html.view-desktop .stage {
+    padding-right: var(--stage-pad-x);
+    justify-content: center;
+  }
+}
+
+/* ===== 右侧 PRD 同步面板（贴右收窄） ===== */
+.prd-pane {
+  position: fixed;
+  top: var(--stage-pad-y);
+  right: var(--stage-pad-x);
+  z-index: 150;
+  width: var(--prd-w);
+  height: var(--phone-h, 844px);
+  background: #fff;
+  border: 1px solid #D7D7D5;
+  border-radius: 12px;
+  box-shadow: 0 0 24px rgba(0,0,0,.08);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.prd-pane__bar {
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 14px;
+  background: #1c1c1e; color: #fff;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.prd-pane__meta { min-width: 0; display: flex; align-items: baseline; gap: 8px; }
+.prd-pane__label {
+  flex-shrink: 0; font-size: 11px; font-weight: 700; color: #F32F41;
+  letter-spacing: .04em;
+}
+.prd-pane__title {
+  font-size: 13px; font-weight: 600; color: #f2f2f2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.prd-pane__open {
+  flex-shrink: 0; font-size: 12px; color: #fff; text-decoration: none;
+  padding: 5px 10px; border-radius: 6px; background: rgba(243,47,65,.9);
+}
+.prd-pane__open:hover { background: #F32F41; }
+.prd-pane__frame {
+  flex: 1; min-height: 0; width: 100%; border: 0; background: #fafafa;
 }
 
 #frame {
@@ -67,6 +134,7 @@ html.view-mobile, html.view-mobile body {
   position: fixed; inset: 0;
 }
 html.view-mobile .site-nav { display: none !important; }
+html.view-mobile .prd-pane { display: none !important; }
 html.view-mobile .stage {
   margin-left: 0; padding: 0; width: var(--app-w, 100%); height: var(--app-h, 100%);
   display: block; position: fixed; top: var(--app-top, 0); left: var(--app-left, 0); overflow: hidden;
@@ -75,10 +143,13 @@ html.view-mobile #frame { box-shadow: none; border: none; width: 100%; height: 1
 html.view-mobile { --safe-bottom: env(safe-area-inset-bottom, 0px); }
 html.view-mobile .status-bar { display: none !important; }
 
-/* run-to-figma：隐藏左侧导航，固定桌面 390 壳 */
+/* run-to-figma：隐藏左侧导航与 PRD 面板，固定桌面 390 壳 */
 html.figma-capture .site-nav { display: none !important; }
+html.figma-capture .prd-pane { display: none !important; }
 html.figma-capture .stage {
-  margin-left: 0 !important; padding: 0 !important;
+  margin-left: 0 !important;
+  padding: 0 !important;
+  padding-right: 0 !important;
   display: block; width: 390px; height: 844px;
 }
 html.figma-capture #frame {
