@@ -11,15 +11,24 @@
     rolePerm: true, // 账号是否有核销操作权限（16B：进页可，动作时拦）
     allowReassign: true,
     selectedEmpId: 'st0',
-    selectedProdId: 'p21',
+    selectedEmpIds: ['st0'],
+    staffRoles: { st0: 'senior' },
+    staffDesignated: { st0: false },
+    selectedProdId: null,
+    selectedMatchIds: [],
+    matchMemory: {},
+    /* 内部开单字段（6X：UI 文案仍显示「抖音团购」等） */
+    orderType: '快捷开单',
+    payType: '团购',
     couponName: '深层补水护理 · 单次体验',
     couponPrice: 268,
     couponCode: 'dy9182-ABCD-7781',
-    mismatched: false,
+    mismatched: true,
     phone: ''
   };
 
-  var seed = window.DySeed || { staff: [], products: [], couponMap: {} };
+  var seed = window.DySeed || { staff: [], products: [], projects: [], shopProducts: [], catalogGroups: {}, couponDemos: {} };
+  var matchStaff = null;
 
   var ORDERS = [
     {
@@ -153,11 +162,45 @@
     return seed.staff.filter(function (s) { return s.id === id; })[0] || seed.staff[0];
   }
   function prodById(id) {
-    return seed.products.filter(function (p) { return p.id === id; })[0];
+    var all = [].concat(seed.projects || [], seed.shopProducts || [], seed.products || []);
+    return all.filter(function (p) { return p.id === id; })[0];
   }
   function staffName() {
     var s = staffById(session.selectedEmpId);
     return s ? s.name : '顾清扬';
+  }
+  function applyMemoryForCoupon(name) {
+    var mem = session.matchMemory && session.matchMemory[name];
+    if (mem && mem.length) {
+      session.selectedMatchIds = mem.map(function (m) { return m.id; });
+      session.selectedProdId = session.selectedMatchIds[0] || null;
+      session.mismatched = false;
+      return true;
+    }
+    return false;
+  }
+  /* 无事先价目映射：仅会话记忆可自动已匹配 */
+  function resolveCouponMatch(name) {
+    if (applyMemoryForCoupon(name)) return { mismatched: false };
+    session.selectedMatchIds = [];
+    session.selectedProdId = null;
+    return { mismatched: true };
+  }
+  function isCouponMatched() {
+    if (session.mismatched) return false;
+    if (session.selectedMatchIds && session.selectedMatchIds.length) return true;
+    return !!session.selectedProdId;
+  }
+  function syncMatchStatusTags() {
+    var matched = isCouponMatched();
+    ['#resultUnmatchTag', '#confirmUnmatchTag'].forEach(function (sel) {
+      var el = $(sel);
+      if (!el) return;
+      el.hidden = false;
+      el.textContent = matched ? '已匹配' : '未匹配';
+      el.classList.toggle('tag-unmatch', !matched);
+      el.classList.toggle('tag-matched', matched);
+    });
   }
 
   function toast(msg) {
@@ -287,54 +330,121 @@
       startVerify({ dup: true, fromScan: true });
     } else if (kind === 'mismatch') {
       startVerify({ mismatch: true, fromScan: true });
+    } else if (kind === 'multi') {
+      startVerify({ multi: true, fromScan: true });
     } else {
       reinforceScanFail();
     }
   }
 
   function syncConfirmUI() {
-    var emp = staffById(session.selectedEmpId);
-    var prod = prodById(session.selectedProdId);
     var empBtn = $('#confirmEmpBtn');
     if (empBtn) {
-      empBtn.textContent = (emp ? emp.name : '未选') +
-        (session.allowReassign ? ' ▸' : '（不可改派）');
+      var empText = matchStaff ? matchStaff.empSummaryText() : (staffById(session.selectedEmpId) || {}).name || '未选';
+      empBtn.textContent = empText + (session.allowReassign ? ' ▸' : '（不可改派）');
     }
-    var cp = $('#confirmProd');
+
+    var ids = session.selectedMatchIds && session.selectedMatchIds.length
+      ? session.selectedMatchIds
+      : (session.selectedProdId ? [session.selectedProdId] : []);
+    var items = ids.map(prodById).filter(Boolean);
+    var pickCta = $('#btnPickMatch');
+    var head = $('#confirmMatchHead');
+    var itemsEl = $('#confirmMatchItems');
+    var ratio = $('#confirmMatchRatio');
+    var tip = $('#confirmUnmatchTip');
     var cpr = $('#confirmPrice');
-    if (session.mismatched && !prod) {
-      if (cp) cp.textContent = '未匹配 · 请选择';
-      if (cpr) cpr.textContent = '¥' + session.couponPrice.toFixed(2);
-    } else if (prod) {
-      if (cp) cp.textContent = prod.name;
-      if (cpr) cpr.textContent = '¥' + prod.price.toFixed(2);
+    var face = $('#confirmFace');
+    var codeEl = $('#confirmCode');
+
+    if (face) face.textContent = '¥' + Number(session.couponPrice);
+    if (codeEl) codeEl.textContent = maskCode(session.couponCode);
+    if (cpr) cpr.textContent = '¥' + Number(session.couponPrice).toFixed(2);
+
+    if (!items.length) {
+      if (pickCta) pickCta.hidden = false;
+      if (head) head.hidden = true;
+      if (itemsEl) itemsEl.innerHTML = '';
+      if (ratio) ratio.hidden = true;
+      if (tip) tip.hidden = false;
+    } else if (items.length === 1) {
+      if (pickCta) pickCta.hidden = true;
+      if (head) head.hidden = false;
+      if (itemsEl) {
+        itemsEl.innerHTML =
+          '<div class="match-item-line"><span class="nm">' + items[0].name + '</span></div>';
+      }
+      if (ratio) ratio.hidden = true;
+      if (tip) tip.hidden = true;
+    } else {
+      if (pickCta) pickCta.hidden = true;
+      if (head) head.hidden = false;
+      if (itemsEl) {
+        itemsEl.innerHTML = items.map(function (it) {
+          var kind = it.kind === 'product' ? '产品' : '项目';
+          return '<div class="match-item-line">' +
+            '<span class="nm">' + it.name + '</span>' +
+            '<span class="sub">' + kind + ' · 门店价 ¥' + it.price + '</span>' +
+            '</div>';
+        }).join('');
+      }
+      if (ratio) ratio.hidden = false;
+      if (tip) tip.hidden = true;
     }
-    var ban = $('#mismatchBanner');
-    if (ban) ban.hidden = !session.mismatched;
+
+    var matchRow = $('#confirmMatchRow');
+    if (matchRow) matchRow.classList.toggle('is-multi', items.length > 1);
+
+    var couponNameEl = $('#confirmCouponName');
+    if (couponNameEl) couponNameEl.textContent = session.couponName || '';
+    syncMatchStatusTags();
+
     var so = $('#successOp');
-    if (so) so.textContent = emp ? emp.name : '—';
+    if (so) so.textContent = staffName();
   }
 
   function applyCouponToResult(name, price, code, prodId, mismatched) {
     session.couponName = name;
     session.couponPrice = price;
     session.couponCode = code;
-    session.selectedProdId = prodId;
-    session.mismatched = !!mismatched;
+    session.orderType = '快捷开单';
+    session.payType = '团购';
+    if (mismatched) {
+      session.selectedProdId = null;
+      session.selectedMatchIds = [];
+      session.mismatched = true;
+      applyMemoryForCoupon(name);
+    } else if (Array.isArray(prodId)) {
+      session.selectedMatchIds = prodId.slice();
+      session.selectedProdId = session.selectedMatchIds[0] || null;
+      session.mismatched = false;
+    } else if (prodId) {
+      session.selectedProdId = prodId;
+      session.selectedMatchIds = [prodId];
+      session.mismatched = false;
+      applyMemoryForCoupon(name);
+    } else {
+      session.selectedProdId = null;
+      session.selectedMatchIds = [];
+      session.mismatched = true;
+      applyMemoryForCoupon(name);
+    }
     var rn = $('#resultProdName');
     var rp = $('#resultPrice');
     var rc = $('#resultCode');
     if (rn) rn.textContent = name;
     if (rp) rp.textContent = String(price);
     if (rc) rc.textContent = maskCode(code);
-    var confirmCard = $('#screen-confirm .info-card .prod');
-    if (confirmCard) confirmCard.textContent = name;
     $all('#screen-confirm .info-card:first-of-type .kv').forEach(function (row) {
       var k = row.querySelector('.k');
       var v = row.querySelector('.v');
       if (k && v && k.textContent === '面额') v.textContent = '¥' + price;
       if (k && v && k.textContent === '券码') v.textContent = maskCode(code);
     });
+    var face = $('#confirmFace');
+    var codeEl = $('#confirmCode');
+    if (face) face.textContent = '¥' + price;
+    if (codeEl) codeEl.textContent = maskCode(code);
     syncConfirmUI();
   }
 
@@ -361,7 +471,8 @@
       'cam-denied': 'screen-cam-denied',
       'tpl-offline': 'screen-tpl-offline',
       'tpl-timeout': 'screen-tpl-timeout',
-      'tpl-noperm': 'screen-tpl-noperm'
+      'tpl-noperm': 'screen-tpl-noperm',
+      'match-pick': 'screen-match-pick'
     };
     var id = map[flow];
     if (!id) return;
@@ -422,27 +533,36 @@
         return;
       }
       if (opts.mismatch) {
-        applyCouponToResult(
-          '未匹配演示券 · 抖音专享护理',
-          199,
-          'dy9900-MM00-1122',
-          null,
-          true
-        );
+        var mm = (seed.couponDemos && seed.couponDemos.mismatch) || {
+          name: '抖音专享护理 · 单次体验', price: 199, code: 'dy9900-MM00-1122'
+        };
+        applyCouponToResult(mm.name, mm.price, mm.code, null, true);
         flashScanOk();
         setTimeout(function () { showScreen('result'); }, 500);
         return;
       }
-      var name = opts.name || '深层补水护理 · 单次体验';
-      var mapId = seed.couponMap[name];
-      var prod = mapId ? prodById(mapId) : prodById('p21');
-      applyCouponToResult(
-        name,
-        prod ? prod.price : 268,
-        opts.code || 'dy9182-ABCD-7781',
-        prod ? prod.id : 'p21',
-        false
-      );
+      if (opts.multi) {
+        var md = (seed.couponDemos && seed.couponDemos.multi) || {
+          name: '护理组合体验券', price: 436, code: 'dy8800-MT00-5566'
+        };
+        /* 预写入会话记忆，模拟此前手工多选匹配 */
+        session.matchMemory[md.name] = [
+          { id: 'p21', kind: 'project', name: '深层补水护理', price: 268 },
+          { id: 'p15', kind: 'project', name: '头皮护理', price: 168 }
+        ];
+        applyCouponToResult(md.name, md.price, md.code, null, true);
+        flashScanOk();
+        setTimeout(function () { showScreen('result'); }, 500);
+        return;
+      }
+      var demo = (seed.couponDemos && seed.couponDemos.default) || {
+        name: '深层补水护理 · 单次体验', price: 268, code: 'dy9182-ABCD-7781'
+      };
+      var name = opts.name || demo.name;
+      var price = opts.price != null ? opts.price : demo.price;
+      var code = opts.code || demo.code;
+      resolveCouponMatch(name);
+      applyCouponToResult(name, price, code, null, true);
       if (opts.fromScan) flashScanOk();
       setTimeout(function () { showScreen('result'); }, opts.fromScan ? 500 : 0);
     });
@@ -450,17 +570,11 @@
 
   function startConsume() {
     if (!gateOnAction()) return;
-    if (session.mismatched && !session.selectedProdId) {
-      toast('请先选择本店价目项目');
-      openProdPicker();
-      return;
-    }
     if (session.offline) {
       showScreen('tpl-offline');
       return;
     }
     withLoading('正在核销…', 1000, function () {
-      // demo: network fail if offline flipped mid-way — already gated
       showScreen('success');
     });
   }
@@ -639,33 +753,16 @@
 
   function openEmpPicker(ctx) {
     empPickCtx = ctx || 'confirm';
-    var list = $('#empPickList');
-    if (!list) return;
-    list.innerHTML = seed.staff.map(function (s) {
-      var on = s.id === session.selectedEmpId ? ' on' : '';
-      return (
-        '<button type="button" class="pick-item' + on + '" data-emp-id="' + s.id + '">' +
-          '<span class="av">' + (s.short || s.name.slice(0, 1)) + '</span>' +
-          '<span><div class="nm">' + s.name + '</div><div class="sub">' + s.role + '</div></span>' +
-        '</button>'
-      );
-    }).join('');
+    if (!matchStaff) return;
+    matchStaff.syncStaffFromSession();
+    var root = $('#empPickRoot');
+    matchStaff.renderStaffInto(root);
     openMask('empMask');
   }
 
   function openProdPicker() {
-    var list = $('#prodPickList');
-    if (!list) return;
-    list.innerHTML = seed.products.map(function (p) {
-      var on = p.id === session.selectedProdId ? ' on' : '';
-      return (
-        '<button type="button" class="pick-item' + on + '" data-prod-id="' + p.id + '">' +
-          '<span class="av">' + p.category.slice(0, 1) + '</span>' +
-          '<span><div class="nm">' + p.name + '</div><div class="sub">' + p.category + ' · ¥' + p.price + '</div></span>' +
-        '</button>'
-      );
-    }).join('');
-    openMask('prodMask');
+    if (!matchStaff) return;
+    matchStaff.openMatchPick();
   }
 
   // events
@@ -818,7 +915,7 @@
       return;
     }
 
-    if (e.target.closest('#btnPickProduct')) {
+    if (e.target.closest('#btnPickMatch') || e.target.closest('#btnPickProduct') || e.target.closest('#confirmMatchEdit')) {
       openProdPicker();
       return;
     }
@@ -826,6 +923,7 @@
     var empItem = e.target.closest('#empPickList [data-emp-id]');
     if (empItem) {
       session.selectedEmpId = empItem.getAttribute('data-emp-id');
+      session.selectedEmpIds = [session.selectedEmpId];
       closeMasks();
       syncConfirmUI();
       var a = $('#attrDefaultEmp');
@@ -837,6 +935,7 @@
     var prodItem = e.target.closest('#prodPickList [data-prod-id]');
     if (prodItem) {
       session.selectedProdId = prodItem.getAttribute('data-prod-id');
+      session.selectedMatchIds = [session.selectedProdId];
       session.mismatched = false;
       closeMasks();
       syncConfirmUI();
@@ -999,6 +1098,19 @@
   });
 
   // boot
+  matchStaff = new window.DyMatchStaff({
+    seed: seed,
+    session: session,
+    staffById: staffById,
+    toast: toast,
+    showScreen: showScreen,
+    goBack: goBack,
+    closeMasks: closeMasks,
+    syncConfirmUI: syncConfirmUI,
+    staffName: staffName
+  });
+  matchStaff.bindEvents();
+
   setFail('invalid');
   setVerifyFail('invalid');
   setInputPlat('douyin');
@@ -1022,11 +1134,11 @@
       scan: function () { showScreen('scan', false); historyStack = ['scan']; },
       input: function () { setInputPlat('douyin'); showScreen('input', false); historyStack = ['input']; },
       result: function () {
-        applyCouponToResult('深层补水护理 · 单次体验', 268, 'dy9182-ABCD-7781', 'p21', false);
+        applyCouponToResult('深层补水护理 · 单次体验', 268, 'dy9182-ABCD-7781', null, true);
         showScreen('result', false); historyStack = ['result'];
       },
       confirm: function () {
-        applyCouponToResult('深层补水护理 · 单次体验', 268, 'dy9182-ABCD-7781', 'p21', false);
+        applyCouponToResult('深层补水护理 · 单次体验', 268, 'dy9182-ABCD-7781', null, true);
         showScreen('confirm', false); historyStack = ['confirm'];
       },
       success: function () { showScreen('success', false); historyStack = ['success']; },

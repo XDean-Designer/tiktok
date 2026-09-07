@@ -66,6 +66,7 @@
         <button type="button" data-demo-scan="fail-read">识别失败</button>
         <button type="button" data-demo-scan="dup">这张券已用过</button>
         <button type="button" data-demo-scan="mismatch">价目未匹配</button>
+        <button type="button" data-demo-scan="multi">多匹配演示</button>
       </div>
       <div class="nav-demo-label" style="margin-top:10px;">网络</div>
       <div class="auth-state-bar" id="demoNetBar">
@@ -299,7 +300,10 @@
           <div class="note-banner ok"><img src="assets/icons/check-ok.svg" alt="" width="18" height="18"><span>验券成功，请确认商品信息后继续核销</span></div>
           <div class="info-card">
             <div class="h h-plat"><img src="assets/icons/tiktok-sm.svg" alt="" width="12" height="12"><span>抖音团购</span></div>
-            <div class="prod" id="resultProdName">深层补水护理 · 单次体验</div>
+            <div class="prod prod-with-tag">
+              <span id="resultProdName">深层补水护理 · 单次体验</span>
+              <span class="tag tag-unmatch" id="resultUnmatchTag">未匹配</span>
+            </div>
             <div class="price"><small>¥</small><span id="resultPrice">268</span></div>
             <div class="kv-list">
               <div class="kv"><span class="k">适用门店</span><span class="v">悦颜美肌 · 旗舰店</span></div>
@@ -325,17 +329,35 @@
         </div>
         <div class="page-body">
           <div class="info-card">
-            <div class="h h-plat"><img src="assets/icons/tiktok-sm.svg" alt="" width="12" height="12"><span>待核销券</span></div>
-            <div class="prod">深层补水护理 · 单次体验</div>
+            <div class="h h-plat"><img src="assets/icons/tiktok-confirm.svg" alt="" width="12" height="12"><span>待核销券</span></div>
+            <div class="prod prod-with-tag">
+              <span id="confirmCouponName">深层补水护理 · 单次体验</span>
+              <span class="tag tag-unmatch" id="confirmUnmatchTag">未匹配</span>
+            </div>
             <div class="kv-list">
-              <div class="kv"><span class="k">面额</span><span class="v">¥268</span></div>
-              <div class="kv"><span class="k">券码</span><span class="v">dy********7781</span></div>
+              <div class="kv"><span class="k">面额</span><span class="v" id="confirmFace">¥268</span></div>
+              <div class="kv"><span class="k">券码</span><span class="v" id="confirmCode">dy********7781</span></div>
             </div>
           </div>
-          <div class="info-card">
-            <div class="h">将自动生成开单（预览）</div>
+          <div class="info-card info-card--order">
             <div class="kv-list">
-              <div class="kv"><span class="k">项目</span><span class="v" id="confirmProd">深层补水护理</span></div>
+              <div class="kv" id="confirmMatchRow">
+                <span class="k">匹配项目</span>
+                <div class="v match-row-block" id="confirmMatchBlock">
+                  <button type="button" class="match-pick-cta" id="btnPickMatch">
+                    <span>选择匹配项</span>
+                    <img src="assets/icons/match-chevron.svg" alt="" width="16" height="16">
+                  </button>
+                  <div class="match-row-head" id="confirmMatchHead" hidden>
+                    <div class="match-items" id="confirmMatchItems"></div>
+                    <button type="button" class="match-edit-btn" id="confirmMatchEdit">修改</button>
+                  </div>
+                  <div class="match-ratio-box" id="confirmMatchRatio" hidden>
+                    <img src="assets/icons/info-circle.svg" alt="" width="16" height="16">
+                    <span>多项匹配按门店原价占比分摊计算业绩</span>
+                  </div>
+                </div>
+              </div>
               <div class="kv"><span class="k">开单金额</span><span class="v" id="confirmPrice">¥268.00</span></div>
               <div class="kv">
                 <span class="k">业绩归属</span>
@@ -344,15 +366,40 @@
               <div class="kv"><span class="k">支付方式</span><span class="v">抖音团购</span></div>
             </div>
           </div>
-          <div class="note-banner warn" id="mismatchBanner" hidden>
-            平台券未匹配到本店价目表，请先选择对应项目后再确认核销。
-            <div style="margin-top:8px;"><button type="button" class="btn-primary" style="height:36px;font-size:14px;" id="btnPickProduct">选择项目</button></div>
-          </div>
-          <p style="padding:0 20px 16px;font-size:12px;color:#929292;line-height:1.6;">确认后将调用平台核销接口并生成开单；同券重复扫码仅核销一次。</p>
+          <p class="confirm-tip" id="confirmUnmatchTip" hidden>未匹配价目时，将按券面额开单，业绩计入所选员工。</p>
         </div>
         <div class="footer-actions">
           <button type="button" class="btn-ghost" data-back>取消</button>
           <button type="button" class="btn-primary" id="btnConfirmVerify">确认核销</button>
+        </div>
+      </div>
+
+      <!-- ========== MATCH PICK（全屏多选价目） ========== -->
+      <div class="screen" id="screen-match-pick" data-flow="match-pick">
+        <div class="page-title-bar">
+          <button type="button" class="btn-back" id="btnMatchPickBack" aria-label="返回">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <span class="title">选择匹配项</span>
+        </div>
+        <div class="page-body">
+          <div class="match-pick-types" id="matchPickTypes" role="tablist">
+            <button type="button" class="match-pick-types__btn on" data-match-type="project" role="tab" aria-selected="true">项目</button>
+            <button type="button" class="match-pick-types__btn" data-match-type="product" role="tab" aria-selected="false">产品</button>
+          </div>
+          <div class="match-pick-groups" id="matchPickGroups"></div>
+          <div class="match-pick-tools">
+            <button type="button" id="btnMatchPickClear">清空</button>
+            <span class="match-pick-tools__count" id="matchPickCount">已选 <strong>0</strong> 项</span>
+            <span style="width:36px"></span>
+          </div>
+          <div class="match-pick-body">
+            <div class="match-pick-list" id="matchPickList"></div>
+          </div>
+        </div>
+        <div class="match-pick-footer">
+          <button type="button" class="btn-ghost" id="btnMatchPickCancel">取消</button>
+          <button type="button" class="btn-primary" id="btnMatchPickOk">确定</button>
         </div>
       </div>
 
@@ -751,13 +798,16 @@
 
       <div class="picker-mask" id="empMask">
         <div class="sheet">
-          <div class="sheet-h">选择业绩归属员工</div>
-          <div class="pick-list" id="empPickList"></div>
-          <button type="button" class="sheet-cancel" data-close-mask>取消</button>
+          <div class="sheet-h">选择服务员工</div>
+          <div class="staff-pick-body" id="empPickRoot" data-staff-root></div>
+          <div class="sheet-footer-actions">
+            <button type="button" class="btn-ghost" data-close-mask>取消</button>
+            <button type="button" class="btn-primary" id="btnEmpPickOk">确定</button>
+          </div>
         </div>
       </div>
 
-      <div class="picker-mask" id="prodMask">
+      <div class="picker-mask" id="prodMask" hidden>
         <div class="sheet">
           <div class="sheet-h">选择本店价目项目</div>
           <div class="pick-list" id="prodPickList"></div>
@@ -826,6 +876,7 @@
   </div>
 </div>
 <script src="seed-demo.js"></script>
+<script src="staff-match.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
