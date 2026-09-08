@@ -948,7 +948,7 @@
       return;
     }
 
-    if (e.target.closest('#homeScanBtn')) {
+    if (e.target.closest('#homeScanBtn') || e.target.closest('#homeVerifyBtn')) {
       tryEnterScan();
       return;
     }
