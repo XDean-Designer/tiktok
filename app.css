@@ -320,6 +320,9 @@
 .tag-plat-dy { background: var(--plat-dy-solid); color: #fff; }
 .tag-plat-mt { background: #FFF4E8; color: #FF6A00; }
 .tag-plat-cp { background: var(--brand-soft); color: var(--brand); }
+/* 美团“明细页”标签（Figma 597-104 导出的黄底白字标签资源） */
+.tag-plat-mt.tag--ico { padding: 0; background: transparent; line-height: 0; }
+.tag-plat-mt .tag-mt-ico { display: block; height: 20px; width: auto; }
 .empty-state {
   padding: 80px 24px; text-align: center; color: var(--text-sec);
 }
@@ -565,7 +568,11 @@
   color: #fff;
   background: rgba(243,47,65,.28);
 }
+.nav-demo-scan .auth-state-bar button:disabled {
+  opacity: .32; cursor: default; border-color: rgba(255,255,255,.08);
+}
 .nav-demo-actions button { flex: 1 1 calc(50% - 4px); justify-content: center; }
+#scanCouponBar button { flex: 1 1 calc(33.333% - 4px); }
 
 #screen-owner-auth {
   --auth-red: #F32F41;
@@ -1180,14 +1187,6 @@
   flex: 1 1 0; min-width: 0; width: auto; margin: 0; height: 48px;
   line-height: 48px; box-sizing: border-box;
 }
-
-.plat-tabs--scan {
-  background: #111;
-  border-bottom-color: rgba(255,255,255,.08);
-}
-.plat-tabs--scan .plat-tab { color: rgba(255,255,255,.55); }
-.plat-tabs--scan .plat-tab.on { color: #fff; }
-.plat-tabs--scan .plat-tab.on::after { background: #fff; }
 
 .confirm-emp-btn {
   border: 0; background: transparent; padding: 0; margin: 0;

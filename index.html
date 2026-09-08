@@ -60,8 +60,14 @@
     <div class="nav-arrow">↓</div>
     <button type="button" class="nav-item" data-flow="scan"><span class="idx">2</span>扫码核销</button>
     <div class="nav-demo-scan" id="navDemoScan">
-      <div class="nav-demo-label">扫码结果演示</div>
-      <div class="auth-state-bar nav-demo-actions">
+      <div class="nav-demo-label">券类型 · 点击即模拟扫码自动识别</div>
+      <div class="auth-state-bar nav-demo-actions" id="scanCouponBar">
+        <button type="button" class="on" data-scan-coupon="douyin">抖音团购券</button>
+        <button type="button" data-scan-coupon="meituan">美团团购券</button>
+        <button type="button" data-scan-coupon="coupon">系统优惠券</button>
+      </div>
+      <div class="nav-demo-label" style="margin-top:8px;">扫码结果演示（当前券类型）</div>
+      <div class="auth-state-bar nav-demo-actions" id="scanScenarioBar">
         <button type="button" data-demo-scan="fail-read">识别失败</button>
         <button type="button" data-demo-scan="dup">这张券已用过</button>
         <button type="button" data-demo-scan="mismatch">价目未匹配</button>
@@ -159,7 +165,7 @@
   </div>
   <div class="nav-group grow">
     <div class="g-t">说明</div>
-    <div style="padding:6px 8px;font-size:11px;color:#9a9a9a;line-height:1.55;">APP 首页仅为演示占位。本期单店·团购核销（抖音/美团同款流程）；优惠券 Tab 仍占位；美团授权指引为占位页。</div>
+    <div style="padding:6px 8px;font-size:11px;color:#9a9a9a;line-height:1.55;">APP 首页仅为演示占位。本期单店·团购核销（抖音/美团同款流程，扫码自动识别券类型）；系统优惠券识别为占位页；美团授权指引为占位页。</div>
   </div>
 </aside>
 
@@ -231,14 +237,6 @@
           <span class="title">扫码</span>
           <button type="button" class="btn-side" data-go="orders">验券订单</button>
         </div>
-        <div class="plat-tabs plat-tabs--scan" id="scanTabs">
-          <button type="button" class="plat-tab on" data-scan-plat="douyin">
-            <span class="logo logo-plain"><img src="assets/icons/tiktok.svg" alt="" width="18" height="18"></span>抖音
-          </button>
-          <button type="button" class="plat-tab" data-scan-plat="meituan">
-            <span class="logo logo-mt" aria-hidden="true"><span class="mt-mark">美团</span></span>美团
-          </button>
-        </div>
         <div class="scan-stage">
           <div class="scan-cam-sim" aria-hidden="true"></div>
           <div class="scan-frame-wrap">
@@ -250,7 +248,7 @@
               <div class="scan-laser"></div>
             </div>
           </div>
-          <p class="scan-hint"><img class="scan-hint-ico" src="assets/icons/info-circle-fill.svg" alt="" width="16" height="16"><span id="scanHintText">扫描抖音团购核销码，核销后即可分账</span></p>
+          <p class="scan-hint"><img class="scan-hint-ico" src="assets/icons/info-circle-fill.svg" alt="" width="16" height="16"><span id="scanHintText">将券码放入框内，扫码后自动识别券类型</span></p>
         </div>
         <div class="scan-bottom-bar">
           <button type="button" class="scan-input-entry" id="scanInputEntry" data-go="input">输入券号</button>
@@ -258,6 +256,28 @@
         <div class="feedback-flash" id="scanFeedback">
           <div class="ff-ico"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg></div>
           <div class="ff-t">识别成功</div>
+          <div class="ff-s" id="scanFeedbackSub"></div>
+        </div>
+      </div>
+
+      <!-- ========== 系统优惠券（扫码识别占位） ========== -->
+      <div class="screen" id="screen-coupon-ph" data-flow="coupon-ph">
+        <div class="page-title-bar">
+          <button type="button" class="btn-back" data-back aria-label="返回">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <span class="title">系统优惠券</span>
+          <button type="button" class="btn-side" data-go="scan">重新扫码</button>
+        </div>
+        <div class="page-body">
+          <div class="info-card">
+            <div class="h h-plat"><img src="assets/icons/ticket-01.svg" alt="" width="16" height="16"><span>系统优惠券</span></div>
+            <div class="placeholder-panel">
+              <div class="big">🎫</div>
+              <div>优惠券核销 · 示意占位</div>
+              <div style="margin-top:8px;">已识别为系统优惠券，该通道本期暂未开放；抖音 / 美团团购核销主链路已打通。</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -337,7 +357,7 @@
               <div class="kv"><span class="k">适用门店</span><span class="v">悦颜美肌 · 旗舰店</span></div>
               <div class="kv"><span class="k">有效期</span><span class="v">至 2026-12-31</span></div>
               <div class="kv"><span class="k">券码</span><span class="v" id="resultCode">dy********7781</span></div>
-              <div class="kv"><span class="k">平台</span><span class="v"><span class="tag tag-plat-dy">抖音</span></span></div>
+              <div class="kv"><span class="k">平台</span><span class="v" id="resultPlatTag"><span class="tag tag-plat-dy">抖音</span></span></div>
             </div>
           </div>
         </div>
@@ -357,7 +377,7 @@
         </div>
         <div class="page-body">
           <div class="info-card">
-            <div class="h h-plat"><img src="assets/icons/tiktok-confirm.svg" alt="" width="12" height="12"><span>待核销券</span></div>
+            <div class="h h-plat" id="confirmPlatHead"><img src="assets/icons/tiktok-confirm.svg" alt="" width="12" height="12"><span>待核销券</span></div>
             <div class="prod prod-with-tag">
               <span id="confirmCouponName">深层补水护理 · 单次体验</span>
               <span class="tag tag-unmatch" id="confirmUnmatchTag">未匹配</span>

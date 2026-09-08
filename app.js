@@ -13,6 +13,7 @@
     result: 'result',
     confirm: 'confirm',
     'match-pick': 'match-pick',
+    'coupon-ph': 'scan',
     success: 'success',
     fail: 'fail',
     orders: 'orders',
@@ -246,6 +247,9 @@
     expired: { label: '已到期', tag: 'tag-rev', expire: '2026-08-01' }
   };
 
+  /* 扫码演示当前券类型：douyin | meituan | coupon */
+  var scanKind = 'douyin';
+
   function isMeituan() { return session.plat === 'meituan'; }
   function platLabel() { return isMeituan() ? '美团' : '抖音'; }
   function platPayLabel() { return isMeituan() ? '美团团购' : '抖音团购'; }
@@ -372,9 +376,13 @@
     }, ms || 900);
   }
 
-  function flashScanOk() {
+  function flashScanOk(msg, sub) {
     var fb = $('#scanFeedback');
     if (!fb) return;
+    var t = fb.querySelector('.ff-t');
+    var s = fb.querySelector('.ff-s');
+    if (t) t.textContent = msg || '识别成功';
+    if (s) s.textContent = sub || '';
     fb.classList.add('open');
     setTimeout(function () { fb.classList.remove('open'); }, 700);
   }
@@ -441,15 +449,6 @@
   }
 
   function syncPlatformChrome() {
-    var hint = $('#scanHintText');
-    if (hint) {
-      hint.textContent = isMeituan()
-        ? '扫描美团团购核销码，核销后即可分账'
-        : '扫描抖音团购核销码，核销后即可分账';
-    }
-    $all('#scanTabs .plat-tab').forEach(function (t) {
-      t.classList.toggle('on', t.getAttribute('data-scan-plat') === session.plat);
-    });
     var head = $('#resultPlatHead');
     if (head) {
       head.classList.toggle('h-plat--mt', isMeituan());
@@ -458,9 +457,22 @@
       if (img) {
         img.src = isMeituan() ? 'assets/icons/meituan-mark.svg' : 'assets/icons/tiktok-sm.svg';
         img.width = isMeituan() ? 14 : 12;
+        img.height = isMeituan() ? 14 : 12;
       }
       if (span) span.textContent = platPayLabel();
     }
+    var cHead = $('#confirmPlatHead');
+    if (cHead) {
+      cHead.classList.toggle('h-plat--mt', isMeituan());
+      var ci = cHead.querySelector('img');
+      if (ci) {
+        ci.src = isMeituan() ? 'assets/icons/meituan-mark.svg' : 'assets/icons/tiktok-confirm.svg';
+        ci.width = isMeituan() ? 14 : 12;
+        ci.height = isMeituan() ? 14 : 12;
+      }
+    }
+    var rt = $('#resultPlatTag');
+    if (rt) rt.innerHTML = isMeituan() ? mtBadgeHtml() : '<span class="tag tag-plat-dy">抖音</span>';
     var pay = $('#confirmPayWay');
     if (pay) pay.textContent = platPayLabel();
   }
@@ -499,8 +511,50 @@
     setTimeout(fn, 280);
   }
 
+  function mtBadgeHtml() {
+    return '<span class="tag tag-plat-mt tag--ico">' +
+      '<img class="tag-mt-ico" src="assets/icons/meituan-tag.svg" alt="美团">' +
+      '</span>';
+  }
+
+  function syncScanPlatForDemo() {
+    if (scanKind === 'douyin' || scanKind === 'meituan') {
+      session.plat = scanKind;
+      syncPlatformChrome();
+    }
+  }
+
+  /* 扫码后自动识别：douyin/meituan → 对应平台主流程；coupon → 系统券占位页 */
+  function scanCouponAuto(kind) {
+    if (kind === 'coupon') {
+      flashScanOk('识别成功', '系统优惠券');
+      setTimeout(function () { showScreen('coupon-ph'); }, 750);
+      return;
+    }
+    session.plat = kind;
+    syncPlatformChrome();
+    runScanDemo('matched');
+  }
+
+  function syncScanCouponUI() {
+    $all('#scanCouponBar [data-scan-coupon]').forEach(function (b) {
+      b.classList.toggle('on', b.getAttribute('data-scan-coupon') === scanKind);
+    });
+    var isCoupon = scanKind === 'coupon';
+    $all('#scanScenarioBar [data-demo-scan]').forEach(function (b) {
+      var k = b.getAttribute('data-demo-scan');
+      var platOnly = k === 'matched' || k === 'mismatch' || k === 'multi';
+      b.disabled = isCoupon && platOnly;
+    });
+  }
+
   function runScanDemo(kind) {
     if (kind === 'ok' || kind === 'matched') {
+      if (scanKind === 'coupon') {
+        scanCouponAuto('coupon');
+        return;
+      }
+      syncScanPlatForDemo();
       var demo = getCouponDemo('default');
       session.matchMemory[demo.name] = [
         { id: 'p21', kind: 'project', name: '深层补水护理', price: 268 }
@@ -509,8 +563,12 @@
     } else if (kind === 'dup') {
       startVerify({ dup: true, fromScan: true });
     } else if (kind === 'mismatch') {
+      if (scanKind === 'coupon') { scanCouponAuto('coupon'); return; }
+      syncScanPlatForDemo();
       startVerify({ mismatch: true, fromScan: true });
     } else if (kind === 'multi') {
+      if (scanKind === 'coupon') { scanCouponAuto('coupon'); return; }
+      syncScanPlatForDemo();
       startVerify({ multi: true, fromScan: true });
     } else {
       reinforceScanFail();
@@ -659,7 +717,8 @@
       'tpl-offline': 'screen-tpl-offline',
       'tpl-timeout': 'screen-tpl-timeout',
       'tpl-noperm': 'screen-tpl-noperm',
-      'match-pick': 'screen-match-pick'
+      'match-pick': 'screen-match-pick',
+      'coupon-ph': 'screen-coupon-ph'
     };
     var id = map[flow];
     if (!id) return;
@@ -797,7 +856,7 @@
           ? '<span class="tag tag-refund">已退款</span>'
           : '<span class="tag tag-ok">已核销</span>';
       var platTag = (o.plat === 'meituan')
-        ? '<span class="tag tag-plat-mt">美团</span>'
+        ? mtBadgeHtml()
         : '<span class="tag tag-plat-dy">抖音</span>';
       return (
         '<button type="button" class="order-card" data-order-id="' + o.id + '">' +
@@ -989,17 +1048,6 @@
     }
   }
 
-  function setScanPlat(plat) {
-    if (plat !== 'douyin' && plat !== 'meituan') return;
-    session.plat = plat;
-    $all('#scanTabs .plat-tab').forEach(function (t) {
-      t.classList.toggle('on', t.getAttribute('data-scan-plat') === plat);
-    });
-    /* 扫码切平台时同步输码 Tab（优惠券除外） */
-    setInputPlat(plat);
-    syncPlatformChrome();
-  }
-
   function setOrderPlat(plat) {
     $all('#orderTabs .plat-tab').forEach(function (t) {
       t.classList.toggle('on', t.getAttribute('data-order-plat') === plat);
@@ -1078,6 +1126,18 @@
       return;
     }
 
+    var couponChip = e.target.closest('#scanCouponBar [data-scan-coupon]');
+    if (couponChip) {
+      var ckind = couponChip.getAttribute('data-scan-coupon');
+      scanKind = ckind;
+      syncScanCouponUI();
+      if (ckind === 'douyin' || ckind === 'meituan') {
+        setInputPlat(ckind);
+      }
+      ensureScanThen(function () { scanCouponAuto(ckind); });
+      return;
+    }
+
     var demo = e.target.closest('[data-demo-scan]');
     if (demo) {
       var kind = demo.getAttribute('data-demo-scan');
@@ -1137,12 +1197,6 @@
     if (plat) {
       var p = plat.getAttribute('data-plat');
       setInputPlat(p);
-      return;
-    }
-
-    var scanPlat = e.target.closest('#scanTabs [data-scan-plat]');
-    if (scanPlat) {
-      setScanPlat(scanPlat.getAttribute('data-scan-plat'));
       return;
     }
 
@@ -1353,6 +1407,7 @@
   applyAuthUI();
   applyAuthMtUI();
   syncDemoGateUI();
+  syncScanCouponUI();
   syncPlatformChrome();
   syncConfirmUI();
   renderOrders();
