@@ -1201,8 +1201,6 @@
 #confirmMatchRow.is-multi { align-items: flex-start; }
 #confirmMatchRow.is-multi .match-row-head { align-items: flex-start; }
 
-.info-card .h-plat.h-plat--mt { color: #FF6A00; }
-
 /* 确认页 · 匹配项 / 多匹配占比（对齐 Figma S5b/S5c） */
 .info-card--order { padding-top: 8px; padding-bottom: 8px; }
 .info-card--order .kv-list { margin-top: 0; }

@@ -451,7 +451,6 @@
   function syncPlatformChrome() {
     var head = $('#resultPlatHead');
     if (head) {
-      head.classList.toggle('h-plat--mt', isMeituan());
       var img = head.querySelector('img');
       var span = head.querySelector('span');
       if (img) {
@@ -463,7 +462,6 @@
     }
     var cHead = $('#confirmPlatHead');
     if (cHead) {
-      cHead.classList.toggle('h-plat--mt', isMeituan());
       var ci = cHead.querySelector('img');
       if (ci) {
         ci.src = isMeituan() ? 'assets/icons/meituan-mark.svg' : 'assets/icons/tiktok-confirm.svg';
