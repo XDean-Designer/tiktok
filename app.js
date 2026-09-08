@@ -5,7 +5,7 @@
   var filterDraft = { status: 'all', time: 'all' };
   /* 无核销权限时禁止进入的主链路（防绕过） */
   var CONSUME_ENTRY = { scan: 1, input: 1, result: 1, confirm: 1, success: 1 };
-  /* 页面/弹层 → PRD 屏级锚点（PRD-抖音团购核销.html） */
+  /* 页面/弹层 → PRD 屏级锚点（PRD-团购核销.html） */
   var PRD_ANCHOR = {
     home: 'home',
     scan: 'scan',
@@ -19,6 +19,7 @@
     detail: 'detail',
     'revoke-ok': 'revoke-ok',
     'owner-auth': 'owner-auth',
+    'owner-auth-mt': 'owner-auth-mt',
     'cam-denied': 'cam-denied',
     'tpl-offline': 'tpl-offline',
     'tpl-timeout': 'tpl-timeout',
@@ -48,7 +49,8 @@
     orders: '6.10 核销明细',
     detail: '6.11 订单详情与撤销',
     'revoke-ok': '6.12 撤销成功',
-    'owner-auth': '6.13 授权指引',
+    'owner-auth': '6.13 抖音授权指引',
+    'owner-auth-mt': '6.13b 美团授权（占位）',
     'cam-denied': '6.14 相机无权限',
     'tpl-offline': '6.15 断网模板',
     'tpl-timeout': '6.15 超时模板',
@@ -59,7 +61,9 @@
   var session = {
     offline: false,
     camDenied: false,
-    auth: 'ok', // none | pending | ok | expired
+    plat: 'douyin', // douyin | meituan（当前核销平台）
+    authDouyin: 'ok', // none | pending | ok | expired
+    authMeituan: 'ok',
     rolePerm: true, // 对应 APP 角色权限「收银开单」：关闭则不可扫码核销
     selectedEmpId: null, // 业绩归属默认空：不默认店主，核销时点击选择
     selectedEmpIds: [],
@@ -69,7 +73,7 @@
     selectedProdId: null,
     selectedMatchIds: [],
     matchMemory: {},
-    /* 内部开单字段（6X：UI 文案仍显示「抖音团购」等） */
+    /* 内部开单字段（UI 文案按平台显示「抖音团购 / 美团团购」） */
     orderType: '快捷开单',
     payType: '团购',
     couponName: '深层补水护理 · 单次体验',
@@ -88,6 +92,7 @@
   var ORDERS = [
     {
       id: 'o1',
+      plat: 'douyin',
       name: '深层补水护理 · 单次体验',
       price: 268,
       code: 'dy9182-ABCD-7781',
@@ -101,6 +106,7 @@
     },
     {
       id: 'o2',
+      plat: 'douyin',
       name: '时尚洗剪吹',
       price: 98,
       code: 'dy4410-KK92-1203',
@@ -114,6 +120,7 @@
     },
     {
       id: 'o3',
+      plat: 'douyin',
       name: '头皮护理套餐',
       price: 168,
       code: 'dy2201-PL88-0091',
@@ -127,6 +134,7 @@
     },
     {
       id: 'o4',
+      plat: 'douyin',
       name: '美白淡斑护理',
       price: 398,
       code: 'dy5502-RF01-3344',
@@ -137,6 +145,34 @@
       status: 'refund',
       canRevoke: false,
       revokeHint: '顾客退款后已回滚业绩'
+    },
+    {
+      id: 'o5',
+      plat: 'meituan',
+      name: '深层补水护理 · 美团专享',
+      price: 258,
+      code: 'mt7182-ABCD-9901',
+      oid: 'MT202609031102',
+      time: '2026-09-03 14:08',
+      op: '顾清扬',
+      bill: 'SO20260903022',
+      status: 'ok',
+      canRevoke: true,
+      revokeHint: '剩余 51 分钟可撤销'
+    },
+    {
+      id: 'o6',
+      plat: 'meituan',
+      name: '时尚洗剪吹 · 美团',
+      price: 88,
+      code: 'mt3301-KK11-8822',
+      oid: 'MT202609021455',
+      time: '2026-09-02 16:40',
+      op: '林屿森',
+      bill: 'SO20260902051',
+      status: 'ok',
+      canRevoke: false,
+      revokeHint: '已超过 1 小时，不可撤销'
     }
   ];
 
@@ -183,7 +219,7 @@
   var VFAIL_MAP = {
     invalid: {
       title: '券无效或已过期',
-      desc: '验券未通过，尚未发起核销与开单。请核对有效期或让顾客在抖音侧查看券状态。',
+      desc: '验券未通过，尚未发起核销与开单。请核对有效期或让顾客在平台侧查看券状态。',
       action: '重新扫码或改输码'
     },
     used: {
@@ -209,6 +245,28 @@
     ok: { label: '已授权', tag: 'tag-ok', expire: '2027-03-01' },
     expired: { label: '已到期', tag: 'tag-rev', expire: '2026-08-01' }
   };
+
+  function isMeituan() { return session.plat === 'meituan'; }
+  function platLabel() { return isMeituan() ? '美团' : '抖音'; }
+  function platPayLabel() { return isMeituan() ? '美团团购' : '抖音团购'; }
+  function platAuthKey() { return isMeituan() ? 'authMeituan' : 'authDouyin'; }
+  function currentAuth() { return session[platAuthKey()]; }
+  function setCurrentAuth(v) { session[platAuthKey()] = v; }
+  function authScreenForPlat() { return isMeituan() ? 'owner-auth-mt' : 'owner-auth'; }
+  function couponDemoKey(kind) {
+    if (!isMeituan()) return kind;
+    if (kind === 'default') return 'meituanDefault';
+    if (kind === 'mismatch') return 'meituanMismatch';
+    if (kind === 'multi') return 'meituanMulti';
+    return kind;
+  }
+  function getCouponDemo(kind) {
+    var demos = seed.couponDemos || {};
+    var key = couponDemoKey(kind || 'default');
+    return demos[key] || demos.default || {
+      name: '深层补水护理 · 单次体验', price: 268, code: 'dy9182-ABCD-7781'
+    };
+  }
 
   function $(sel, root) { return (root || document).querySelector(sel); }
   function $all(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
@@ -334,7 +392,7 @@
   }
 
   function storeAuthOk() {
-    return session.auth === 'ok';
+    return currentAuth() === 'ok';
   }
 
   function gateOnAction() {
@@ -343,8 +401,9 @@
       return false;
     }
     if (!storeAuthOk()) {
-      toast(session.auth === 'expired' ? '门店授权已到期' : '门店尚未完成授权');
-      showScreen('owner-auth');
+      var auth = currentAuth();
+      toast(auth === 'expired' ? (platLabel() + '门店授权已到期') : (platLabel() + '门店尚未完成授权'));
+      showScreen(authScreenForPlat());
       return false;
     }
     return true;
@@ -360,14 +419,50 @@
   }
 
   function applyAuthUI() {
-    var ui = AUTH_UI[session.auth] || AUTH_UI.ok;
+    var ui = AUTH_UI[session.authDouyin] || AUTH_UI.ok;
     $all('#authStateBar button').forEach(function (b) {
-      b.classList.toggle('on', b.getAttribute('data-auth') === session.auth);
+      b.classList.toggle('on', b.getAttribute('data-auth') === session.authDouyin);
     });
     var tag = $('#authStatusTag');
     if (tag) tag.innerHTML = '<span class="tag ' + ui.tag + '">' + ui.label + '</span>';
     var exp = $('#authExpire');
     if (exp) exp.textContent = ui.expire;
+  }
+
+  function applyAuthMtUI() {
+    var ui = AUTH_UI[session.authMeituan] || AUTH_UI.ok;
+    $all('#authMtStateBar button').forEach(function (b) {
+      b.classList.toggle('on', b.getAttribute('data-auth') === session.authMeituan);
+    });
+    var tag = $('#authMtStatusTag');
+    if (tag) tag.innerHTML = '<span class="tag ' + ui.tag + '">' + ui.label + '</span>';
+    var exp = $('#authMtExpire');
+    if (exp) exp.textContent = ui.expire;
+  }
+
+  function syncPlatformChrome() {
+    var hint = $('#scanHintText');
+    if (hint) {
+      hint.textContent = isMeituan()
+        ? '扫描美团团购核销码，核销后即可分账'
+        : '扫描抖音团购核销码，核销后即可分账';
+    }
+    $all('#scanTabs .plat-tab').forEach(function (t) {
+      t.classList.toggle('on', t.getAttribute('data-scan-plat') === session.plat);
+    });
+    var head = $('#resultPlatHead');
+    if (head) {
+      head.classList.toggle('h-plat--mt', isMeituan());
+      var img = head.querySelector('img');
+      var span = head.querySelector('span');
+      if (img) {
+        img.src = isMeituan() ? 'assets/icons/meituan-mark.svg' : 'assets/icons/tiktok-sm.svg';
+        img.width = isMeituan() ? 14 : 12;
+      }
+      if (span) span.textContent = platPayLabel();
+    }
+    var pay = $('#confirmPayWay');
+    if (pay) pay.textContent = platPayLabel();
   }
 
   function syncDemoGateUI() {
@@ -406,10 +501,7 @@
 
   function runScanDemo(kind) {
     if (kind === 'ok' || kind === 'matched') {
-      /* 价目已匹配：预写入默认券的单项匹配记忆 */
-      var demo = (seed.couponDemos && seed.couponDemos.default) || {
-        name: '深层补水护理 · 单次体验', price: 268, code: 'dy9182-ABCD-7781'
-      };
+      var demo = getCouponDemo('default');
       session.matchMemory[demo.name] = [
         { id: 'p21', kind: 'project', name: '深层补水护理', price: 268 }
       ];
@@ -431,7 +523,7 @@
       var empText = matchStaff ? matchStaff.empSummaryText() : (staffName() || '未选');
       var hasEmp = empText !== '未选';
       empBtn.textContent = empText + ' ▸';
-      empBtn.style.color = hasEmp ? 'var(--info)' : '#B9B9B9';
+      empBtn.classList.toggle('is-empty', !hasEmp);
     }
 
     var ids = session.selectedMatchIds && session.selectedMatchIds.length
@@ -483,10 +575,15 @@
     }
 
     var matchRow = $('#confirmMatchRow');
-    if (matchRow) matchRow.classList.toggle('is-multi', items.length > 1);
+    if (matchRow) {
+      matchRow.classList.toggle('is-multi', items.length > 1);
+      matchRow.classList.toggle('is-single', items.length === 1);
+    }
 
     var couponNameEl = $('#confirmCouponName');
     if (couponNameEl) couponNameEl.textContent = session.couponName || '';
+    var pay = $('#confirmPayWay');
+    if (pay) pay.textContent = platPayLabel();
     syncMatchStatusTags();
 
     var so = $('#successOp');
@@ -557,6 +654,7 @@
       detail: 'screen-detail',
       'revoke-ok': 'screen-revoke-ok',
       'owner-auth': 'screen-owner-auth',
+      'owner-auth-mt': 'screen-owner-auth-mt',
       'cam-denied': 'screen-cam-denied',
       'tpl-offline': 'screen-tpl-offline',
       'tpl-timeout': 'screen-tpl-timeout',
@@ -575,6 +673,8 @@
     if (flow === 'orders') renderOrders();
     if (flow === 'confirm') syncConfirmUI();
     if (flow === 'owner-auth') applyAuthUI();
+    if (flow === 'owner-auth-mt') applyAuthMtUI();
+    if (flow === 'scan' || flow === 'result' || flow === 'confirm' || flow === 'input') syncPlatformChrome();
     if (flow === 'success') resetSuccessMemberForm();
     if (flow !== 'scan') {
       var entry = $('#scanInputEntry');
@@ -621,18 +721,14 @@
         return;
       }
       if (opts.mismatch) {
-        var mm = (seed.couponDemos && seed.couponDemos.mismatch) || {
-          name: '抖音专享护理 · 单次体验', price: 199, code: 'dy9900-MM00-1122'
-        };
+        var mm = getCouponDemo('mismatch');
         applyCouponToResult(mm.name, mm.price, mm.code, null, true);
         flashScanOk();
         setTimeout(function () { showScreen('result'); }, 500);
         return;
       }
       if (opts.multi) {
-        var md = (seed.couponDemos && seed.couponDemos.multi) || {
-          name: '护理组合体验券', price: 436, code: 'dy8800-MT00-5566'
-        };
+        var md = getCouponDemo('multi');
         /* 预写入会话记忆，模拟此前手工多选匹配 */
         session.matchMemory[md.name] = [
           { id: 'p21', kind: 'project', name: '深层补水护理', price: 268 },
@@ -643,9 +739,7 @@
         setTimeout(function () { showScreen('result'); }, 500);
         return;
       }
-      var demo = (seed.couponDemos && seed.couponDemos.default) || {
-        name: '深层补水护理 · 单次体验', price: 268, code: 'dy9182-ABCD-7781'
-      };
+      var demo = getCouponDemo('default');
       var name = opts.name || demo.name;
       var price = opts.price != null ? opts.price : demo.price;
       var code = opts.code || demo.code;
@@ -673,16 +767,18 @@
     var onTab = $('.plat-tab.on', $('#orderTabs'));
     var plat = onTab ? onTab.getAttribute('data-order-plat') : 'douyin';
 
-    if (plat !== 'douyin') {
+    if (plat === 'coupon') {
       list.hidden = true;
       empty.hidden = false;
       return;
     }
 
     var rows = ORDERS.filter(function (o) {
+      if ((o.plat || 'douyin') !== plat) return false;
+      /* 核销明细不展示已退款（status=refund）；造数可保留供详情深链 */
+      if (o.status === 'refund') return false;
       if (filterState.status === 'ok' && o.status !== 'ok') return false;
       if (filterState.status === 'revoked' && o.status !== 'revoked') return false;
-      if (filterState.status === 'refund' && o.status !== 'refund') return false;
       if (filterState.time === 'today' && (o.time || '').indexOf('2026-09-03') !== 0) return false;
       return true;
     });
@@ -700,11 +796,14 @@
         : o.status === 'refund'
           ? '<span class="tag tag-refund">已退款</span>'
           : '<span class="tag tag-ok">已核销</span>';
+      var platTag = (o.plat === 'meituan')
+        ? '<span class="tag tag-plat-mt">美团</span>'
+        : '<span class="tag tag-plat-dy">抖音</span>';
       return (
         '<button type="button" class="order-card" data-order-id="' + o.id + '">' +
           '<div class="row1"><div class="name">' + o.name + '</div><div class="amt">¥' + o.price + '</div></div>' +
           '<div class="meta">' + o.time + ' · ' + o.op + '</div>' +
-          '<div class="tags"><span class="tag tag-plat-dy">抖音</span>' + st + '</div>' +
+          '<div class="tags">' + platTag + st + '</div>' +
         '</button>'
       );
     }).join('');
@@ -884,6 +983,32 @@
     $('#inputPanelDouyin').hidden = plat !== 'douyin';
     $('#inputPanelCoupon').hidden = plat !== 'coupon';
     $('#inputPanelMeituan').hidden = plat !== 'meituan';
+    if (plat === 'douyin' || plat === 'meituan') {
+      session.plat = plat;
+      syncPlatformChrome();
+    }
+  }
+
+  function setScanPlat(plat) {
+    if (plat !== 'douyin' && plat !== 'meituan') return;
+    session.plat = plat;
+    $all('#scanTabs .plat-tab').forEach(function (t) {
+      t.classList.toggle('on', t.getAttribute('data-scan-plat') === plat);
+    });
+    /* 扫码切平台时同步输码 Tab（优惠券除外） */
+    setInputPlat(plat);
+    syncPlatformChrome();
+  }
+
+  function setOrderPlat(plat) {
+    $all('#orderTabs .plat-tab').forEach(function (t) {
+      t.classList.toggle('on', t.getAttribute('data-order-plat') === plat);
+    });
+    if (plat === 'douyin' || plat === 'meituan') {
+      session.plat = plat;
+      syncPlatformChrome();
+    }
+    renderOrders();
   }
 
   function openEmpPicker() {
@@ -1011,13 +1136,23 @@
     var plat = e.target.closest('#inputTabs [data-plat]');
     if (plat) {
       var p = plat.getAttribute('data-plat');
-      if (p === 'meituan') return;
       setInputPlat(p);
       return;
     }
 
-    if (e.target.closest('#btnVerifyNow')) {
-      var val = ($('#codeInput').value || '').trim();
+    var scanPlat = e.target.closest('#scanTabs [data-scan-plat]');
+    if (scanPlat) {
+      setScanPlat(scanPlat.getAttribute('data-scan-plat'));
+      return;
+    }
+
+    if (e.target.closest('#btnVerifyNow') || e.target.closest('#btnVerifyNowMt')) {
+      var fromMt = !!e.target.closest('#btnVerifyNowMt');
+      if (fromMt) session.plat = 'meituan';
+      else session.plat = 'douyin';
+      syncPlatformChrome();
+      var inputEl = fromMt ? $('#codeInputMt') : $('#codeInput');
+      var val = ((inputEl && inputEl.value) || '').trim();
       if (!val) {
         toast('请输入券码');
         return;
@@ -1034,7 +1169,8 @@
         startVerify({ mismatch: true });
         return;
       }
-      startVerify({ code: val, name: '深层补水护理 · 单次体验' });
+      var demoNow = getCouponDemo('default');
+      startVerify({ code: val, name: demoNow.name, price: demoNow.price });
       return;
     }
 
@@ -1103,11 +1239,15 @@
       return;
     }
 
-    var authBtn = e.target.closest('#authStateBar [data-auth]');
+    var authBtn = e.target.closest('#authStateBar [data-auth], #authMtStateBar [data-auth]');
     if (authBtn) {
-      session.auth = authBtn.getAttribute('data-auth');
+      var authPlat = authBtn.getAttribute('data-auth-plat') || 'douyin';
+      var authVal = authBtn.getAttribute('data-auth');
+      if (authPlat === 'meituan') session.authMeituan = authVal;
+      else session.authDouyin = authVal;
       applyAuthUI();
-      toast('授权状态：' + (AUTH_UI[session.auth] || {}).label);
+      applyAuthMtUI();
+      toast((authPlat === 'meituan' ? '美团' : '抖音') + '授权状态：' + (AUTH_UI[authVal] || {}).label);
       return;
     }
 
@@ -1149,12 +1289,7 @@
 
     var orderPlat = e.target.closest('#orderTabs [data-order-plat]');
     if (orderPlat) {
-      var op = orderPlat.getAttribute('data-order-plat');
-      if (op === 'meituan') return;
-      $all('#orderTabs .plat-tab').forEach(function (t) {
-        t.classList.toggle('on', t === orderPlat);
-      });
-      renderOrders();
+      setOrderPlat(orderPlat.getAttribute('data-order-plat'));
       return;
     }
 
@@ -1216,7 +1351,9 @@
   setVerifyFail('invalid');
   setInputPlat('douyin');
   applyAuthUI();
+  applyAuthMtUI();
   syncDemoGateUI();
+  syncPlatformChrome();
   syncConfirmUI();
   renderOrders();
 
@@ -1260,9 +1397,14 @@
         showScreen('fail', false); historyStack = ['fail'];
       },
       'owner-auth': function () {
-        session.auth = 'ok';
+        session.authDouyin = 'ok';
         applyAuthUI();
         showScreen('owner-auth', false); historyStack = ['owner-auth'];
+      },
+      'owner-auth-mt': function () {
+        session.authMeituan = 'ok';
+        applyAuthMtUI();
+        showScreen('owner-auth-mt', false); historyStack = ['owner-auth-mt'];
       }
     };
     var run = routes[key];

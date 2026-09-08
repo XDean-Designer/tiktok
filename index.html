@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>剑琅联盟 · 抖音团购核销</title>
+<title>剑琅联盟 · 团购核销</title>
 <link rel="stylesheet" href="shell.css">
 <link rel="stylesheet" href="app.css">
 <script>
@@ -51,8 +51,8 @@
 <body>
 <aside class="site-nav">
   <div class="nav-brand">
-    <div class="t">抖音团购核销</div>
-    <div class="s">独立原型 · 店员端 + 店长端</div>
+    <div class="t">团购核销</div>
+    <div class="s">独立原型 · 店员端 + 店长端 · 抖音/美团</div>
   </div>
   <div class="nav-group">
     <div class="g-t">店员端 · 主链路</div>
@@ -130,26 +130,36 @@
   </div>
   <div class="nav-group">
     <div class="g-t">店长端</div>
-    <button type="button" class="nav-item" data-flow="owner-auth"><span class="idx">A</span>授权指引</button>
+    <button type="button" class="nav-item" data-flow="owner-auth"><span class="idx">A</span>抖音授权指引</button>
     <div class="nav-demo-auth">
-      <div class="nav-demo-label">授权状态演示</div>
+      <div class="nav-demo-label">抖音授权状态</div>
       <div class="auth-state-bar" id="authStateBar">
-        <button type="button" data-auth="none">未发起</button>
-        <button type="button" data-auth="pending">待确认</button>
-        <button type="button" class="on" data-auth="ok">已授权</button>
-        <button type="button" data-auth="expired">已到期</button>
+        <button type="button" data-auth="none" data-auth-plat="douyin">未发起</button>
+        <button type="button" data-auth="pending" data-auth-plat="douyin">待确认</button>
+        <button type="button" class="on" data-auth="ok" data-auth-plat="douyin">已授权</button>
+        <button type="button" data-auth="expired" data-auth-plat="douyin">已到期</button>
+      </div>
+    </div>
+    <button type="button" class="nav-item" data-flow="owner-auth-mt"><span class="idx">B</span>美团授权（占位）</button>
+    <div class="nav-demo-auth">
+      <div class="nav-demo-label">美团授权状态</div>
+      <div class="auth-state-bar" id="authMtStateBar">
+        <button type="button" data-auth="none" data-auth-plat="meituan">未发起</button>
+        <button type="button" data-auth="pending" data-auth-plat="meituan">待确认</button>
+        <button type="button" class="on" data-auth="ok" data-auth-plat="meituan">已授权</button>
+        <button type="button" data-auth="expired" data-auth-plat="meituan">已到期</button>
       </div>
     </div>
   </div>
   <div class="nav-group">
     <div class="g-t">文档</div>
-    <a class="nav-item nav-link" href="PRD-抖音团购核销.html" target="_blank" rel="noopener">
+    <a class="nav-item nav-link" href="PRD-团购核销.html" target="_blank" rel="noopener">
       <span class="idx">P</span>PRD 预览
     </a>
   </div>
   <div class="nav-group grow">
     <div class="g-t">说明</div>
-    <div style="padding:6px 8px;font-size:11px;color:#9a9a9a;line-height:1.55;">APP 首页仅为演示占位，非真实首页。本期单店·抖音直连；美团 Tab 仅视觉；无业绩归属配置页。</div>
+    <div style="padding:6px 8px;font-size:11px;color:#9a9a9a;line-height:1.55;">APP 首页仅为演示占位。本期单店·团购核销（抖音/美团同款流程）；优惠券 Tab 仍占位；美团授权指引为占位页。</div>
   </div>
 </aside>
 
@@ -221,6 +231,14 @@
           <span class="title">扫码</span>
           <button type="button" class="btn-side" data-go="orders">验券订单</button>
         </div>
+        <div class="plat-tabs plat-tabs--scan" id="scanTabs">
+          <button type="button" class="plat-tab on" data-scan-plat="douyin">
+            <span class="logo logo-plain"><img src="assets/icons/tiktok.svg" alt="" width="18" height="18"></span>抖音
+          </button>
+          <button type="button" class="plat-tab" data-scan-plat="meituan">
+            <span class="logo logo-mt" aria-hidden="true"><span class="mt-mark">美团</span></span>美团
+          </button>
+        </div>
         <div class="scan-stage">
           <div class="scan-cam-sim" aria-hidden="true"></div>
           <div class="scan-frame-wrap">
@@ -232,7 +250,7 @@
               <div class="scan-laser"></div>
             </div>
           </div>
-          <p class="scan-hint"><img class="scan-hint-ico" src="assets/icons/info-circle-fill.svg" alt="" width="16" height="16"><span>扫描项目核销码，核销后即可分账</span></p>
+          <p class="scan-hint"><img class="scan-hint-ico" src="assets/icons/info-circle-fill.svg" alt="" width="16" height="16"><span id="scanHintText">扫描抖音团购核销码，核销后即可分账</span></p>
         </div>
         <div class="scan-bottom-bar">
           <button type="button" class="scan-input-entry" id="scanInputEntry" data-go="input">输入券号</button>
@@ -280,14 +298,19 @@
             <div class="placeholder-panel">
               <div class="big">🎫</div>
               <div>优惠券核销 · 示意占位</div>
-              <div style="margin-top:8px;">本期原型仅打通抖音团购核销主链路</div>
+              <div style="margin-top:8px;">本期原型已打通抖音 / 美团团购核销主链路</div>
             </div>
           </div>
           <div id="inputPanelMeituan" hidden>
-            <div class="placeholder-panel">
-              <div class="big">🍜</div>
-              <div>美团 Tab 仅视觉展示</div>
-              <div style="margin-top:8px;">按执行清单：美团接入评估中，点击无响应</div>
+            <div class="input-card">
+              <div class="lab"><span class="ico ico-img"><img src="assets/icons/wallet-fill.svg" alt="" width="24" height="24"></span>美团团购核销码</div>
+              <div class="input-row">
+                <input id="codeInputMt" type="text" placeholder="请输入或粘贴美团券码 / 短链" autocomplete="off">
+                <button type="button" class="scan-mini" data-go="scan" title="扫码" aria-label="扫码">
+                  <img src="assets/icons/scan-mini.svg" alt="" width="22" height="22">
+                </button>
+              </div>
+              <button type="button" class="btn-primary" id="btnVerifyNowMt">立即核销</button>
             </div>
           </div>
         </div>
@@ -304,7 +327,7 @@
         <div class="page-body">
           <div class="note-banner ok"><img src="assets/icons/check-ok.svg" alt="" width="18" height="18"><span>验券成功，请确认商品信息后继续核销</span></div>
           <div class="info-card">
-            <div class="h h-plat"><img src="assets/icons/tiktok-sm.svg" alt="" width="12" height="12"><span>抖音团购</span></div>
+            <div class="h h-plat" id="resultPlatHead"><img src="assets/icons/tiktok-sm.svg" alt="" width="12" height="12"><span>抖音团购</span></div>
             <div class="prod prod-with-tag">
               <span id="resultProdName">深层补水护理 · 单次体验</span>
               <span class="tag tag-unmatch" id="resultUnmatchTag">未匹配</span>
@@ -366,9 +389,9 @@
               <div class="kv"><span class="k">开单金额</span><span class="v" id="confirmPrice">¥268.00</span></div>
               <div class="kv">
                 <span class="k">业绩归属</span>
-                <span class="v" style="color:#B9B9B9;cursor:pointer;" id="confirmEmpBtn">未选 ▸</span>
+                <button type="button" class="confirm-emp-btn is-empty" id="confirmEmpBtn">未选 ▸</button>
               </div>
-              <div class="kv"><span class="k">支付方式</span><span class="v">抖音团购</span></div>
+              <div class="kv"><span class="k">支付方式</span><span class="v" id="confirmPayWay">抖音团购</span></div>
             </div>
           </div>
           <p class="confirm-tip" id="confirmUnmatchTip" hidden>未匹配价目时，将按券面额开单；业绩归属未选则该单不计业绩。</p>
@@ -648,6 +671,31 @@
         </div>
       </div>
 
+      <!-- ========== OWNER AUTH MEITUAN PLACEHOLDER ========== -->
+      <div class="screen" id="screen-owner-auth-mt" data-flow="owner-auth-mt">
+        <div class="page-title-bar">
+          <button type="button" class="btn-back" data-go="home" aria-label="返回">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <span class="title">美团授权</span>
+        </div>
+        <div class="page-body auth-guide-body">
+          <div class="placeholder-panel" style="margin-top:24px;">
+            <div class="big">美</div>
+            <div>美团授权指引 · 占位</div>
+            <div style="margin-top:8px;line-height:1.55;">正式授权步骤页后续提供。演示可用左侧「美团授权状态」切换门禁；未授权时核销美团券会进入本页。</div>
+          </div>
+          <div class="auth-status-card" style="margin-top:16px;">
+            <div class="h">当前门店 · 美团授权状态</div>
+            <div class="kv-list">
+              <div class="kv"><span class="k">门店</span><span class="v">悦颜美肌 · 旗舰店</span></div>
+              <div class="kv"><span class="k">状态</span><span class="v" id="authMtStatusTag"><span class="tag tag-ok">已授权</span></span></div>
+              <div class="kv"><span class="k">到期日</span><span class="v" id="authMtExpire">2027-03-01</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ========== CAM DENIED ========== -->
       <div class="screen" id="screen-cam-denied" data-flow="cam-denied">
         <div class="page-title-bar">
@@ -683,7 +731,7 @@
           <div class="result-hero">
             <div class="ico bad"><img src="assets/icons/x-circle.svg" alt="" width="40" height="40"></div>
             <div class="t" id="vfailTitle">券无效或已过期</div>
-            <div class="s" id="vfailDesc">验券未通过，尚未发起核销与开单。请核对有效期或让顾客在抖音侧查看券状态。</div>
+            <div class="s" id="vfailDesc">验券未通过，尚未发起核销与开单。请核对有效期或让顾客在平台侧查看券状态。</div>
           </div>
           <div class="info-card fail-meta-card">
             <div class="kv-list">
@@ -813,7 +861,6 @@
               <button type="button" class="filter-chip on" data-f-status="all">全部</button>
               <button type="button" class="filter-chip" data-f-status="ok">已核销</button>
               <button type="button" class="filter-chip" data-f-status="revoked">已撤销</button>
-              <button type="button" class="filter-chip" data-f-status="refund">已退款</button>
             </div>
           </div>
           <div class="filter-section">
@@ -851,9 +898,9 @@
         <span class="prd-pane__label">PRD</span>
         <span class="prd-pane__title" id="prdPaneTitle">怎么读这份 PRD</span>
       </div>
-      <a class="prd-pane__open" href="PRD-抖音团购核销.html" target="_blank" rel="noopener">打开独立页</a>
+      <a class="prd-pane__open" href="PRD-团购核销.html" target="_blank" rel="noopener">打开独立页</a>
     </div>
-    <iframe class="prd-pane__frame" id="prdFrame" title="PRD 预览" src="PRD-抖音团购核销.html?embed=1#howto"></iframe>
+    <iframe class="prd-pane__frame" id="prdFrame" title="PRD 预览" src="PRD-团购核销.html?embed=1#howto"></iframe>
   </aside>
 </div>
 <script src="seed-demo.js"></script>

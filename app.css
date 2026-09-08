@@ -1181,6 +1181,29 @@
   line-height: 48px; box-sizing: border-box;
 }
 
+.plat-tabs--scan {
+  background: #111;
+  border-bottom-color: rgba(255,255,255,.08);
+}
+.plat-tabs--scan .plat-tab { color: rgba(255,255,255,.55); }
+.plat-tabs--scan .plat-tab.on { color: #fff; }
+.plat-tabs--scan .plat-tab.on::after { background: #fff; }
+
+.confirm-emp-btn {
+  border: 0; background: transparent; padding: 0; margin: 0;
+  font-family: inherit; font-size: 14px; cursor: pointer; line-height: 1.4;
+  color: var(--info);
+}
+.confirm-emp-btn.is-empty { color: #F32F41; }
+
+/* 单匹配 / 未匹配：字段名与右侧主内容垂直居中 */
+#confirmMatchRow { align-items: center; }
+#confirmMatchRow.is-single .match-row-head { align-items: center; }
+#confirmMatchRow.is-multi { align-items: flex-start; }
+#confirmMatchRow.is-multi .match-row-head { align-items: flex-start; }
+
+.info-card .h-plat.h-plat--mt { color: #FF6A00; }
+
 /* 确认页 · 匹配项 / 多匹配占比（对齐 Figma S5b/S5c） */
 .info-card--order { padding-top: 8px; padding-bottom: 8px; }
 .info-card--order .kv-list { margin-top: 0; }

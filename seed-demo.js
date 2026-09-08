@@ -87,11 +87,14 @@ window.DySeed = {
       { id: 'g_prod_kids', name: '儿童专区', itemIds: ['pd7', 'pd15'] }
     ]
   },
-  /* 抖音团购券无事先价目映射；仅手工匹配 + 会话记忆 */
+  /* 团购券无事先价目映射；仅手工匹配 + 会话记忆（按平台分演示券） */
   couponDemos: {
     default: { name: '深层补水护理 · 单次体验', price: 268, code: 'dy9182-ABCD-7781' },
     mismatch: { name: '抖音专享护理 · 单次体验', price: 199, code: 'dy9900-MM00-1122' },
-    multi: { name: '护理组合体验券', price: 436, code: 'dy8800-MT00-5566' }
+    multi: { name: '护理组合体验券', price: 436, code: 'dy8800-MT00-5566' },
+    meituanDefault: { name: '深层补水护理 · 美团专享', price: 258, code: 'mt7182-ABCD-9901' },
+    meituanMismatch: { name: '美团专享护理 · 单次体验', price: 189, code: 'mt9900-MM00-2233' },
+    meituanMulti: { name: '美团护理组合券', price: 426, code: 'mt8800-MT00-7788' }
   }
 };
 
