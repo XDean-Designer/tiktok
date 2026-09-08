@@ -232,49 +232,118 @@
 
       <!-- ========== ACCOUNT ========== -->
       <div class="screen" id="screen-account" data-flow="account">
-        <div class="page-title-bar">
-          <button type="button" class="btn-back" data-go="home" aria-label="返回">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        <div class="page-title-bar acct-title-bar">
+          <button type="button" class="btn-back acct-back" data-go="home" aria-label="返回">
+            <img src="assets/account/back.svg" alt="" width="24" height="24">
           </button>
           <span class="title">账号管理</span>
         </div>
         <div class="page-body acct-body">
           <div class="acct-sec-label">账号资料</div>
           <div class="acct-card">
-            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#F0F4FF;">信</span><span class="acct-lab">个人信息</span><span class="acct-chev">›</span></div>
-            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#F0F4FF;">社</span><span class="acct-lab">社区形象</span><span class="acct-trail"><span class="acct-muted">流光逐影剑</span><span class="acct-chev">›</span></span></div>
-            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#ECF7EF;">手</span><span class="acct-lab">修改手机</span><span class="acct-trail"><span class="acct-val">132****7897</span><span class="acct-chev">›</span></span></div>
-            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#F0F4FF;">店</span><span class="acct-lab">店铺认证</span><span class="acct-trail"><span class="acct-warn">待认证</span><span class="acct-chev">›</span></span></div>
-            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#FFF4E8;">银</span><span class="acct-lab">银行账号</span><span class="acct-trail"><span class="acct-warn">待认证</span><span class="acct-chev">›</span></span></div>
-            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#FBF4DF;">资</span><span class="acct-lab">我的资产</span><span class="acct-chev">›</span></div>
+            <div class="acct-row acct-row--ph">
+              <span class="acct-ico acct-ico--full"><img src="assets/account/ico-personal.svg" alt="" width="42" height="42"></span>
+              <span class="acct-lab">个人信息</span>
+              <img class="acct-chev-img" src="assets/account/chevron.svg" alt="" width="16" height="16">
+            </div>
+            <div class="acct-row acct-row--ph">
+              <span class="acct-ico" style="background:#F0F4FF;"><img src="assets/account/ico-community.svg" alt="" width="26" height="26"></span>
+              <span class="acct-lab">社区形象</span>
+              <span class="acct-trail">
+                <img class="acct-avatar" src="assets/account/avatar.png" alt="" width="28" height="28">
+                <span class="acct-trail-name">流光逐影剑</span>
+                <img class="acct-chev-img" src="assets/account/chevron.svg" alt="" width="16" height="16">
+              </span>
+            </div>
+            <div class="acct-row acct-row--ph">
+              <span class="acct-ico" style="background:#ECF7EF;"><img src="assets/account/ico-phone.svg" alt="" width="16" height="22"></span>
+              <span class="acct-lab">修改手机</span>
+              <span class="acct-trail">
+                <span class="acct-val">132****7897</span>
+                <img class="acct-chev-img" src="assets/account/chevron.svg" alt="" width="16" height="16">
+              </span>
+            </div>
+            <div class="acct-row acct-row--ph">
+              <span class="acct-ico acct-ico--full"><img src="assets/account/ico-shop.svg" alt="" width="42" height="42"></span>
+              <span class="acct-lab">店铺认证</span>
+              <span class="acct-trail">
+                <span class="acct-warn">待认证</span>
+                <img class="acct-chev-img" src="assets/account/chevron.svg" alt="" width="16" height="16">
+              </span>
+            </div>
+            <div class="acct-row acct-row--ph">
+              <span class="acct-ico acct-ico--full"><img src="assets/account/ico-bank.svg" alt="" width="42" height="42"></span>
+              <span class="acct-lab">银行账号</span>
+              <span class="acct-trail">
+                <span class="acct-warn">待认证</span>
+                <img class="acct-chev-img" src="assets/account/chevron.svg" alt="" width="16" height="16">
+              </span>
+            </div>
+            <div class="acct-row acct-row--ph">
+              <span class="acct-ico" style="background:#FBF4DF;"><img src="assets/account/ico-assets.svg" alt="" width="21" height="20"></span>
+              <span class="acct-lab">我的资产</span>
+              <img class="acct-chev-img" src="assets/account/chevron.svg" alt="" width="16" height="16">
+            </div>
             <div class="acct-row acct-row--tuangou">
               <div class="acct-row-main">
-                <span class="acct-ico acct-ico--img" style="background:#FBF4DF;"><img src="assets/icons/acct-tuangou.svg" alt="" width="22" height="22"></span>
+                <span class="acct-ico" style="background:#FBF4DF;"><img src="assets/account/ico-tuangou.svg" alt="" width="25" height="25"></span>
                 <span class="acct-lab">团购核销</span>
               </div>
               <div class="acct-plat-stack">
                 <button type="button" class="acct-plat-line" id="acctAuthDy" data-auth-entry="douyin">
-                  <span class="acct-plat-name"><img src="assets/icons/acct-tiktok-sm.svg" alt="" width="12" height="12"><span>抖音</span></span>
+                  <span class="acct-plat-name"><img src="assets/account/plat-tiktok.svg" alt="" width="12" height="12"><span>抖音</span></span>
                   <span class="acct-plat-st" id="acctAuthDySt">去开通</span>
-                  <span class="acct-chev">›</span>
+                  <img class="acct-chev-img" src="assets/account/chevron.svg" alt="" width="16" height="16">
                 </button>
                 <button type="button" class="acct-plat-line" id="acctAuthMt" data-auth-entry="meituan">
-                  <span class="acct-plat-name"><span class="logo logo-mt acct-mt-mark" aria-hidden="true"><span class="mt-mark">美团</span></span><span>美团</span></span>
+                  <span class="acct-plat-name"><span class="acct-mt-badge" aria-hidden="true">美团</span><span>美团</span></span>
                   <span class="acct-plat-st" id="acctAuthMtSt">去开通</span>
-                  <span class="acct-chev">›</span>
+                  <img class="acct-chev-img" src="assets/account/chevron.svg" alt="" width="16" height="16">
                 </button>
               </div>
             </div>
-            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#F0F4FF;">设</span><span class="acct-lab">店主设置</span><span class="acct-chev">›</span></div>
-            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#F5F0FF;">账</span><span class="acct-lab">账号管理</span><span class="acct-chev">›</span></div>
+            <div class="acct-row acct-row--ph">
+              <span class="acct-ico" style="background:#F0F4FF;"><img src="assets/account/ico-owner.svg" alt="" width="20" height="20"></span>
+              <span class="acct-lab">店主设置</span>
+              <img class="acct-chev-img" src="assets/account/chevron.svg" alt="" width="16" height="16">
+            </div>
+            <div class="acct-row acct-row--ph">
+              <span class="acct-ico acct-ico--full"><img src="assets/account/ico-account.svg" alt="" width="42" height="42"></span>
+              <span class="acct-lab">账号管理</span>
+              <img class="acct-chev-img" src="assets/account/chevron.svg" alt="" width="16" height="16">
+            </div>
           </div>
+
           <div class="acct-sec-label">其他</div>
-          <div class="acct-card">
-            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#F0F4FF;">版</span><span class="acct-lab">版本中心</span><span class="acct-chev">›</span></div>
-            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#ECF7EF;">更</span><span class="acct-lab">版本更新</span><span class="acct-chev">›</span></div>
-            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#F0F4FF;">关</span><span class="acct-lab">关于我们</span><span class="acct-trail"><span class="acct-val">5.0.12(176)</span><span class="acct-chev">›</span></span></div>
-            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#FBF4DF;">客</span><span class="acct-lab">联系客服</span><span class="acct-trail"><span class="acct-muted acct-muted--multi">工作日：周一至周五<br>9:00~18:00</span><span class="acct-chev">›</span></span></div>
+          <div class="acct-card acct-card--other">
+            <div class="acct-row acct-row--ph">
+              <span class="acct-ico" style="background:#F0F4FF;"><img src="assets/account/ico-version.svg" alt="" width="20" height="22"></span>
+              <span class="acct-lab">版本中心</span>
+              <img class="acct-chev-img" src="assets/account/chevron.svg" alt="" width="16" height="16">
+            </div>
+            <div class="acct-row acct-row--ph">
+              <span class="acct-ico" style="background:#ECF7EF;"><img src="assets/account/ico-update.svg" alt="" width="18" height="20"></span>
+              <span class="acct-lab">版本更新</span>
+              <img class="acct-chev-img" src="assets/account/chevron.svg" alt="" width="16" height="16">
+            </div>
+            <div class="acct-row acct-row--ph">
+              <span class="acct-ico" style="background:#F0F4FF;"><img src="assets/account/ico-about.svg" alt="" width="22" height="20"></span>
+              <span class="acct-lab">关于我们</span>
+              <span class="acct-trail">
+                <span class="acct-val">5.0.12(176)</span>
+                <img class="acct-chev-img" src="assets/account/chevron.svg" alt="" width="16" height="16">
+              </span>
+            </div>
+            <div class="acct-row acct-row--ph">
+              <span class="acct-ico" style="background:#FBF4DF;"><img src="assets/account/ico-cs.svg" alt="" width="20" height="20"></span>
+              <span class="acct-lab">联系客服</span>
+              <span class="acct-trail">
+                <span class="acct-muted acct-muted--multi">工作日：周一至周五<br>9:00~18:00</span>
+                <img class="acct-chev-img" src="assets/account/chevron.svg" alt="" width="16" height="16">
+              </span>
+            </div>
           </div>
+
           <button type="button" class="acct-logout" id="btnAcctLogout">退出登录</button>
         </div>
       </div>
