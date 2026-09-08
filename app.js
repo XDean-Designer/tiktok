@@ -8,6 +8,7 @@
   /* 页面/弹层 → PRD 屏级锚点（PRD-团购核销.html） */
   var PRD_ANCHOR = {
     home: 'home',
+    account: 'account',
     scan: 'scan',
     input: 'input',
     result: 'result',
@@ -34,11 +35,19 @@
     revokeMask: 'detail',
     dupMask: 'scan',
     offlineMask: 'tpl-offline',
+    authNeedMask: 'owner-auth',
+    camDeniedMask: 'cam-denied',
+    offlinePageMask: 'tpl-offline',
+    timeoutMask: 'tpl-timeout',
+    nopermMask: 'tpl-noperm',
+    vfailMask: 'verify-fail',
+    failMask: 'fail',
     loadingMask: null
   };
   var PRD_TITLE = {
     howto: '怎么读这份 PRD',
     home: '6.1 演示首页（占位）',
+    account: '6.1b 账号管理',
     scan: '6.2 扫码核销',
     input: '6.3 输码验券',
     result: '6.4 验券结果',
@@ -247,6 +256,24 @@
     expired: { label: '已到期', tag: 'tag-rev', expire: '2026-08-01' }
   };
 
+  /* 账号管理 · 团购核销行状态（文案；颜色对齐授权页标签色） */
+  var AUTH_ROW = {
+    none: { label: '去开通', cls: 'is-go' },
+    pending: { label: '待确认', cls: 'is-pending' },
+    ok: { label: '已授权', cls: 'is-ok' },
+    expired: { label: '已到期', cls: 'is-expired' }
+  };
+
+  var pendingAuthPlat = 'douyin';
+  var EXCEPTION_MASK = {
+    'cam-denied': 'camDeniedMask',
+    'tpl-offline': 'offlinePageMask',
+    'tpl-timeout': 'timeoutMask',
+    'tpl-noperm': 'nopermMask',
+    'verify-fail': 'vfailMask',
+    fail: 'failMask'
+  };
+
   /* 扫码演示当前券类型：douyin | meituan | coupon */
   var scanKind = 'douyin';
 
@@ -403,15 +430,50 @@
     return currentAuth() === 'ok';
   }
 
+  function syncAcctAuthUI() {
+    [
+      { key: 'authDouyin', st: '#acctAuthDySt' },
+      { key: 'authMeituan', st: '#acctAuthMtSt' }
+    ].forEach(function (item) {
+      var state = session[item.key] || 'none';
+      var row = AUTH_ROW[state] || AUTH_ROW.none;
+      var el = $(item.st);
+      if (!el) return;
+      el.textContent = row.label;
+      el.className = 'acct-plat-st ' + row.cls;
+    });
+  }
+
+  function openAuthNeedMask(plat) {
+    pendingAuthPlat = plat === 'meituan' ? 'meituan' : 'douyin';
+    var name = pendingAuthPlat === 'meituan' ? '美团' : '抖音';
+    var title = $('#authNeedTitle');
+    var desc = $('#authNeedDesc');
+    if (title) title.textContent = '尚未开通' + name + '团购核销';
+    if (desc) {
+      desc.textContent = '当前门店尚未完成' + name + '授权，暂时无法验券核销。请先完成开通后再试。';
+    }
+    openMask('authNeedMask');
+  }
+
+  function openException(flow) {
+    var maskId = EXCEPTION_MASK[flow];
+    if (!maskId) return false;
+    if (flow === 'fail') setFail($('#failSwitch .on') ? $('#failSwitch .on').getAttribute('data-fail') : 'invalid');
+    if (flow === 'verify-fail') setVerifyFail($('#verifyFailSwitch .on') ? $('#verifyFailSwitch .on').getAttribute('data-vfail') : 'invalid');
+    openMask(maskId);
+    setNav(flow);
+    syncPrdPanel(PRD_ANCHOR[flow] || flow);
+    return true;
+  }
+
   function gateOnAction() {
     if (!session.rolePerm) {
-      showScreen('tpl-noperm');
+      openException('tpl-noperm');
       return false;
     }
     if (!storeAuthOk()) {
-      var auth = currentAuth();
-      toast(auth === 'expired' ? (platLabel() + '门店授权已到期') : (platLabel() + '门店尚未完成授权'));
-      showScreen(authScreenForPlat());
+      openAuthNeedMask(session.plat);
       return false;
     }
     return true;
@@ -420,7 +482,7 @@
   /* 无权限：进核销链路前即拦（扫码/输码/结果/确认/成功等入口） */
   function gateConsumeEntry() {
     if (!session.rolePerm) {
-      showScreen('tpl-noperm');
+      openException('tpl-noperm');
       return false;
     }
     return true;
@@ -435,6 +497,7 @@
     if (tag) tag.innerHTML = '<span class="tag ' + ui.tag + '">' + ui.label + '</span>';
     var exp = $('#authExpire');
     if (exp) exp.textContent = ui.expire;
+    syncAcctAuthUI();
   }
 
   function applyAuthMtUI() {
@@ -446,6 +509,7 @@
     if (tag) tag.innerHTML = '<span class="tag ' + ui.tag + '">' + ui.label + '</span>';
     var exp = $('#authMtExpire');
     if (exp) exp.textContent = ui.expire;
+    syncAcctAuthUI();
   }
 
   function syncPlatformChrome() {
@@ -497,7 +561,7 @@
 
   function ensureScanThen(fn) {
     if (!session.rolePerm) {
-      showScreen('tpl-noperm');
+      openException('tpl-noperm');
       return;
     }
     if (isScanActive()) {
@@ -697,8 +761,13 @@
   }
 
   function showScreen(flow, push) {
+    if (EXCEPTION_MASK[flow]) {
+      openException(flow);
+      return;
+    }
     var map = {
       home: 'screen-home',
+      account: 'screen-account',
       scan: 'screen-scan',
       input: 'screen-input',
       result: 'screen-result',
@@ -711,10 +780,6 @@
       'revoke-ok': 'screen-revoke-ok',
       'owner-auth': 'screen-owner-auth',
       'owner-auth-mt': 'screen-owner-auth-mt',
-      'cam-denied': 'screen-cam-denied',
-      'tpl-offline': 'screen-tpl-offline',
-      'tpl-timeout': 'screen-tpl-timeout',
-      'tpl-noperm': 'screen-tpl-noperm',
       'match-pick': 'screen-match-pick',
       'coupon-ph': 'screen-coupon-ph'
     };
@@ -731,6 +796,7 @@
     if (flow === 'confirm') syncConfirmUI();
     if (flow === 'owner-auth') applyAuthUI();
     if (flow === 'owner-auth-mt') applyAuthMtUI();
+    if (flow === 'account') syncAcctAuthUI();
     if (flow === 'scan' || flow === 'result' || flow === 'confirm' || flow === 'input') syncPlatformChrome();
     if (flow === 'success') resetSuccessMemberForm();
     if (flow !== 'scan') {
@@ -750,7 +816,7 @@
   function tryEnterScan() {
     if (!gateConsumeEntry()) return;
     if (session.camDenied) {
-      showScreen('cam-denied');
+      openException('cam-denied');
       return;
     }
     if (session.offline) {
@@ -764,7 +830,7 @@
     opts = opts || {};
     if (!gateOnAction()) return;
     if (session.offline) {
-      showScreen('tpl-offline');
+      openException('tpl-offline');
       return;
     }
     withLoading(opts.loadingText || '正在验券…', 900, function () {
@@ -774,7 +840,7 @@
       }
       if (opts.vfail) {
         setVerifyFail(opts.vfail);
-        showScreen('verify-fail');
+        openException('verify-fail');
         return;
       }
       if (opts.mismatch) {
@@ -810,7 +876,7 @@
   function startConsume() {
     if (!gateOnAction()) return;
     if (session.offline) {
-      showScreen('tpl-offline');
+      openException('tpl-offline');
       return;
     }
     withLoading('正在核销…', 1000, function () {
@@ -977,16 +1043,20 @@
   }
 
   function isFlowActive(flow) {
-    var map = {
-      fail: 'screen-fail',
-      'verify-fail': 'screen-verify-fail'
-    };
-    var id = map[flow];
-    var s = id ? document.getElementById(id) : null;
-    return !!(s && s.classList.contains('active'));
+    var maskId = EXCEPTION_MASK[flow];
+    if (maskId) {
+      var m = document.getElementById(maskId);
+      return !!(m && m.classList.contains('open'));
+    }
+    return false;
   }
 
   function ensureFlowThen(flow, fn) {
+    if (EXCEPTION_MASK[flow]) {
+      openException(flow);
+      setTimeout(fn, 80);
+      return;
+    }
     if (isFlowActive(flow)) {
       fn();
       return;
@@ -997,38 +1067,45 @@
 
   function setFail(type) {
     var f = FAIL_MAP[type] || FAIL_MAP.invalid;
-    $('#failTitle').textContent = f.title;
-    $('#failDesc').textContent = f.desc;
-    $('#failAction').textContent = f.action;
-    $('#failCode').textContent = f.code;
+    var title = $('#failTitle');
+    var desc = $('#failDesc');
+    var action = $('#failAction');
+    var code = $('#failCode');
+    if (title) title.textContent = f.title;
+    if (desc) desc.textContent = f.desc;
+    if (action) action.textContent = f.action;
+    if (code) code.textContent = f.code;
     $all('#failSwitch button').forEach(function (b) {
       b.classList.toggle('on', b.getAttribute('data-fail') === type);
     });
     var primary = $('#failPrimaryBtn');
-    primary.setAttribute('data-go', f.primary);
-    primary.textContent = f.primary === 'orders' ? '查看订单'
-      : f.primary === 'owner-auth' ? '查看授权指引'
-      : f.primary === 'confirm' ? '重试核销'
-      : f.primary === 'input' ? '手动输码'
-      : '重新扫码';
+    if (primary) {
+      primary.setAttribute('data-ex-go', f.primary);
+      primary.textContent = f.primary === 'orders' ? '查看订单'
+        : f.primary === 'owner-auth' ? '查看授权指引'
+        : f.primary === 'confirm' ? '重试核销'
+        : f.primary === 'input' ? '手动输码'
+        : '重新扫码';
+    }
   }
 
   function setVerifyFail(type) {
     var f = VFAIL_MAP[type] || VFAIL_MAP.invalid;
-    $('#vfailTitle').textContent = f.title;
-    $('#vfailDesc').textContent = f.desc;
-    $('#vfailAction').textContent = f.action;
+    var title = $('#vfailTitle');
+    var desc = $('#vfailDesc');
+    if (title) title.textContent = f.title;
+    if (desc) desc.textContent = f.desc;
     $all('#verifyFailSwitch button').forEach(function (b) {
       b.classList.toggle('on', b.getAttribute('data-vfail') === type);
     });
-    var foot = $('#screen-verify-fail .footer-actions .btn-primary');
-    if (foot) {
+    var primary = $('#vfailMask .ok');
+    if (primary) {
       if (type === 'used') {
-        foot.setAttribute('data-go', 'orders');
-        foot.textContent = '查看订单';
+        primary.setAttribute('data-ex-go', 'orders');
+        primary.textContent = '查看订单';
       } else {
-        foot.setAttribute('data-go', 'scan');
-        foot.textContent = '重新扫码';
+        primary.setAttribute('data-ex-go', 'scan');
+        primary.textContent = '重新扫码';
       }
     }
   }
@@ -1076,8 +1153,11 @@
     if (t && t.classList.contains('nav-item')) {
       var navFlow = t.getAttribute('data-flow');
       if (CONSUME_ENTRY[navFlow] && !session.rolePerm) {
-        historyStack = ['tpl-noperm'];
-        showScreen('tpl-noperm', false);
+        openException('tpl-noperm');
+        return;
+      }
+      if (EXCEPTION_MASK[navFlow]) {
+        openException(navFlow);
         return;
       }
       historyStack = [navFlow];
@@ -1121,6 +1201,45 @@
 
     if (e.target.closest('#homeScanBtn') || e.target.closest('#homeVerifyBtn')) {
       tryEnterScan();
+      return;
+    }
+
+    if (e.target.closest('#homeStoreBtn')) {
+      showScreen('account');
+      return;
+    }
+
+    var authEntry = e.target.closest('[data-auth-entry]');
+    if (authEntry) {
+      var ep = authEntry.getAttribute('data-auth-entry');
+      session.plat = ep === 'meituan' ? 'meituan' : 'douyin';
+      syncPlatformChrome();
+      showScreen(ep === 'meituan' ? 'owner-auth-mt' : 'owner-auth');
+      return;
+    }
+
+    if (e.target.closest('#btnAuthNeedGo')) {
+      closeMasks();
+      showScreen(pendingAuthPlat === 'meituan' ? 'owner-auth-mt' : 'owner-auth');
+      return;
+    }
+
+    if (e.target.closest('#btnAcctLogout')) {
+      toast('演示：退出登录（示意）');
+      return;
+    }
+
+    var exGo = e.target.closest('[data-ex-go]');
+    if (exGo) {
+      var exTarget = exGo.getAttribute('data-ex-go');
+      closeMasks();
+      if (exTarget === 'scan') {
+        tryEnterScan();
+        return;
+      }
+      if (exTarget === 'input' && !gateConsumeEntry()) return;
+      if (exTarget === 'confirm' && !gateOnAction()) return;
+      showScreen(exTarget);
       return;
     }
 
@@ -1175,12 +1294,13 @@
     if (e.target.closest('#btnRetryOnline')) {
       session.offline = false;
       syncDemoGateUI();
+      closeMasks();
       toast('已切换为联网');
-      goBack();
       return;
     }
 
     if (e.target.closest('#btnOpenSettings')) {
+      closeMasks();
       toast('请在系统设置中开启相机权限（示意）');
       return;
     }
@@ -1437,18 +1557,21 @@
       'detail-ok': function () { openDetail('o1'); historyStack = ['orders', 'detail']; },
       'detail-timeout': function () { openDetail('o2'); historyStack = ['orders', 'detail']; },
       'revoke-ok': function () { showScreen('revoke-ok', false); historyStack = ['revoke-ok']; },
-      'cam-denied': function () { showScreen('cam-denied', false); historyStack = ['cam-denied']; },
-      'tpl-offline': function () { showScreen('tpl-offline', false); historyStack = ['tpl-offline']; },
-      'tpl-timeout': function () { showScreen('tpl-timeout', false); historyStack = ['tpl-timeout']; },
-      'tpl-noperm': function () { showScreen('tpl-noperm', false); historyStack = ['tpl-noperm']; },
+      'cam-denied': function () { showScreen('home', false); historyStack = ['home']; openException('cam-denied'); },
+      'tpl-offline': function () { showScreen('home', false); historyStack = ['home']; openException('tpl-offline'); },
+      'tpl-timeout': function () { showScreen('home', false); historyStack = ['home']; openException('tpl-timeout'); },
+      'tpl-noperm': function () { showScreen('home', false); historyStack = ['home']; openException('tpl-noperm'); },
       'verify-fail': function () {
         setVerifyFail('invalid');
-        showScreen('verify-fail', false); historyStack = ['verify-fail'];
+        showScreen('home', false); historyStack = ['home'];
+        openException('verify-fail');
       },
       fail: function () {
         setFail('invalid');
-        showScreen('fail', false); historyStack = ['fail'];
+        showScreen('home', false); historyStack = ['home'];
+        openException('fail');
       },
+      account: function () { showScreen('account', false); historyStack = ['account']; },
       'owner-auth': function () {
         session.authDouyin = 'ok';
         applyAuthUI();

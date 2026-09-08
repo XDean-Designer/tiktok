@@ -58,6 +58,8 @@
     <div class="g-t">店员端 · 主链路</div>
     <button type="button" class="nav-item on" data-flow="home"><span class="idx">1</span>APP 首页</button>
     <div class="nav-arrow">↓</div>
+    <button type="button" class="nav-item" data-flow="account"><span class="idx">1b</span>账号管理</button>
+    <div class="nav-arrow">↓</div>
     <button type="button" class="nav-item" data-flow="scan"><span class="idx">2</span>扫码核销</button>
     <div class="nav-demo-scan" id="navDemoScan">
       <div class="nav-demo-label">券类型 · 点击即模拟扫码自动识别</div>
@@ -186,7 +188,7 @@
         <div class="page-body" style="padding-bottom:0;display:flex;flex-direction:column;">
           <div class="home-top">
             <div class="home-store-row">
-              <div class="home-store-name">悦颜美肌 · 旗舰店 <span class="chev">▾</span></div>
+              <button type="button" class="home-store-name" id="homeStoreBtn" aria-label="账号管理" title="账号管理">悦颜美肌 · 旗舰店 <span class="chev">▾</span></button>
               <button type="button" class="home-icon-btn" aria-label="消息" tabindex="-1">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
               </button>
@@ -217,7 +219,7 @@
               <button type="button" class="home-grid-item" id="homeVerifyBtn" style="cursor:pointer;" aria-label="验券" title="验券"><div class="ico" style="background:#FE2C55;">验</div><div class="lab">验券</div></button>
               <div class="home-grid-item"><div class="ico" style="background:#929292;">更</div><div class="lab">更多</div></div>
             </div>
-            <p style="margin:14px 4px 0;font-size:12px;color:#929292;line-height:1.5;">提示：本页仅为演示占位首页，并非真实 APP 首页。核销入口：顶部右侧扫码图标（与线上一致）+ 宫格「验券」，二者进入同一扫码核销链路、同一权限门禁。</p>
+            <p style="margin:14px 4px 0;font-size:12px;color:#929292;line-height:1.5;">提示：本页仅为演示占位首页。核销入口：顶部扫码图标 + 宫格「验券」。点门店名进入「账号管理」→「团购核销」可查看抖音/美团授权状态并进入授权指引。</p>
           </div>
           <div class="home-bottom-tab">
             <button type="button" class="tab on"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>首页</button>
@@ -225,6 +227,55 @@
             <button type="button" class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>消息</button>
             <button type="button" class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>我的</button>
           </div>
+        </div>
+      </div>
+
+      <!-- ========== ACCOUNT ========== -->
+      <div class="screen" id="screen-account" data-flow="account">
+        <div class="page-title-bar">
+          <button type="button" class="btn-back" data-go="home" aria-label="返回">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <span class="title">账号管理</span>
+        </div>
+        <div class="page-body acct-body">
+          <div class="acct-sec-label">账号资料</div>
+          <div class="acct-card">
+            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#F0F4FF;">信</span><span class="acct-lab">个人信息</span><span class="acct-chev">›</span></div>
+            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#F0F4FF;">社</span><span class="acct-lab">社区形象</span><span class="acct-trail"><span class="acct-muted">流光逐影剑</span><span class="acct-chev">›</span></span></div>
+            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#ECF7EF;">手</span><span class="acct-lab">修改手机</span><span class="acct-trail"><span class="acct-val">132****7897</span><span class="acct-chev">›</span></span></div>
+            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#F0F4FF;">店</span><span class="acct-lab">店铺认证</span><span class="acct-trail"><span class="acct-warn">待认证</span><span class="acct-chev">›</span></span></div>
+            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#FFF4E8;">银</span><span class="acct-lab">银行账号</span><span class="acct-trail"><span class="acct-warn">待认证</span><span class="acct-chev">›</span></span></div>
+            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#FBF4DF;">资</span><span class="acct-lab">我的资产</span><span class="acct-chev">›</span></div>
+            <div class="acct-row acct-row--tuangou">
+              <div class="acct-row-main">
+                <span class="acct-ico acct-ico--img" style="background:#FBF4DF;"><img src="assets/icons/acct-tuangou.svg" alt="" width="22" height="22"></span>
+                <span class="acct-lab">团购核销</span>
+              </div>
+              <div class="acct-plat-stack">
+                <button type="button" class="acct-plat-line" id="acctAuthDy" data-auth-entry="douyin">
+                  <span class="acct-plat-name"><img src="assets/icons/acct-tiktok-sm.svg" alt="" width="12" height="12"><span>抖音</span></span>
+                  <span class="acct-plat-st" id="acctAuthDySt">去开通</span>
+                  <span class="acct-chev">›</span>
+                </button>
+                <button type="button" class="acct-plat-line" id="acctAuthMt" data-auth-entry="meituan">
+                  <span class="acct-plat-name"><span class="logo logo-mt acct-mt-mark" aria-hidden="true"><span class="mt-mark">美团</span></span><span>美团</span></span>
+                  <span class="acct-plat-st" id="acctAuthMtSt">去开通</span>
+                  <span class="acct-chev">›</span>
+                </button>
+              </div>
+            </div>
+            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#F0F4FF;">设</span><span class="acct-lab">店主设置</span><span class="acct-chev">›</span></div>
+            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#F5F0FF;">账</span><span class="acct-lab">账号管理</span><span class="acct-chev">›</span></div>
+          </div>
+          <div class="acct-sec-label">其他</div>
+          <div class="acct-card">
+            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#F0F4FF;">版</span><span class="acct-lab">版本中心</span><span class="acct-chev">›</span></div>
+            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#ECF7EF;">更</span><span class="acct-lab">版本更新</span><span class="acct-chev">›</span></div>
+            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#F0F4FF;">关</span><span class="acct-lab">关于我们</span><span class="acct-trail"><span class="acct-val">5.0.12(176)</span><span class="acct-chev">›</span></span></div>
+            <div class="acct-row acct-row--ph"><span class="acct-ico" style="background:#FBF4DF;">客</span><span class="acct-lab">联系客服</span><span class="acct-trail"><span class="acct-muted acct-muted--multi">工作日：周一至周五<br>9:00~18:00</span><span class="acct-chev">›</span></span></div>
+          </div>
+          <button type="button" class="acct-logout" id="btnAcctLogout">退出登录</button>
         </div>
       </div>
 
@@ -503,34 +554,8 @@
         </div>
       </div>
 
-      <!-- ========== FAIL ========== -->
-      <div class="screen" id="screen-fail" data-flow="fail">
-        <div class="page-title-bar">
-          <button type="button" class="btn-back" data-back aria-label="返回">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-          </button>
-          <span class="title">核销失败</span>
-        </div>
-        <div class="page-body">
-          <div class="result-hero">
-            <div class="ico bad alt">
-              <img src="assets/icons/x-circle.svg" alt="" width="40" height="40">
-            </div>
-            <div class="t" id="failTitle">券状态异常</div>
-            <div class="s" id="failDesc">核销提交时平台返回券不可用。请核对后重试或改输码。</div>
-          </div>
-          <div class="info-card fail-meta-card">
-            <div class="kv-list">
-              <div class="kv"><span class="k">建议操作</span><span class="v" id="failAction">重新扫码或改输码</span></div>
-              <div class="kv"><span class="k">错误码</span><span class="v" id="failCode">RESULT_EXPIRED</span></div>
-            </div>
-          </div>
-        </div>
-        <div class="footer-actions">
-          <button type="button" class="btn-ghost" data-go="input">手动输码</button>
-          <button type="button" class="btn-primary" id="failPrimaryBtn" data-go="scan">重新扫码</button>
-        </div>
-      </div>
+      <!-- ========== FAIL（整页已改为 failMask 居中弹窗） ========== -->
+      <div class="screen" id="screen-fail" data-flow="fail" hidden aria-hidden="true"></div>
 
       <!-- ========== ORDERS ========== -->
       <div class="screen" id="screen-orders" data-flow="orders">
@@ -615,7 +640,7 @@
       <!-- ========== OWNER AUTH ========== -->
       <div class="screen" id="screen-owner-auth" data-flow="owner-auth">
         <div class="page-title-bar">
-          <button type="button" class="btn-back" data-go="home" aria-label="返回">
+          <button type="button" class="btn-back" data-back aria-label="返回">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
           <span class="title">抖音来客授权</span>
@@ -694,7 +719,7 @@
       <!-- ========== OWNER AUTH MEITUAN PLACEHOLDER ========== -->
       <div class="screen" id="screen-owner-auth-mt" data-flow="owner-auth-mt">
         <div class="page-title-bar">
-          <button type="button" class="btn-back" data-go="home" aria-label="返回">
+          <button type="button" class="btn-back" data-back aria-label="返回">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
           <span class="title">美团授权</span>
@@ -716,115 +741,96 @@
         </div>
       </div>
 
-      <!-- ========== CAM DENIED ========== -->
-      <div class="screen" id="screen-cam-denied" data-flow="cam-denied">
-        <div class="page-title-bar">
-          <button type="button" class="btn-back" data-back aria-label="返回">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-          </button>
-          <span class="title">无法使用相机</span>
-        </div>
-        <div class="page-body">
-          <div class="result-hero">
-            <div class="ico bad">
-              <img src="assets/icons/cam.svg" alt="" width="36" height="36">
-            </div>
-            <div class="t">未获得相机权限</div>
-            <div class="s">请在系统设置中允许剑琅联盟访问相机，或改用「输入券号」完成核销。</div>
-          </div>
-        </div>
-        <div class="footer-actions">
-          <button type="button" class="btn-ghost" id="btnOpenSettings">去系统设置</button>
-          <button type="button" class="btn-primary" data-go="input">输入券号</button>
-        </div>
-      </div>
-
-      <!-- ========== VERIFY FAIL ========== -->
-      <div class="screen" id="screen-verify-fail" data-flow="verify-fail">
-        <div class="page-title-bar">
-          <button type="button" class="btn-back" data-back aria-label="返回">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-          </button>
-          <span class="title">验券失败</span>
-        </div>
-        <div class="page-body">
-          <div class="result-hero">
-            <div class="ico bad"><img src="assets/icons/x-circle.svg" alt="" width="40" height="40"></div>
-            <div class="t" id="vfailTitle">券无效或已过期</div>
-            <div class="s" id="vfailDesc">验券未通过，尚未发起核销与开单。请核对有效期或让顾客在平台侧查看券状态。</div>
-          </div>
-          <div class="info-card fail-meta-card">
-            <div class="kv-list">
-              <div class="kv"><span class="k">建议操作</span><span class="v" id="vfailAction">重新扫码或改输码</span></div>
-              <div class="kv"><span class="k">阶段</span><span class="v">验券准备 / 验券</span></div>
-            </div>
-          </div>
-        </div>
-        <div class="footer-actions">
-          <button type="button" class="btn-ghost" data-go="input">手动输码</button>
-          <button type="button" class="btn-primary" data-go="scan">重新扫码</button>
-        </div>
-      </div>
-
-      <!-- ========== TEMPLATES ========== -->
-      <div class="screen" id="screen-tpl-offline" data-flow="tpl-offline">
-        <div class="page-title-bar">
-          <button type="button" class="btn-back" data-back aria-label="返回"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
-          <span class="title">网络异常</span>
-        </div>
-        <div class="page-body">
-          <div class="result-hero">
-            <div class="ico bad"><img src="assets/icons/wifi-off.svg" alt="" width="48" height="48"></div>
-            <div class="t">当前无网络</div>
-            <div class="s">请连接 Wi-Fi 或蜂窝网络后再验券。可先进入扫码页熟悉界面，或改用输入券号（仍需联网提交）。</div>
-          </div>
-        </div>
-        <div class="footer-actions">
-          <button type="button" class="btn-ghost" data-go="input">输入券号</button>
-          <button type="button" class="btn-primary" id="btnRetryOnline">我已联网，重试</button>
-        </div>
-      </div>
-
-      <div class="screen" id="screen-tpl-timeout" data-flow="tpl-timeout">
-        <div class="page-title-bar">
-          <button type="button" class="btn-back" data-back aria-label="返回"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
-          <span class="title">请求超时</span>
-        </div>
-        <div class="page-body">
-          <div class="result-hero">
-            <div class="ico bad"><img src="assets/icons/clock.svg" alt="" width="36" height="36"></div>
-            <div class="t">请求超时</div>
-            <div class="s">平台响应超时。可以再试一次，不用担心会重复扣券。</div>
-          </div>
-        </div>
-        <div class="footer-actions">
-          <button type="button" class="btn-primary" data-back>重试</button>
-        </div>
-      </div>
-
-      <div class="screen" id="screen-tpl-noperm" data-flow="tpl-noperm">
-        <div class="page-title-bar">
-          <button type="button" class="btn-back" data-back aria-label="返回"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
-          <span class="title">无操作权限</span>
-        </div>
-        <div class="page-body">
-          <div class="result-hero">
-            <div class="ico bad"><img src="assets/icons/lock.svg" alt="" width="36" height="36"></div>
-            <div class="t">无核销权限</div>
-            <div class="s">当前账号未开启「收银开单」权限，无法扫码核销。请联系店长在角色权限中开启，或查看门店授权状态。</div>
-          </div>
-        </div>
-        <div class="footer-actions">
-          <button type="button" class="btn-ghost" data-go="owner-auth">查看授权指引</button>
-          <button type="button" class="btn-primary" data-go="home">返回首页</button>
-        </div>
-      </div>
+      <!-- 异常态已改为居中弹窗，见下方 masks -->
 
       <!-- masks -->
       <div class="loading-mask" id="loadingMask">
         <div class="loading-box">
           <div class="loading-spin"></div>
           <div class="lt" id="loadingText">正在验券…</div>
+        </div>
+      </div>
+
+      <div class="dialog-mask" id="authNeedMask">
+        <div class="dialog">
+          <div class="dt" id="authNeedTitle">尚未开通抖音团购核销</div>
+          <div class="ds" id="authNeedDesc">当前门店尚未完成该平台授权，暂时无法验券核销。请先完成开通后再试。</div>
+          <div class="da">
+            <button type="button" class="cancel" data-close-mask>取消</button>
+            <button type="button" class="ok" id="btnAuthNeedGo">去开通</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dialog-mask" id="camDeniedMask">
+        <div class="dialog dialog--alert">
+          <div class="dialog-ico"><img src="assets/icons/cam.svg" alt="" width="36" height="36"></div>
+          <div class="dt">未获得相机权限</div>
+          <div class="ds">请在系统设置中允许剑琅联盟访问相机，或改用「输入券号」完成核销。</div>
+          <div class="da">
+            <button type="button" class="cancel" id="btnOpenSettings">去系统设置</button>
+            <button type="button" class="ok" data-ex-go="input">输入券号</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dialog-mask" id="vfailMask">
+        <div class="dialog dialog--alert">
+          <div class="dialog-ico"><img src="assets/icons/x-circle.svg" alt="" width="40" height="40"></div>
+          <div class="dt" id="vfailTitle">券无效或已过期</div>
+          <div class="ds" id="vfailDesc">验券未通过，尚未发起核销与开单。请核对有效期或让顾客在平台侧查看券状态。</div>
+          <div class="da">
+            <button type="button" class="cancel" data-ex-go="input">手动输码</button>
+            <button type="button" class="ok" data-ex-go="scan">重新扫码</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dialog-mask" id="offlinePageMask">
+        <div class="dialog dialog--alert">
+          <div class="dialog-ico"><img src="assets/icons/wifi-off.svg" alt="" width="40" height="40"></div>
+          <div class="dt">当前无网络</div>
+          <div class="ds">请连接 Wi-Fi 或蜂窝网络后再验券。可先进入扫码页熟悉界面，或改用输入券号（仍需联网提交）。</div>
+          <div class="da">
+            <button type="button" class="cancel" data-ex-go="input">输入券号</button>
+            <button type="button" class="ok" id="btnRetryOnline">我已联网，重试</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dialog-mask" id="timeoutMask">
+        <div class="dialog dialog--alert">
+          <div class="dialog-ico"><img src="assets/icons/clock.svg" alt="" width="36" height="36"></div>
+          <div class="dt">请求超时</div>
+          <div class="ds">平台响应超时。可以再试一次，不用担心会重复扣券。</div>
+          <div class="da">
+            <button type="button" class="ok" data-close-mask style="flex:1;">重试</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dialog-mask" id="nopermMask">
+        <div class="dialog dialog--alert">
+          <div class="dialog-ico"><img src="assets/icons/lock.svg" alt="" width="36" height="36"></div>
+          <div class="dt">无核销权限</div>
+          <div class="ds">当前账号未开启「收银开单」权限，无法扫码核销。请联系店长在角色权限中开启，或查看门店授权状态。</div>
+          <div class="da">
+            <button type="button" class="cancel" data-ex-go="owner-auth">查看授权指引</button>
+            <button type="button" class="ok" data-ex-go="home">返回首页</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dialog-mask" id="failMask">
+        <div class="dialog dialog--alert">
+          <div class="dialog-ico"><img src="assets/icons/x-circle.svg" alt="" width="40" height="40"></div>
+          <div class="dt" id="failTitle">券状态异常</div>
+          <div class="ds" id="failDesc">核销提交时平台返回券不可用。请核对后重试或改输码。</div>
+          <div class="ds ds--meta" id="failMetaLine">建议：<span id="failAction">重新扫码或改输码</span> · <span id="failCode">RESULT_EXPIRED</span></div>
+          <div class="da">
+            <button type="button" class="cancel" data-ex-go="input">手动输码</button>
+            <button type="button" class="ok" id="failPrimaryBtn" data-ex-go="scan">重新扫码</button>
+          </div>
         </div>
       </div>
 
