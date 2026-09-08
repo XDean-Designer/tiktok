@@ -344,7 +344,30 @@
 .kv-list .v.copy-row .copy-ico { display: block; flex-shrink: 0; }
 .fail-meta-card { display: none !important; }
 .phone-card .kv-list { margin-top: 0; }
-.phone-card .kv { border-top: 0; padding: 4px 0; }
+.phone-card .kv { border-top: 0; padding: 10px 0; }
+.phone-card .phone-card__row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  border-top: 1px solid var(--card-divider, #F0F0F0);
+}
+.phone-card .phone-card__row:first-child { border-top: 0; padding-top: 4px; }
+.phone-card .phone-card__row .k { flex-shrink: 0; color: var(--text-sec, #666); }
+.phone-card__input {
+  flex: 1; min-width: 0; height: 32px; border: 0; outline: none; background: transparent;
+  text-align: right; font-size: 15px; font-family: inherit; color: var(--text, #1a1a1a);
+}
+.phone-card__input::placeholder { color: #B9B9B9; }
+.gender-seg {
+  display: inline-flex; align-items: center; background: #F2F2F2; border-radius: 16px;
+  padding: 2px; gap: 0;
+}
+.gender-seg__btn {
+  min-width: 52px; height: 28px; border: 0; border-radius: 14px; background: transparent;
+  font-size: 13px; font-weight: 500; color: #666; font-family: inherit; cursor: pointer;
+}
+.gender-seg__btn.on {
+  background: #fff; color: var(--brand, #F32F41); font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06);
+}
 .info-card .prod { font-size: 17px; font-weight: 700; color: var(--text); }
 .info-card .prod.prod-with-tag {
   display: flex; align-items: center; flex-wrap: wrap; gap: 8px;

@@ -62,10 +62,10 @@
     <div class="nav-demo-scan" id="navDemoScan">
       <div class="nav-demo-label">扫码结果演示</div>
       <div class="auth-state-bar nav-demo-actions">
-        <button type="button" data-demo-scan="ok">扫码成功</button>
         <button type="button" data-demo-scan="fail-read">识别失败</button>
         <button type="button" data-demo-scan="dup">这张券已用过</button>
         <button type="button" data-demo-scan="mismatch">价目未匹配</button>
+        <button type="button" data-demo-scan="matched">价目已匹配</button>
         <button type="button" data-demo-scan="multi">多匹配演示</button>
       </div>
       <div class="nav-demo-label" style="margin-top:10px;">网络</div>
@@ -78,10 +78,10 @@
         <button type="button" class="on" data-demo-cam="ok">已授权</button>
         <button type="button" data-demo-cam="denied">无权限</button>
       </div>
-      <div class="nav-demo-label" style="margin-top:8px;">账号核销权限</div>
+      <div class="nav-demo-label" style="margin-top:8px;">收银开单权限</div>
       <div class="auth-state-bar" id="demoPermBar">
-        <button type="button" class="on" data-demo-perm="ok">有权限</button>
-        <button type="button" data-demo-perm="none">无权限</button>
+        <button type="button" class="on" data-demo-perm="ok">已开启</button>
+        <button type="button" data-demo-perm="none">已关闭</button>
       </div>
     </div>
     <div class="nav-arrow">↓</div>
@@ -436,16 +436,27 @@
           </div>
           <div class="info-card phone-card" id="phoneCard">
             <div class="kv-list">
-              <div class="kv">
+              <div class="kv phone-card__row">
                 <span class="k">手机号（选填）</span>
-                <span class="v" style="color:var(--info);cursor:pointer;" id="btnAddPhone">登记手机号 ▸</span>
+                <input class="phone-card__input" id="successPhone" type="tel" maxlength="11" inputmode="numeric" placeholder="请输入手机号" autocomplete="tel">
+              </div>
+              <div class="kv phone-card__row">
+                <span class="k">称呼（选填）</span>
+                <input class="phone-card__input" id="successNickname" type="text" maxlength="20" placeholder="如：王 / 王芳" autocomplete="off">
+              </div>
+              <div class="kv phone-card__row">
+                <span class="k">性别（选填）</span>
+                <div class="gender-seg" id="successGender" role="group" aria-label="选择性别">
+                  <button type="button" class="gender-seg__btn" data-gender="male">男</button>
+                  <button type="button" class="gender-seg__btn" data-gender="female">女</button>
+                </div>
               </div>
             </div>
           </div>
         </div>
         <div class="footer-actions">
           <button type="button" class="btn-ghost" data-go="scan">继续核销</button>
-          <button type="button" class="btn-primary" data-go="home">完成</button>
+          <button type="button" class="btn-primary" id="btnSuccessDone">完成</button>
         </div>
       </div>
 
@@ -732,7 +743,7 @@
           <div class="result-hero">
             <div class="ico bad"><img src="assets/icons/lock.svg" alt="" width="36" height="36"></div>
             <div class="t">无核销权限</div>
-            <div class="s">当前账号未被授予抖音核销权限，请联系店长开通，或查看门店授权状态。</div>
+            <div class="s">当前账号未开启「收银开单」权限，无法扫码核销。请联系店长在角色权限中开启，或查看门店授权状态。</div>
           </div>
         </div>
         <div class="footer-actions">
@@ -790,22 +801,6 @@
         </div>
       </div>
 
-      <div class="picker-mask" id="phoneMask">
-        <div class="sheet">
-          <div class="sheet-h sheet-h-bar">
-            <span class="sheet-h-title">登记客户手机号</span>
-            <button type="button" class="sheet-h-link" id="btnSkipPhone">跳过</button>
-          </div>
-          <div class="phone-sheet-body">
-            <input id="phoneInput" type="tel" maxlength="11" placeholder="请输入手机号（选填）">
-          </div>
-          <div class="sheet-footer-actions">
-            <button type="button" class="btn-ghost" data-close-mask>取消</button>
-            <button type="button" class="btn-primary" id="btnSavePhone">保存</button>
-          </div>
-        </div>
-      </div>
-
       <div class="picker-mask" id="filterMask">
         <div class="sheet filter-sheet">
           <div class="sheet-h sheet-h-bar">
@@ -818,7 +813,7 @@
               <button type="button" class="filter-chip on" data-f-status="all">全部</button>
               <button type="button" class="filter-chip" data-f-status="ok">已核销</button>
               <button type="button" class="filter-chip" data-f-status="revoked">已撤销</button>
-              <button type="button" class="filter-chip" data-f-status="refund">退款冲销</button>
+              <button type="button" class="filter-chip" data-f-status="refund">已退款</button>
             </div>
           </div>
           <div class="filter-section">

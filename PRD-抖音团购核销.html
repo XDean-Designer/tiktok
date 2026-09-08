@@ -112,13 +112,13 @@
 
 <div class="main">
 
-<h1>PRD：抖音团购核销 <span class="tag">v1.0</span></h1>
+<h1>PRD：抖音团购核销 <span class="tag">v1.1</span></h1>
 <p>（单店 · 商户端）</p>
 
 <table>
   <tr><th>字段</th><th>内容</th></tr>
-  <tr><td>文档版本</td><td>v1.0</td></tr>
-  <tr><td>日期</td><td>2026-09-07</td></tr>
+  <tr><td>文档版本</td><td>v1.1</td></tr>
+  <tr><td>日期</td><td>2026-09-08</td></tr>
   <tr><td>交互原型（唯一可视依据）</td><td>同目录 <code>index.html</code></td></tr>
   <tr><td>画布</td><td>390 × 844</td></tr>
   <tr><td>目的</td><td>供前端 / 后端 / 测试及 AI 工具落地「抖音团购核销」；<b>只需本文 + 交互原型</b></td></tr>
@@ -136,7 +136,7 @@
   <tr><td>6</td><td>功能规格</td><td>✓</td><td>了解</td><td>✓</td><td>逐屏字段与跳转（含锚点 id）</td></tr>
   <tr><td>7</td><td>数据模型与接口约定</td><td>✓</td><td><b>必看</b></td><td>✓</td><td>会话字段 + 能力清单；路径【待联调确认】</td></tr>
   <tr><td>8</td><td>业务规则</td><td>✓</td><td><b>必看</b></td><td>✓</td><td>匹配/业绩/权限/撤销口径</td></tr>
-  <tr><td>9</td><td>文案清单与权限</td><td>✓</td><td>部分</td><td>✓</td><td>文案；核销权限 / 门店授权</td></tr>
+  <tr><td>9</td><td>文案清单与权限</td><td>✓</td><td>部分</td><td>✓</td><td>文案；收银开单权限（rolePerm）/ 门店授权</td></tr>
   <tr><td>10</td><td>验收 P0 + 造数场景</td><td>了解</td><td>了解</td><td><b>必看</b></td><td>Given→When→Then</td></tr>
   <tr><td>11</td><td>非功能（极简）</td><td>✓</td><td>✓</td><td>✓</td><td></td></tr>
   <tr><td>12</td><td>交付物</td><td>✓</td><td>—</td><td>✓</td><td>仅 PRD + 原型</td></tr>
@@ -148,12 +148,14 @@
   <li><b>APP 首页仅为演示占位，并非真实 APP 首页</b>。原型用占位首页承载扫码按钮，便于演示主链路；<b>真实产品入口以线上 APP 首页扫码核销入口为准</b>。宫格「抖音核销」仅作展示，不作为正式入口验收。详见模块 1 / 3 / 6.1。</li>
   <li><b>业绩归属一律默认空</b>：核销确认页点击选择服务员工；<b>不选也可确认核销</b>，按「未选服务员工」生成订单，<b>该单不计业绩</b>。成功页「操作人」= 当前登录账号，<b>与业绩归属解耦</b>。</li>
   <li><b>团购券无事先价目映射</b>：验券后默认「未匹配」；核销时手工「选择消费项」（项目/产品分组多选）。同一会话内按券名记忆匹配；标签在「未匹配」↔「已匹配」间切换。多项时展示文案「多项匹配按门店原价占比分摊计算业绩」（<b>不展示具体百分比</b>）。</li>
-  <li><b>账号无核销权限</b>：拦截全部核销入口（扫码 / 输码 / 主链路导航 / 重新扫码 / 手动输码等）→「无核销权限」页；验券、核销等动作时仍做兜底拦截。</li>
+  <li><b>账号无核销权限</b>：<code>rolePerm</code> <b>对应 APP「角色权限 · 收银开单」</b>；该权限关闭则不可扫码核销。拦截全部核销入口（扫码 / 输码 / 主链路导航 / 重新扫码 / 手动输码等）→「无核销权限」页；验券、核销等动作时仍做兜底拦截。原型演示条文案为「收银开单权限 / 已开启 / 已关闭」。</li>
   <li><b>门店授权</b>状态：<code>none</code> / <code>pending</code> / <code>ok</code> / <code>expired</code>。未授权或到期时，<b>拦动作</b>并引导授权指引页。</li>
   <li><b>内部开单字段</b>：UI 支付方式仍显示「抖音团购」；内部写入 <code>orderType=快捷开单</code>、<code>payType=团购</code>。</li>
   <li><b>美团 / 优惠券 Tab</b>：仅占位视觉，<b>本期不做完整核销</b>。</li>
-  <li><b>撤销</b>：核销后 <b>1 小时内</b>可撤；超时不可撤；顾客退款后为「退款冲销」态；幂等「已核销」弹窗可查看原单。</li>
+  <li><b>撤销</b>：核销后 <b>1 小时内</b>可撤；超时不可撤；顾客退款后内部状态 <code>refund</code>，<b>展示文案「已退款」</b>（列表标签、筛选、详情状态、禁用按钮）；幂等「已核销」弹窗可查看原单。</li>
   <li><b>员工选择</b>：开单式卡片翻转（点客/散客 → 大/中/小工），可多选；照片头像。</li>
+  <li><b>核销成功页会员选填</b>：卡片内联「手机号 / 称呼 / 性别」三行选填（<b>无</b>独立 <code>phoneMask</code>）；点「完成」时：手机号有值须 11 位；<b>称呼与性别都已填</b>则自动注册会员（称呼 1 字时男→<code>X先生</code>、女→<code>X小姐</code>）；只填手机号或缺称呼/性别不注册，可直接离开。</li>
+  <li><b>扫码结果演示条</b>（非正式规格）：已删「扫码成功」；保留「识别失败 / 已用过 / 价目未匹配 / 多匹配」；新增「价目已匹配」（预写默认券单项 <code>p21</code> 匹配记忆）。</li>
 </ol>
 <p class="reader-note">交互行为与文案以 <code>index.html</code> 当前表现为准。</p>
 
@@ -167,7 +169,7 @@
   <li>本期按 <b>单店</b> 交付，不做总部/多分店与「业绩归属配置」页；</li>
   <li>团购券与门店价目 <b>无事先映射</b>，需在核销时手工选择消费项，并支持会话记忆；</li>
   <li>业绩归属与操作人解耦：归属可空（不计业绩），操作人固定为登录账号；</li>
-  <li>需覆盖账号无核销权限、门店未授权/到期、断网、相机权限、已核销幂等等异常；</li>
+  <li>需覆盖账号无「收银开单」权限、门店未授权/到期、断网、相机权限、已核销幂等等异常；</li>
   <li>原型首页仅为演示占位，真实入口对齐线上扫码核销。</li>
 </ul>
 
@@ -178,8 +180,8 @@
   <tr><td>手工匹配消费项</td><td>无事先映射；项目/产品多选；会话记忆；未匹配也可核销</td></tr>
   <tr><td>业绩归属可选</td><td>默认空；选员工可计业绩；不选不计业绩</td></tr>
   <tr><td>确认核销开单</td><td>成功后自动开单；内部 orderType/payType 约定见 8</td></tr>
-  <tr><td>核销明细与撤销</td><td>列表/详情；1h 内可撤；超时/冲销态正确</td></tr>
-  <tr><td>权限与授权门禁</td><td>无核销权限进页即拦；门店授权未 ok 拦动作</td></tr>
+  <tr><td>核销明细与撤销</td><td>列表/详情；1h 内可撤；超时/已退款态正确</td></tr>
+  <tr><td>权限与授权门禁</td><td>无「收银开单」权限（rolePerm）进页即拦；门店授权未 ok 拦动作</td></tr>
   <tr><td>异常可达</td><td>相机无权限、断网、超时、验券失败、核销失败、幂等已核销</td></tr>
   <tr><td>范围可控</td><td>美团/优惠券仅占位；单店；无业绩归属配置页</td></tr>
 </table>
@@ -191,7 +193,7 @@
   <li>验券结果 → 核销确认 →（可选）选择消费项 / 选择服务员工 → 核销成功 / 失败</li>
   <li>选择消费项：项目/产品分组多选；会话按券名记忆；标签未匹配/已匹配；多项分摊提示文案</li>
   <li>选择服务员工：卡片翻转（点客/散客 → 小工/中工/大工），多选，照片头像；默认未选可核销</li>
-  <li>核销成功：操作人=登录账号；可选登记手机号</li>
+  <li>核销成功：操作人=登录账号；成功页内联选填手机号/称呼/性别；称呼+性别齐全时自动注册会员（写入线上会员列表）</li>
   <li>核销明细（抖音列表 + 筛选）→ 订单详情 → 撤销（1h）→ 撤销成功</li>
   <li>授权指引（none/pending/ok/expired）</li>
   <li>相机无权限、断网/超时/无权限模板、验券失败、已核销幂等弹窗等异常页/层</li>
@@ -205,7 +207,7 @@
   <li>美团团购核销、优惠券核销完整流程（Tab 仅视觉占位）</li>
   <li>次卡 / 其它平台券</li>
   <li>团购券与价目的事先自动映射配置（本期仅手工匹配 + 会话记忆）</li>
-  <li>支付收银改造、会员体系改造（沿用线上开单能力承接核销开单）</li>
+  <li>支付收银改造、会员体系全面改造（成功页选填自动注册沿用线上会员列表；不做独立会员中心改造）</li>
   <li>撤销失败中间页（确认撤销后直接成功；无单独失败页）</li>
 </ul>
 
@@ -217,9 +219,9 @@
   <tr><td>业绩强制选员工</td><td>默认空；可不选；未选则该单不计业绩</td></tr>
   <tr><td>操作人=业绩人</td><td>操作人=登录账号；业绩归属独立字段</td></tr>
   <tr><td>无授权引导</td><td>授权状态机 + 授权指引页；动作时拦截</td></tr>
-  <tr><td>无权限仍可进扫码</td><td>全部核销入口拦截 → 无核销权限页；动作兜底</td></tr>
+  <tr><td>无权限仍可进扫码</td><td><code>rolePerm</code>=收银开单关闭 → 全部核销入口拦截 → 无核销权限页；动作兜底</td></tr>
   <tr><td>已核销重复扫</td><td>幂等弹窗，可查看原单</td></tr>
-  <tr><td>误核销无法回退</td><td>1 小时内可撤销；超时不可撤；退款冲销态</td></tr>
+  <tr><td>误核销无法回退</td><td>1 小时内可撤销；超时不可撤；已退款态（内部 <code>refund</code>）</td></tr>
   <tr><td>美团同页核销</td><td>Tab 占位，本期不做</td></tr>
 </table>
 <p>映射不足时以原型字段与行为为准。</p>
@@ -231,11 +233,11 @@
 <h3>2.1 角色</h3>
 <table>
   <tr><th>角色</th><th>说明</th></tr>
-  <tr><td>店员</td><td>日常扫码/输码核销（需具备核销权限）</td></tr>
+  <tr><td>店员</td><td>日常扫码/输码核销（需开启「收银开单」权限）</td></tr>
   <tr><td>店长</td><td>核销 + 门店授权协同</td></tr>
   <tr><td>店主</td><td>门店授权与权限发放</td></tr>
 </table>
-<p>本期权限差异：<b>账号是否具备「抖音核销」操作权限</b>（<code>rolePerm</code>）与 <b>门店是否已授权</b>（<code>auth</code>）分开判定，见模块 4 / 8 / 9。</p>
+<p>本期权限差异：<b>账号是否开启 APP「角色权限 · 收银开单」</b>（会话字段 <code>rolePerm</code>）与 <b>门店是否已授权</b>（<code>auth</code>）分开判定，见模块 4 / 8 / 9。店员日常核销依赖收银开单权限。</p>
 
 <h3>2.2 核心场景</h3>
 <table>
@@ -245,12 +247,12 @@
   <tr><td>未匹配可核销</td><td>券未对手动价目也能核销</td><td>标签「未匹配」；可确认；按券面额开单</td></tr>
   <tr><td>多匹配 / 记忆匹配</td><td>组合券选多项；下次同券名自动带出</td><td>多项提示分摊文案；记忆后标签「已匹配」</td></tr>
   <tr><td>归属空可核销</td><td>赶时间不选员工</td><td>默认「未选」；确认成功；该单不计业绩；操作人仍显示登录账号</td></tr>
-  <tr><td>无核销权限</td><td>无权限账号无法核销</td><td>任何核销入口 → 无核销权限页</td></tr>
+  <tr><td>无收银开单权限</td><td>权限关闭账号无法核销</td><td>任何核销入口 → 无核销权限页（副文说明未开启收银开单）</td></tr>
   <tr><td>未授权 / 到期</td><td>引导完成来客授权</td><td>动作拦截 → 授权指引；状态展示正确</td></tr>
   <tr><td>已核销幂等</td><td>重复扫不重复开单</td><td>dup 弹窗；可看原单</td></tr>
   <tr><td>1h 撤销</td><td>误核销可撤</td><td>详情可撤 → 撤销成功；状态已撤销</td></tr>
   <tr><td>超时不可撤</td><td>超 1h 不可撤</td><td>按钮禁用；提示超时/客服指引</td></tr>
-  <tr><td>登记手机号</td><td>成功后可选登记</td><td>选填；可跳过；格式 11 位</td></tr>
+  <tr><td>成功页会员选填</td><td>可选填手机号/称呼/性别</td><td>手机号有值须 11 位；称呼+性别齐全则自动注册会员；否则可直接完成离开</td></tr>
 </table>
 
 <!-- ===================== 模块 3 ===================== -->
@@ -275,7 +277,7 @@
  │    └─ 业绩归属 → empMask
  ├─ match-pick 选择消费项          &lt;!-- #match-pick --&gt;
  ├─ success 核销成功               &lt;!-- #success --&gt;
- │    └─ 登记手机号 → phoneMask
+ │    └─ 卡片内联：手机号 / 称呼 / 性别（选填；无 phoneMask）
  ├─ fail 核销失败                  &lt;!-- #fail --&gt;
  ├─ orders 核销明细                &lt;!-- #orders --&gt;
  │    └─ 筛选 → filterMask
@@ -288,7 +290,7 @@
  ├─ verify-fail 验券失败           &lt;!-- #verify-fail --&gt;
  └─ 弹层
       ├─ offlineMask / dupMask / empMask
-      ├─ phoneMask / filterMask / revokeMask
+      ├─ filterMask / revokeMask
       └─ loadingMask
 </code></pre>
 
@@ -320,7 +322,7 @@
   <tr><td>验券结果</td><td><code>result</code></td><td>验券结果</td><td>券信息 + 匹配标签</td></tr>
   <tr><td>核销确认</td><td><code>confirm</code></td><td>确认核销</td><td>匹配/金额/归属/支付方式</td></tr>
   <tr><td>选择消费项</td><td><code>match-pick</code></td><td>选择消费项</td><td>项目/产品多选</td></tr>
-  <tr><td>核销成功</td><td><code>success</code></td><td>核销成功</td><td>操作人 + 登记手机号</td></tr>
+  <tr><td>核销成功</td><td><code>success</code></td><td>核销成功</td><td>操作人 + 内联会员选填（手机号/称呼/性别）</td></tr>
   <tr><td>核销失败</td><td><code>fail</code></td><td>核销失败</td><td>确认后平台失败</td></tr>
   <tr><td>核销明细</td><td><code>orders</code></td><td>核销明细</td><td>抖音列表 + 筛选</td></tr>
   <tr><td>订单详情</td><td><code>detail</code></td><td>核销详情</td><td>撤销入口</td></tr>
@@ -329,23 +331,27 @@
   <tr><td>相机无权限</td><td><code>cam-denied</code></td><td>无法使用相机</td><td></td></tr>
   <tr><td>断网模板</td><td><code>tpl-offline</code></td><td>—</td><td></td></tr>
   <tr><td>超时模板</td><td><code>tpl-timeout</code></td><td>—</td><td></td></tr>
-  <tr><td>无核销权限</td><td><code>tpl-noperm</code></td><td>—</td><td></td></tr>
+  <tr><td>无核销权限</td><td><code>tpl-noperm</code></td><td>—</td><td>未开启「收银开单」统一落点</td></tr>
   <tr><td>验券失败</td><td><code>verify-fail</code></td><td>—</td><td>验券阶段失败</td></tr>
   <tr><td>选择服务员工</td><td><code>empMask</code></td><td>选择服务员工</td><td>翻转多选</td></tr>
-  <tr><td>其它弹层</td><td>offline/dup/phone/filter/revoke/loading</td><td>—</td><td>见 6.17</td></tr>
+  <tr><td>其它弹层</td><td>offline/dup/filter/revoke/loading</td><td>—</td><td>见 6.17（无 phoneMask）</td></tr>
 </table>
 
 <!-- ===================== 模块 4 ===================== -->
 <h2 id="m4"><span class="no">4</span>状态机</h2>
 <p class="reader-note">读者：前端 ✓ · 后端 <b>必看</b> · 测试 <b>必看</b></p>
 
-<h3>4.1 账号核销权限 <code>rolePerm</code></h3>
+<h3>4.1 账号核销权限 <code>rolePerm</code>（= APP「角色权限 · 收银开单」）</h3>
+<blockquote>
+  <p><b>映射</b>：会话字段 <code>rolePerm</code> <b>对应</b> 线上 APP「角色权限 · 收银开单」。该权限关闭则不可扫码核销（入口全拦逻辑不变）。原型左侧演示条标签为「收银开单权限」，开关文案「已开启 / 已关闭」。</p>
+</blockquote>
 <table>
   <tr><th>状态</th><th>含义</th><th>行为</th></tr>
-  <tr><td><code>true</code></td><td>有核销权限</td><td>可进入扫码/输码及后续主链路</td></tr>
-  <tr><td><code>false</code></td><td>无核销权限</td><td><b>全部核销入口</b> → <code>tpl-noperm</code>；验券/核销动作兜底拦截</td></tr>
+  <tr><td><code>true</code></td><td>收银开单已开启</td><td>可进入扫码/输码及后续主链路</td></tr>
+  <tr><td><code>false</code></td><td>收银开单已关闭</td><td><b>全部核销入口</b> → <code>tpl-noperm</code>；验券/核销动作兜底拦截</td></tr>
 </table>
 <p>拦截范围包括：首页扫码、扫码页、输码页、结果/确认/成功等主链路导航、重新扫码、手动输码、左侧演示导航进入消费链路等。</p>
+<p><code>tpl-noperm</code> 副文示意：「当前账号未开启「收银开单」权限，无法扫码核销…」</p>
 
 <h3>4.2 门店授权 <code>auth</code></h3>
 <table>
@@ -390,7 +396,7 @@
   <tr><td><code>ok</code> 且 <code>canRevoke</code></td><td>已核销</td><td>可点「撤销核销」</td></tr>
   <tr><td><code>ok</code> 且超时</td><td>已核销</td><td>按钮「已超时不可撤销」</td></tr>
   <tr><td><code>revoked</code></td><td>已撤销</td><td>不可再撤</td></tr>
-  <tr><td><code>refund</code></td><td>退款冲销</td><td>不可撤；文案示意业绩已回滚</td></tr>
+  <tr><td><code>refund</code></td><td><b>已退款</b>（展示文案；内部码仍为 <code>refund</code>）</td><td>不可撤；按钮文案「已退款」；示意业绩已回滚</td></tr>
 </table>
 <p>撤销窗口：<b>核销成功后 1 小时内</b>。</p>
 
@@ -421,12 +427,16 @@
   <tr><td>演示关键字（<b>仅原型演示，不算产品规则</b>）</td><td>含 <code>used</code>/<code>已核销</code> → 幂等弹窗；<code>fail</code>/<code>无效</code> → 验券失败；<code>mismatch</code>/<code>未匹配</code> → 未匹配结果</td></tr>
 </table>
 
-<h3>5.3 手机号（成功页选填）</h3>
+<h3>5.3 成功页会员选填（内联；无 phoneMask）</h3>
+<p>成功页卡片内联三行选填：<b>手机号</b>、<b>称呼</b>、<b>性别</b>（男/女分段控件）。<b>已删除</b>独立 <code>phoneMask</code> sheet。</p>
 <table>
   <tr><th>规则</th><th>说明</th></tr>
-  <tr><td>选填</td><td>可跳过；跳过 toast「已跳过」</td></tr>
-  <tr><td>有值</td><td>须匹配 <code>1</code> 开头 11 位；否则 toast「请输入 11 位手机号」</td></tr>
-  <tr><td>保存成功</td><td>回填脱敏 <code>138****1234 ▸</code>；toast「手机号已保存」</td></tr>
+  <tr><td>全部选填</td><td>可不填直接点「完成」离开</td></tr>
+  <tr><td>手机号有值</td><td>须匹配 <code>1</code> 开头 11 位；否则 toast「请输入 11 位手机号」且<b>不离开</b></td></tr>
+  <tr><td>称呼 + 性别都已填</td><td>点「完成」时<b>自动注册会员</b>（写入线上会员列表）；原型 toast「已注册为会员：XXX」示意</td></tr>
+  <tr><td>称呼展示名</td><td>仅 1 个字：男→<code>X先生</code>，女→<code>X小姐</code>；≥2 字原样</td></tr>
+  <tr><td>只填手机号 / 缺称呼或性别</td><td><b>不注册</b>；校验通过后可直接完成离开</td></tr>
+  <tr><td>「继续核销」</td><td>不触发完成态注册逻辑（以原型为准：仅「完成」走注册校验）</td></tr>
 </table>
 
 <h3>5.4 Loading</h3>
@@ -449,9 +459,9 @@
   <tr><td>匹配确定</td><td>已匹配项目（示意）</td></tr>
   <tr><td>筛选应用</td><td>已应用筛选 / 已显示全部</td></tr>
   <tr><td>超时点撤销</td><td>已超时，请联系客服</td></tr>
-  <tr><td>跳过手机号</td><td>已跳过</td></tr>
-  <tr><td>手机号格式错</td><td>请输入 11 位手机号</td></tr>
-  <tr><td>手机号已存</td><td>手机号已保存</td></tr>
+  <tr><td>手机号格式错（完成时）</td><td>请输入 11 位手机号</td></tr>
+  <tr><td>自动注册会员</td><td>已注册为会员：{展示名}</td></tr>
+  <tr><td>演示：收银开单权限</td><td>演示：收银开单权限已开启 / 已关闭</td></tr>
 </table>
 
 <h3>5.6 弹层交互</h3>
@@ -461,7 +471,20 @@
   <li><code>revokeMask</code>：二次确认后 loading → 撤销成功（无撤销失败页）。</li>
   <li><code>empMask</code>：关闭保留已选；重进不重置（同会话）。</li>
   <li><code>filterMask</code>：重置/应用；应用后刷新列表角标点。</li>
+  <li><b>无 <code>phoneMask</code></b>：会员选填已内联至成功页。</li>
 </ul>
+
+<h3>5.7 扫码结果演示条（<b>非正式规格</b>）</h3>
+<p>原型左侧「扫码结果演示」仅供评审，<b>不算产品正式规则</b>：</p>
+<table>
+  <tr><th>按钮</th><th>行为（示意）</th></tr>
+  <tr><td>识别失败</td><td>扫码页反馈识别失败</td></tr>
+  <tr><td>这张券已用过</td><td>幂等已核销弹窗</td></tr>
+  <tr><td>价目未匹配</td><td>验券结果标签「未匹配」</td></tr>
+  <tr><td><b>价目已匹配</b></td><td>预写默认券「深层补水护理 · 单次体验」→ 单项 <code>p21</code> 匹配记忆；结果/确认页标签「已匹配」</td></tr>
+  <tr><td>多匹配演示</td><td>多项匹配示意</td></tr>
+</table>
+<p><b>已删除</b>「扫码成功」演示按钮（与「价目未匹配」等未匹配路径重复）。</p>
 
 <!-- ===================== 模块 6 ===================== -->
 <h2 id="m6"><span class="no">6</span>功能规格</h2>
@@ -486,6 +509,7 @@
   <li>底部「输入券号」→ <code>input</code>（须过 <code>rolePerm</code>）。</li>
   <li>识别成功闪层「识别成功」后进入验券 loading → <code>result</code>（或失败/幂等）。</li>
   <li>相机无权限 → <code>cam-denied</code>；离线进扫码可弹 <code>offlineMask</code>。</li>
+  <li>左侧「扫码结果演示」见 5.7（非正式规格）；含「价目已匹配 / 价目未匹配」等，<b>无</b>「扫码成功」按钮。</li>
 </ul>
 
 <h3 id="input">6.3 输码验券</h3>
@@ -540,8 +564,15 @@
 <ul>
   <li>成功态文案：「已自动生成开单，可在验券订单中查看明细」。</li>
   <li>券信息：券码/平台单号（可复制）/ 核销时间 / <b>操作人</b>（登录账号，与业绩归属解耦）。</li>
-  <li>手机号（选填）→ <code>phoneMask</code>；可跳过。</li>
-  <li>「继续核销」→ <code>scan</code>；「完成」→ <code>home</code>（占位首页）。</li>
+  <li><b>会员选填卡片</b>（内联，无独立 sheet）：
+    <ul>
+      <li>手机号（选填）输入；</li>
+      <li>称呼（选填）输入；</li>
+      <li>性别（选填）男/女分段控件。</li>
+    </ul>
+  </li>
+  <li>「继续核销」→ <code>scan</code>。</li>
+  <li>「完成」：先按 5.3 校验/可选注册会员，通过后 → <code>home</code>（占位首页）。</li>
 </ul>
 
 <h3 id="fail">6.9 核销失败</h3>
@@ -560,7 +591,7 @@
 <ul>
   <li>标题「核销明细」；筛选图标 → <code>filterMask</code>。</li>
   <li>Tab：优惠券（占位空态）/ 抖音（列表）/ 美团（占位，不切换完整能力）。</li>
-  <li>抖音卡片：名称、金额、时间、操作人、平台标签、状态（已核销/已撤销/退款冲销）。</li>
+  <li>抖音卡片：名称、金额、时间、操作人、平台标签、状态（已核销/已撤销/已退款）。</li>
   <li>点卡片 → <code>detail</code>；空态「暂无核销信息」。</li>
 </ul>
 
@@ -572,7 +603,7 @@
     <ul>
       <li>1h 内：<code>revokeMask</code> → 确认 → loading → <code>revoke-ok</code>；</li>
       <li>超时：按钮禁用「已超时不可撤销」；可展示客服指引卡；</li>
-      <li>已撤销 / 退款冲销：按钮禁用对应文案。</li>
+      <li>已撤销 / 已退款：按钮禁用对应文案（已退款态按钮文案「已退款」）。</li>
     </ul>
   </li>
 </ul>
@@ -604,12 +635,12 @@
 <p>超时模板。文案与按钮以原型为准。</p>
 
 <h3 id="tpl-noperm">无核销权限模板</h3>
-<p><b>无核销权限</b>；账号未被授予抖音核销权限时的统一落点。文案与按钮以原型为准。</p>
+<p><b>无核销权限</b>；账号未开启 APP「收银开单」权限时的统一落点；副文：「当前账号未开启「收银开单」权限，无法扫码核销…」。文案与按钮以原型为准。</p>
 <table>
   <tr><th>页</th><th>用途</th></tr>
   <tr><td><code>tpl-offline</code></td><td>断网模板；可「重试」切回联网示意</td></tr>
   <tr><td><code>tpl-timeout</code></td><td>超时模板</td></tr>
-  <tr><td><code>tpl-noperm</code></td><td><b>无核销权限</b>；账号未被授予抖音核销权限时的统一落点</td></tr>
+  <tr><td><code>tpl-noperm</code></td><td><b>无核销权限</b>；账号未开启 APP「收银开单」权限时的统一落点；副文：「当前账号未开启「收银开单」权限，无法扫码核销…」</td></tr>
 </table>
 
 <h3 id="verify-fail">6.16 验券失败</h3>
@@ -622,8 +653,8 @@
   <tr><td><code>offlineMask</code></td><td>离线提示</td><td>可仍进入扫码（示意）或取消</td></tr>
   <tr><td><code>dupMask</code></td><td>已核销幂等</td><td>说明不重复开单；查看原单 → detail</td></tr>
   <tr><td><code>empMask</code></td><td>选择服务员工</td><td>见 6.7</td></tr>
-  <tr><td><code>phoneMask</code></td><td>登记手机号</td><td>选填；跳过/保存</td></tr>
-  <tr><td><code>filterMask</code></td><td>筛选</td><td>状态：全部/已核销/已撤销/退款冲销；时间：全部/今日；重置/应用</td></tr>
+  <tr><td><code>filterMask</code></td><td>筛选</td><td>状态：全部/已核销/已撤销/<b>已退款</b>（内部值 <code>refund</code>）；时间：全部/今日；重置/应用</td></tr>
+  <tr><td>—</td><td>（已删）<code>phoneMask</code></td><td>会员选填改内联成功页，见 6.8</td></tr>
   <tr><td><code>revokeMask</code></td><td>撤销确认</td><td>确认后直接成功链路</td></tr>
   <tr><td><code>loadingMask</code></td><td>加载中</td><td>验券/核销/撤销文案</td></tr>
 </table>
@@ -639,7 +670,7 @@
   <tr><td><code>offline</code></td><td>是否离线演示</td></tr>
   <tr><td><code>camDenied</code></td><td>相机是否拒绝</td></tr>
   <tr><td><code>auth</code></td><td><code>none</code> | <code>pending</code> | <code>ok</code> | <code>expired</code></td></tr>
-  <tr><td><code>rolePerm</code></td><td>账号是否有核销操作权限</td></tr>
+  <tr><td><code>rolePerm</code></td><td>是否开启 APP「角色权限 · 收银开单」；关闭则不可扫码核销</td></tr>
   <tr><td><code>selectedEmpId</code> / <code>selectedEmpIds</code></td><td>业绩归属员工；默认空</td></tr>
   <tr><td><code>staffRoles</code> / <code>staffDesignated</code></td><td>工位（大/中/小工）与点客/散客</td></tr>
   <tr><td><code>opName</code></td><td>当前登录账号名（成功页操作人）</td></tr>
@@ -649,7 +680,10 @@
   <tr><td><code>payType</code></td><td>内部固定 <code>团购</code></td></tr>
   <tr><td><code>couponName</code> / <code>couponPrice</code> / <code>couponCode</code></td><td>当前券</td></tr>
   <tr><td><code>mismatched</code></td><td>是否未匹配</td></tr>
-  <tr><td><code>phone</code></td><td>成功页登记手机号</td></tr>
+  <tr><td><code>phone</code></td><td>成功页选填手机号</td></tr>
+  <tr><td><code>nickname</code></td><td>成功页选填称呼</td></tr>
+  <tr><td><code>gender</code></td><td><code>male</code> | <code>female</code> | <code>null</code></td></tr>
+  <tr><td><code>registeredMembers</code></td><td>演示/会话：成功页自动注册的会员列表（正式写入线上会员列表）</td></tr>
 </table>
 
 <h3>7.2 能力清单（路径【待联调确认】）</h3>
@@ -663,6 +697,7 @@
   <tr><td>核销明细</td><td>列表筛选（状态/时间）；详情</td><td>【待联调确认】</td></tr>
   <tr><td>价目</td><td>门店项目/产品分组列表（供匹配多选）</td><td>沿用线上价目【待联调确认】</td></tr>
   <tr><td>员工</td><td>在职员工头像/姓名/职位</td><td>沿用线上员工【待联调确认】</td></tr>
+  <tr><td>会员注册（轻量）</td><td>成功页「完成」时：称呼+性别齐全则写入线上会员列表（含手机号可空）</td><td>沿用线上会员【待联调确认】</td></tr>
 </table>
 
 <h3>7.3 核销开单字段约定</h3>
@@ -687,7 +722,7 @@
 确认核销
   → 可选 match-pick / empMask
   → 提交（员工可空、匹配可空）→ success / fail
-成功页可选登记手机号
+成功页内联选填；「完成」时校验手机号并可选自动注册会员
 明细 → 详情 →（1h 内）撤销 → revoke-ok
 </code></pre>
 
@@ -705,13 +740,13 @@
   <li><b>操作人 ≠ 业绩归属</b>：操作人=登录账号。</li>
   <li><b>员工选择</b>：点客/散客 → 小工/中工/大工；多选；照片头像。</li>
   <li><b>内部开单</b>：<code>orderType=快捷开单</code>，<code>payType=团购</code>；UI 支付方式「抖音团购」。</li>
-  <li><b>rolePerm=false</b>：拦截全部核销入口 + 动作兜底 → <code>tpl-noperm</code>。</li>
+  <li><b>rolePerm=false</b>（收银开单已关闭）：拦截全部核销入口 + 动作兜底 → <code>tpl-noperm</code>。</li>
   <li><b>auth≠ok</b>：拦验券/核销动作 → <code>owner-auth</code>。</li>
-  <li><b>撤销窗口 1 小时</b>；超时不可撤；退款冲销态不可撤且业绩已回滚示意。</li>
+  <li><b>撤销窗口 1 小时</b>；超时不可撤；<b>已退款</b>态（内部 <code>refund</code>）不可撤且业绩已回滚示意；展示文案一律「已退款」。</li>
   <li><b>幂等已核销</b>：不重复开单；弹窗可看原单。</li>
   <li><b>美团/优惠券 Tab</b>：仅占位，本期不做完整核销。</li>
-  <li><b>手机号选填</b>：11 位；可跳过。</li>
-  <li><b>输码演示关键字</b>（used/fail/mismatch 等）：<b>仅原型演示，不算产品规则</b>。</li>
+  <li><b>成功页会员选填</b>：手机号/称呼/性别均选填；手机号有值须 11 位；称呼+性别齐全才自动注册会员（1 字称呼按性别补先生/小姐）；否则不注册可离开。无 <code>phoneMask</code>。</li>
+  <li><b>输码演示关键字</b>（used/fail/mismatch 等）及扫码结果演示条：<b>仅原型演示，不算产品规则</b>。</li>
   <li><b>范围边界</b>：其它收银/会员能力沿用线上；冲突以原型界面修正 PRD。</li>
 </ol>
 
@@ -720,19 +755,20 @@
 <p class="reader-note">读者：前端 ✓ · 后端 部分 · 测试 ✓</p>
 
 <h3>9.1 文案清单（须与原型一致）</h3>
-<p><b>导航/按钮</b>：扫码、验券订单、输入券号、立即验券、重新扫码、去核销、选择消费项、修改、取消、确认核销、确定、清空、继续核销、完成、登记手机号、跳过、保存、筛选、重置、应用、撤销核销、返回核销明细、查看原单、手动输码、查看订单、查看授权指引、重试核销、项目、产品、优惠券、抖音、美团、点客、散客、大工、中工、小工。</p>
-<p><b>标签/状态</b>：未匹配、已匹配、已核销、已撤销、退款冲销、未发起、待确认、已授权、已到期、抖音、抖音团购。</p>
-<p><b>关键提示</b>：扫描项目核销码，核销后即可分账；多项匹配按门店原价占比分摊计算业绩；未匹配价目时，将按券面额开单；业绩归属未选则该单不计业绩；已自动生成开单，可在验券订单中查看明细；对应开单已冲销，员工业绩已回滚，撤销流水已保留；在抖音来客完成门店授权后，方可在本店核销抖音团购券。</p>
-<p><b>占位符</b>：请输入券码；请输入手机号（选填）。</p>
+<p><b>导航/按钮</b>：扫码、验券订单、输入券号、立即验券、重新扫码、去核销、选择消费项、修改、取消、确认核销、确定、清空、继续核销、完成、筛选、重置、应用、撤销核销、返回核销明细、查看原单、手动输码、查看订单、查看授权指引、重试核销、项目、产品、优惠券、抖音、美团、点客、散客、大工、中工、小工、男、女。</p>
+<p><b>标签/状态</b>：未匹配、已匹配、已核销、已撤销、<b>已退款</b>、未发起、待确认、已授权、已到期、抖音、抖音团购。</p>
+<p><b>关键提示</b>：扫描项目核销码，核销后即可分账；多项匹配按门店原价占比分摊计算业绩；未匹配价目时，将按券面额开单；业绩归属未选则该单不计业绩；已自动生成开单，可在验券订单中查看明细；对应开单已冲销，员工业绩已回滚，撤销流水已保留；在抖音来客完成门店授权后，方可在本店核销抖音团购券；当前账号未开启「收银开单」权限，无法扫码核销…</p>
+<p><b>占位符</b>：请输入券码；请输入手机号；如：王 / 王芳（称呼）。</p>
+<p><b>成功页字段标签</b>：手机号（选填）、称呼（选填）、性别（选填）。</p>
 <p><b>Toast</b>：见 5.5。</p>
 <p><b>失败标题</b>：券状态异常、券已核销、非本店可用券、无核销权限、网络超时、券无效或已过期、未获得相机权限 等（以原型 FAIL_MAP / VFAIL_MAP 为准）。</p>
 
 <h3>9.2 权限</h3>
 <table>
   <tr><th>维度</th><th>规则</th></tr>
-  <tr><td>账号核销权限 <code>rolePerm</code></td><td>无权限：全部入口 → 无核销权限页；动作兜底</td></tr>
+  <tr><td>账号核销权限 <code>rolePerm</code></td><td><b>映射 APP「角色权限 · 收银开单」</b>；关闭：全部入口 → 无核销权限页；动作兜底。演示条：「收银开单权限 / 已开启 / 已关闭」</td></tr>
   <tr><td>门店授权 <code>auth</code></td><td>仅 <code>ok</code> 可验券/核销；否则引导授权页</td></tr>
-  <tr><td>店员/店长/店主</td><td>角色展示沿用线上；是否授予核销权限由账号配置决定</td></tr>
+  <tr><td>店员/店长/店主</td><td>角色展示沿用线上；是否开启「收银开单」由账号角色权限配置决定</td></tr>
 </table>
 
 <!-- ===================== 模块 10 ===================== -->
@@ -742,16 +778,18 @@
 <h3>10.1 造数</h3>
 <table>
   <tr><th>场景</th><th>说明</th></tr>
-  <tr><td>有权账号 / 无权账号</td><td><code>rolePerm</code> true/false</td></tr>
+  <tr><td>收银开单开/关</td><td><code>rolePerm</code> true/false（对应 APP 收银开单）</td></tr>
   <tr><td>授权四态</td><td>none / pending / ok / expired</td></tr>
   <tr><td>未匹配券</td><td>无记忆的新券名</td></tr>
   <tr><td>多匹配券</td><td>可选手动多项；或演示 multi</td></tr>
   <tr><td>记忆匹配</td><td>同券名二次验券</td></tr>
   <tr><td>可撤订单</td><td>核销后 &lt;1h</td></tr>
   <tr><td>超时订单</td><td>核销后 ≥1h</td></tr>
-  <tr><td>已撤销 / 退款冲销</td><td>列表与详情态</td></tr>
+  <tr><td>已撤销 / 已退款</td><td>列表与详情态（展示「已退款」，内部 <code>refund</code>）</td></tr>
   <tr><td>员工</td><td>≥3 人，含头像，可点客/散客与三工位</td></tr>
   <tr><td>价目</td><td>项目+产品至少各 1 分组</td></tr>
+  <tr><td>价目已匹配演示</td><td>默认券名 + 单项 <code>p21</code> 记忆</td></tr>
+  <tr><td>成功页会员</td><td>可造：仅手机号 / 称呼+性别 / 全空</td></tr>
 </table>
 <p>正式环境自备等价数据；演示关键字造数不进产品规则。</p>
 
@@ -762,9 +800,9 @@
   <li><b>Given</b> 有核销权限且门店已授权、联网、相机可用，<b>When</b> 从演示首页点扫码并完成识别验券，<b>Then</b> 进入验券结果，可「去核销」→ 确认 →「确认核销」→ 核销成功，并生成开单（支付方式 UI 为「抖音团购」）。</li>
 </ol>
 
-<p><b>无权限拦截</b></p>
+<p><b>无收银开单权限拦截</b></p>
 <ol start="2">
-  <li><b>Given</b> <code>rolePerm=false</code>，<b>When</b> 点首页扫码 / 输码 / 主链路导航 / 重新扫码 / 手动输码，<b>Then</b> 均进入「无核销权限」页，不进入扫码或核销。</li>
+  <li><b>Given</b> <code>rolePerm=false</code>（收银开单已关闭），<b>When</b> 点首页扫码 / 输码 / 主链路导航 / 重新扫码 / 手动输码，<b>Then</b> 均进入「无核销权限」页（副文含未开启「收银开单」），不进入扫码或核销。</li>
   <li><b>Given</b> 无权限，<b>When</b> 试图触发验券或核销动作，<b>Then</b> 兜底仍落到无核销权限页。</li>
 </ol>
 
@@ -823,6 +861,23 @@
   <li><b>Given</b> 输码或明细 Tab，<b>When</b> 点美团（或优惠券空态），<b>Then</b> 仅占位视觉，不进入完整美团核销流程。</li>
 </ol>
 
+<p><b>成功页会员选填</b></p>
+<ol start="15">
+  <li><b>Given</b> 核销成功页，手机号填非 11 位合法号，<b>When</b> 点「完成」，<b>Then</b> toast「请输入 11 位手机号」且仍停留成功页。</li>
+  <li><b>Given</b> 称呼与性别都已填（如称呼「王」、性别女），<b>When</b> 点「完成」，<b>Then</b> 自动注册会员（展示名「王小姐」），toast「已注册为会员：王小姐」，并离开至首页；写入线上会员列表（原型写入会话列表示意）。</li>
+  <li><b>Given</b> 仅填手机号或缺少称呼/性别，<b>When</b> 点「完成」，<b>Then</b> 不注册会员，可直接离开。</li>
+</ol>
+
+<p><b>价目已匹配演示（非正式）</b></p>
+<ol start="18">
+  <li><b>Given</b> 原型演示条，<b>When</b> 点「价目已匹配」，<b>Then</b> 默认券写入单项 <code>p21</code> 记忆，结果/确认页标签「已匹配」——<b>仅演示，非产品规则</b>。</li>
+</ol>
+
+<p><b>已退款展示</b></p>
+<ol start="19">
+  <li><b>Given</b> 订单状态内部为 <code>refund</code>，<b>When</b> 查看列表/筛选/详情，<b>Then</b> 展示文案均为「已退款」（非「退款冲销」）；撤销按钮禁用文案「已退款」。</li>
+</ol>
+
 <!-- ===================== 模块 11 ===================== -->
 <h2 id="m11"><span class="no">11</span>非功能（极简）</h2>
 <p class="reader-note">读者：前端 ✓ · 后端 ✓ · 测试 ✓</p>
@@ -844,9 +899,9 @@
   <tr><td>交互原型 <code>index.html</code></td><td>唯一可视依据；桌面壳右侧可同步滚动 PRD；左侧导航「PRD 预览」可打开独立页</td></tr>
 </table>
 <p>开发与测试只需 <b>PRD + 原型</b>。冲突时以原型界面为准修正 PRD。</p>
-<p>原型左侧「演示条」（网络/相机/账号权限切换、扫码结果演示）仅供评审演示，<b>不作为产品正式规格</b>；正式规则以本文状态机与业务规则为准。</p>
+<p>原型左侧「演示条」（网络/相机/<b>收银开单权限</b>切换、扫码结果演示：识别失败 / 已用过 / 价目未匹配 / <b>价目已匹配</b> / 多匹配；<b>无</b>「扫码成功」）仅供评审演示，<b>不作为产品正式规格</b>；正式规则以本文状态机与业务规则为准。</p>
 
-<div class="foot">PRD：抖音团购核销 · v1.0 · 2026-09-07 · 交互原型 index.html（390 × 844）</div>
+<div class="foot">PRD：抖音团购核销 · v1.1 · 2026-09-08 · 交互原型 index.html（390 × 844）</div>
 
 </div>
 

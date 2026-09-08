@@ -27,7 +27,7 @@
   };
   var PRD_MASK_ANCHOR = {
     empMask: 'empMask',
-    phoneMask: 'success',
+    phoneMask: null,
     filterMask: 'orders',
     revokeMask: 'detail',
     dupMask: 'scan',
@@ -60,7 +60,7 @@
     offline: false,
     camDenied: false,
     auth: 'ok', // none | pending | ok | expired
-    rolePerm: true, // 账号是否有核销操作权限（16B：进页可，动作时拦）
+    rolePerm: true, // 对应 APP 角色权限「收银开单」：关闭则不可扫码核销
     selectedEmpId: null, // 业绩归属默认空：不默认店主，核销时点击选择
     selectedEmpIds: [],
     staffRoles: {},
@@ -76,7 +76,10 @@
     couponPrice: 268,
     couponCode: 'dy9182-ABCD-7781',
     mismatched: true,
-    phone: ''
+    phone: '',
+    nickname: '',
+    gender: null, // male | female | null
+    registeredMembers: [] // 演示：核销成功页自动注册的会员
   };
 
   var seed = window.DySeed || { staff: [], products: [], projects: [], shopProducts: [], catalogGroups: {}, couponDemos: {} };
@@ -133,7 +136,7 @@
       bill: 'SO20260901012',
       status: 'refund',
       canRevoke: false,
-      revokeHint: '顾客退款后已冲销，业绩已回滚'
+      revokeHint: '顾客退款后已回滚业绩'
     }
   ];
 
@@ -162,7 +165,7 @@
     },
     perm: {
       title: '无核销权限',
-      desc: '当前账号未被授予抖音核销权限，或门店授权已到期。请联系店长处理。',
+      desc: '当前账号未开启「收银开单」权限，或门店授权已到期。请联系店长处理。',
       action: '联系店长 / 查看授权指引',
       code: 'CONSUME_NO_PERM',
       primary: 'owner-auth'
@@ -402,8 +405,15 @@
   }
 
   function runScanDemo(kind) {
-    if (kind === 'ok') {
-      startVerify({ fromScan: true });
+    if (kind === 'ok' || kind === 'matched') {
+      /* 价目已匹配：预写入默认券的单项匹配记忆 */
+      var demo = (seed.couponDemos && seed.couponDemos.default) || {
+        name: '深层补水护理 · 单次体验', price: 268, code: 'dy9182-ABCD-7781'
+      };
+      session.matchMemory[demo.name] = [
+        { id: 'p21', kind: 'project', name: '深层补水护理', price: 268 }
+      ];
+      startVerify({ fromScan: true, name: demo.name, price: demo.price, code: demo.code });
     } else if (kind === 'dup') {
       startVerify({ dup: true, fromScan: true });
     } else if (kind === 'mismatch') {
@@ -565,6 +575,7 @@
     if (flow === 'orders') renderOrders();
     if (flow === 'confirm') syncConfirmUI();
     if (flow === 'owner-auth') applyAuthUI();
+    if (flow === 'success') resetSuccessMemberForm();
     if (flow !== 'scan') {
       var entry = $('#scanInputEntry');
       if (entry) entry.classList.remove('pulse');
@@ -687,7 +698,7 @@
       var st = o.status === 'revoked'
         ? '<span class="tag tag-rev">已撤销</span>'
         : o.status === 'refund'
-          ? '<span class="tag tag-refund">退款冲销</span>'
+          ? '<span class="tag tag-refund">已退款</span>'
           : '<span class="tag tag-ok">已核销</span>';
       return (
         '<button type="button" class="order-card" data-order-id="' + o.id + '">' +
@@ -707,7 +718,7 @@
     $('#detailPrice').textContent = o.price;
     var statusHtml =
       o.status === 'revoked' ? '<span class="tag tag-rev">已撤销</span>'
-        : o.status === 'refund' ? '<span class="tag tag-refund">退款冲销</span>'
+        : o.status === 'refund' ? '<span class="tag tag-refund">已退款</span>'
           : '<span class="tag tag-ok">已核销</span>';
     $('#detailStatus').innerHTML = statusHtml;
     var codeEl = $('#detailCode');
@@ -728,7 +739,7 @@
     var btn = $('#btnRevoke');
     if (o.status === 'refund' || o.status === 'revoked') {
       btn.disabled = true;
-      btn.textContent = o.status === 'refund' ? '已退款冲销' : '已撤销';
+      btn.textContent = o.status === 'refund' ? '已退款' : '已撤销';
     } else if (o.canRevoke) {
       btn.disabled = false;
       btn.textContent = '撤销核销';
@@ -754,12 +765,59 @@
     if (dot) dot.hidden = !active;
   }
 
-  function skipPhone() {
+  function resetSuccessMemberForm() {
     session.phone = '';
-    closeMasks();
-    var btn = $('#btnAddPhone');
-    if (btn) btn.textContent = '登记手机号 ▸';
-    toast('已跳过');
+    session.nickname = '';
+    session.gender = null;
+    var phoneEl = $('#successPhone');
+    var nickEl = $('#successNickname');
+    if (phoneEl) phoneEl.value = '';
+    if (nickEl) nickEl.value = '';
+    $all('#successGender [data-gender]').forEach(function (b) {
+      b.classList.remove('on');
+    });
+  }
+
+  function resolveMemberDisplayName(raw, gender) {
+    var name = String(raw || '').trim();
+    if (!name) return '';
+    if (name.length === 1) {
+      return name + (gender === 'female' ? '小姐' : '先生');
+    }
+    return name;
+  }
+
+  function tryRegisterMemberOnDone() {
+    var phoneEl = $('#successPhone');
+    var nickEl = $('#successNickname');
+    var phone = phoneEl ? String(phoneEl.value || '').trim() : '';
+    var nick = nickEl ? String(nickEl.value || '').trim() : '';
+    var gender = session.gender;
+
+    if (phone && !/^1\d{10}$/.test(phone)) {
+      toast('请输入 11 位手机号');
+      return false;
+    }
+    session.phone = phone;
+    session.nickname = nick;
+
+    if (nick && gender) {
+      var displayName = resolveMemberDisplayName(nick, gender);
+      session.registeredMembers.push({
+        name: displayName,
+        gender: gender,
+        phone: phone || '',
+        from: 'verify-success',
+        at: Date.now()
+      });
+      toast('已注册为会员：' + displayName);
+    }
+    return true;
+  }
+
+  function finishSuccess() {
+    if (!tryRegisterMemberOnDone()) return;
+    showScreen('home');
   }
 
   function isFlowActive(flow) {
@@ -920,7 +978,7 @@
     if (permBtn) {
       session.rolePerm = permBtn.getAttribute('data-demo-perm') === 'ok';
       syncDemoGateUI();
-      toast(session.rolePerm ? '演示：账号有核销权限' : '演示：账号无核销权限');
+      toast(session.rolePerm ? '演示：收银开单权限已开启' : '演示：收银开单权限已关闭');
       return;
     }
 
@@ -985,6 +1043,21 @@
       return;
     }
 
+    if (e.target.closest('#btnSuccessDone')) {
+      finishSuccess();
+      return;
+    }
+
+    var genderBtn = e.target.closest('#successGender [data-gender]');
+    if (genderBtn) {
+      var g = genderBtn.getAttribute('data-gender');
+      session.gender = g;
+      $all('#successGender [data-gender]').forEach(function (b) {
+        b.classList.toggle('on', b === genderBtn);
+      });
+      return;
+    }
+
     if (e.target.closest('#confirmEmpBtn')) {
       openEmpPicker();
       return;
@@ -1013,34 +1086,6 @@
       closeMasks();
       syncConfirmUI();
       toast('已匹配项目');
-      return;
-    }
-
-    if (e.target.closest('#btnAddPhone')) {
-      openMask('phoneMask');
-      return;
-    }
-
-    if (e.target.closest('#btnSkipPhone')) {
-      skipPhone();
-      return;
-    }
-
-    if (e.target.closest('#btnSavePhone')) {
-      var phone = ($('#phoneInput').value || '').trim();
-      if (phone && !/^1\d{10}$/.test(phone)) {
-        toast('请输入 11 位手机号');
-        return;
-      }
-      if (!phone) {
-        skipPhone();
-        return;
-      }
-      session.phone = phone;
-      closeMasks();
-      var btn = $('#btnAddPhone');
-      if (btn) btn.textContent = phone.slice(0, 3) + '****' + phone.slice(-4) + ' ▸';
-      toast('手机号已保存');
       return;
     }
 
