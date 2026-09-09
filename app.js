@@ -74,6 +74,12 @@
     plat: 'douyin', // douyin | meituan（当前核销平台）
     authDouyin: 'ok', // none | ok | expired
     authMeituan: 'ok',
+    mapDouyin: true, // 平台门店是否已绑定 APP store
+    mapMeituan: true,
+    bindCodeDy: 'JL-DY-5001',
+    bindCodeMt: 'JL-MT-5001',
+    orderId: '716829104455',
+    dealId: 'product_882910',
     rolePerm: true, // 对应 APP 角色权限「收银开单」：关闭则不可扫码核销
     selectedEmpId: null, // 业绩归属默认空：不默认店主，核销时点击选择
     selectedEmpIds: [],
@@ -107,6 +113,7 @@
       price: 268,
       code: 'dy9182-ABCD-7781',
       oid: '716829104455',
+      dealId: 'product_882910',
       time: '2026-09-03 15:42',
       op: '顾清扬',
       bill: 'SO20260903018',
@@ -121,6 +128,7 @@
       price: 98,
       code: 'dy4410-KK92-1203',
       oid: '716829088120',
+      dealId: 'product_660188',
       time: '2026-09-03 11:18',
       op: '林屿森',
       bill: 'SO20260903007',
@@ -135,6 +143,7 @@
       price: 168,
       code: 'dy2201-PL88-0091',
       oid: '716828901144',
+      dealId: 'product_771204',
       time: '2026-09-02 19:05',
       op: '何苏叶',
       bill: 'SO20260902044',
@@ -149,6 +158,7 @@
       price: 398,
       code: 'dy5502-RF01-3344',
       oid: '716828700221',
+      dealId: 'product_550201',
       time: '2026-09-01 16:20',
       op: 'Lisa',
       bill: 'SO20260901012',
@@ -163,6 +173,7 @@
       price: 258,
       code: 'mt7182-ABCD-9901',
       oid: 'MT202609031102',
+      dealId: 'deal_910288',
       time: '2026-09-03 14:08',
       op: '顾清扬',
       bill: 'SO20260903022',
@@ -177,6 +188,7 @@
       price: 88,
       code: 'mt3301-KK11-8822',
       oid: 'MT202609021455',
+      dealId: 'deal_774411',
       time: '2026-09-02 16:40',
       op: '林屿森',
       bill: 'SO20260902051',
@@ -284,9 +296,15 @@
   function platLabel() { return isMeituan() ? '美团' : '抖音'; }
   function platPayLabel() { return isMeituan() ? '美团团购' : '抖音团购'; }
   function platAuthKey() { return isMeituan() ? 'authMeituan' : 'authDouyin'; }
+  function platMapKey() { return isMeituan() ? 'mapMeituan' : 'mapDouyin'; }
   function currentAuth() { return session[platAuthKey()]; }
   function setCurrentAuth(v) { session[platAuthKey()] = v; }
+  function storeAuthOk() { return currentAuth() === 'ok'; }
+  function storeMapOk() { return !!session[platMapKey()]; }
+  function currentBindCode() { return isMeituan() ? session.bindCodeMt : session.bindCodeDy; }
   function authScreenForPlat() { return isMeituan() ? 'owner-auth-mt' : 'owner-auth'; }
+  function defaultDealId() { return isMeituan() ? 'deal_910288' : 'product_882910'; }
+  function defaultOrderId() { return isMeituan() ? 'MT202609031102' : '716829104455'; }
   function couponDemoKey(kind) {
     if (!isMeituan()) return kind;
     if (kind === 'default') return 'meituanDefault';
@@ -429,10 +447,6 @@
     toast('识别失败');
   }
 
-  function storeAuthOk() {
-    return currentAuth() === 'ok';
-  }
-
   function syncAcctAuthUI() {
     [
       { key: 'authDouyin', st: '#acctAuthDySt' },
@@ -448,16 +462,82 @@
     });
   }
 
+  function syncMapBars() {
+    $all('#mapDyBar button').forEach(function (b) {
+      var on = (b.getAttribute('data-map') === 'ok') === !!session.mapDouyin;
+      b.classList.toggle('on', on);
+    });
+    $all('#mapMtBar button').forEach(function (b) {
+      var on = (b.getAttribute('data-map') === 'ok') === !!session.mapMeituan;
+      b.classList.toggle('on', on);
+    });
+  }
+
+  function syncAuthBindUI() {
+    var dyMap = $('#authDyMapped');
+    var mtMap = $('#authMtMapped');
+    if (dyMap) dyMap.textContent = session.mapDouyin ? '是' : '否';
+    if (mtMap) mtMap.textContent = session.mapMeituan ? '是' : '否';
+    var dyCode = $('#authDyBindCode');
+    var dyRow = $('#authDyBindRow');
+    if (dyCode) dyCode.textContent = session.bindCodeDy;
+    if (dyRow) dyRow.setAttribute('data-copy', session.bindCodeDy);
+    var mtCode = $('#authMtBindCode');
+    var mtRow = $('#authMtBindRow');
+    if (mtCode) mtCode.textContent = session.bindCodeMt;
+    if (mtRow) mtRow.setAttribute('data-copy', session.bindCodeMt);
+    var cat = $('#authDyCatalog');
+    if (cat) cat.hidden = !(session.authDouyin === 'ok' && session.mapDouyin);
+    syncMapBars();
+  }
+
   function openAuthNeedMask(plat) {
     pendingAuthPlat = plat === 'meituan' ? 'meituan' : 'douyin';
     var name = pendingAuthPlat === 'meituan' ? '美团' : '抖音';
+    var authKey = pendingAuthPlat === 'meituan' ? 'authMeituan' : 'authDouyin';
+    var st = normalizeAuthState(session[authKey]);
     var title = $('#authNeedTitle');
     var desc = $('#authNeedDesc');
-    if (title) title.textContent = '尚未开通' + name + '团购核销';
-    if (desc) {
-      desc.textContent = '当前门店尚未完成' + name + '授权，暂时无法验券核销。请先完成开通后再试。';
+    var go = $('#btnAuthNeedGo');
+    if (st === 'expired') {
+      if (title) title.textContent = name + '团购授权已到期';
+      if (desc) desc.textContent = '当前门店' + name + '授权已到期，暂时无法验券核销。请先完成续期后再试。';
+      if (go) go.textContent = '去续期';
+    } else {
+      if (title) title.textContent = '尚未开通' + name + '团购核销';
+      if (desc) desc.textContent = '当前门店尚未完成' + name + '授权，暂时无法验券核销。请先完成开通后再试。';
+      if (go) go.textContent = '去开通';
     }
     openMask('authNeedMask');
+  }
+
+  function openMapNeedMask(plat) {
+    pendingAuthPlat = plat === 'meituan' ? 'meituan' : 'douyin';
+    var name = pendingAuthPlat === 'meituan' ? '美团' : '抖音';
+    var code = pendingAuthPlat === 'meituan' ? session.bindCodeMt : session.bindCodeDy;
+    var title = $('#mapNeedTitle');
+    var desc = $('#mapNeedDesc');
+    var codeEl = $('#mapNeedBindCode');
+    if (title) title.textContent = '请完善门店绑定';
+    if (desc) {
+      desc.textContent = name + '已授权，但尚未关联本 APP 门店，暂时无法验券。请使用绑定码完成关联，或联系店长在后台补录。';
+    }
+    if (codeEl) codeEl.textContent = code;
+    openMask('mapNeedMask');
+  }
+
+  function simulateAuthCallback(plat) {
+    if (plat === 'meituan') {
+      session.authMeituan = 'ok';
+      session.mapMeituan = true;
+      applyAuthMtUI();
+      toast('已模拟汇付回调：美团已授权并绑定本店');
+    } else {
+      session.authDouyin = 'ok';
+      session.mapDouyin = true;
+      applyAuthUI();
+      toast('已模拟授权回调：抖音已授权并绑定本店');
+    }
   }
 
   function openException(flow) {
@@ -478,6 +558,10 @@
     }
     if (!storeAuthOk()) {
       openAuthNeedMask(session.plat);
+      return false;
+    }
+    if (!storeMapOk()) {
+      openMapNeedMask(session.plat);
       return false;
     }
     return true;
@@ -503,6 +587,7 @@
     var exp = $('#authExpire');
     if (exp) exp.textContent = ui.expire;
     syncAcctAuthUI();
+    syncAuthBindUI();
   }
 
   function applyAuthMtUI() {
@@ -516,6 +601,7 @@
     var exp = $('#authMtExpire');
     if (exp) exp.textContent = ui.expire;
     syncAcctAuthUI();
+    syncAuthBindUI();
   }
 
   function syncPlatformChrome() {
@@ -720,6 +806,8 @@
     session.couponName = name;
     session.couponPrice = price;
     session.couponCode = code;
+    session.orderId = defaultOrderId();
+    session.dealId = defaultDealId();
     session.orderType = '快捷开单';
     session.payType = '团购';
     if (mismatched) {
@@ -745,19 +833,29 @@
     var rn = $('#resultProdName');
     var rp = $('#resultPrice');
     var rc = $('#resultCode');
+    var ro = $('#resultOid');
+    var rd = $('#resultDealId');
     if (rn) rn.textContent = name;
     if (rp) rp.textContent = String(price);
     if (rc) rc.textContent = maskCode(code);
-    $all('#screen-confirm .info-card:first-of-type .kv').forEach(function (row) {
-      var k = row.querySelector('.k');
-      var v = row.querySelector('.v');
-      if (k && v && k.textContent === '面额') v.textContent = '¥' + price;
-      if (k && v && k.textContent === '券码') v.textContent = maskCode(code);
-    });
+    if (ro) ro.textContent = session.orderId;
+    if (rd) rd.textContent = session.dealId;
     var face = $('#confirmFace');
     var codeEl = $('#confirmCode');
+    var co = $('#confirmOid');
+    var cd = $('#confirmDealId');
     if (face) face.textContent = '¥' + price;
     if (codeEl) codeEl.textContent = maskCode(code);
+    if (co) co.textContent = session.orderId;
+    if (cd) cd.textContent = session.dealId;
+    var soid = $('#successOid');
+    var soidr = $('#successOidRow');
+    if (soid) soid.textContent = session.orderId;
+    if (soidr) soidr.setAttribute('data-copy', session.orderId);
+    var sd = $('#successDealId');
+    var sdr = $('#successDealRow');
+    if (sd) sd.textContent = session.dealId;
+    if (sdr) sdr.setAttribute('data-copy', session.dealId);
     syncConfirmUI();
   }
 
@@ -802,7 +900,10 @@
     if (flow === 'confirm') syncConfirmUI();
     if (flow === 'owner-auth') applyAuthUI();
     if (flow === 'owner-auth-mt') applyAuthMtUI();
-    if (flow === 'account') syncAcctAuthUI();
+    if (flow === 'account') {
+      syncAcctAuthUI();
+      syncAuthBindUI();
+    }
     if (flow === 'scan' || flow === 'result' || flow === 'confirm' || flow === 'input') syncPlatformChrome();
     if (flow === 'success') resetSuccessMemberForm();
     if (flow !== 'scan') {
@@ -957,6 +1058,13 @@
     var oidTxt = oidEl.querySelector('.copy-text');
     if (oidTxt) oidTxt.textContent = o.oid; else oidEl.textContent = o.oid;
     oidEl.setAttribute('data-copy', o.oid);
+    var dealEl = $('#detailDeal');
+    if (dealEl) {
+      var dealVal = o.dealId || '—';
+      var dealTxt = dealEl.querySelector('.copy-text');
+      if (dealTxt) dealTxt.textContent = dealVal; else dealEl.textContent = dealVal;
+      dealEl.setAttribute('data-copy', dealVal === '—' ? '' : dealVal);
+    }
     $('#detailTime').textContent = o.time;
     $('#detailOp').textContent = o.op;
     $('#detailBill').textContent = o.bill;
@@ -1230,6 +1338,18 @@
       return;
     }
 
+    if (e.target.closest('#btnMapNeedGo')) {
+      closeMasks();
+      showScreen(pendingAuthPlat === 'meituan' ? 'owner-auth-mt' : 'owner-auth');
+      return;
+    }
+
+    if (e.target.closest('#btnNopermAuth')) {
+      closeMasks();
+      showScreen(authScreenForPlat());
+      return;
+    }
+
     if (e.target.closest('#btnAcctLogout')) {
       toast('演示：退出登录（示意）');
       return;
@@ -1429,12 +1549,35 @@
       return;
     }
 
+    var mapBtn = e.target.closest('#mapDyBar [data-map], #mapMtBar [data-map]');
+    if (mapBtn) {
+      var mapPlat = mapBtn.getAttribute('data-map-plat') || 'douyin';
+      var mapped = mapBtn.getAttribute('data-map') === 'ok';
+      if (mapPlat === 'meituan') session.mapMeituan = mapped;
+      else session.mapDouyin = mapped;
+      syncAuthBindUI();
+      toast((mapPlat === 'meituan' ? '美团' : '抖音') + '门店映射：' + (mapped ? '已绑定' : '未绑定'));
+      return;
+    }
+
+    if (e.target.closest('#btnDySettle')) {
+      toast('演示：跳转抖音来客入驻（外链）');
+      return;
+    }
+    if (e.target.closest('#btnDyRefreshAuth')) {
+      simulateAuthCallback('douyin');
+      return;
+    }
     if (e.target.closest('#btnMtSettle')) {
       toast('演示：跳转美团商家入驻（外链）');
       return;
     }
     if (e.target.closest('#btnMtHuifu')) {
       toast('演示：打开汇付天下商户/ISV 后台（外链）');
+      return;
+    }
+    if (e.target.closest('#btnMtRefreshAuth')) {
+      simulateAuthCallback('meituan');
       return;
     }
 

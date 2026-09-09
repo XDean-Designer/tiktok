@@ -693,6 +693,35 @@
   font-family: inherit; font-size: 13px; font-weight: 500;
   color: #3B6FF5; text-align: left; cursor: pointer; line-height: 20px;
 }
+.auth-catalog-card {
+  margin-top: 14px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px 16px 12px;
+  border: 1px solid rgba(243, 47, 65, 0.08);
+}
+.auth-catalog-card .h {
+  font-size: 14px; font-weight: 700; color: #1a1a1a; margin-bottom: 10px;
+}
+.auth-deal-list {
+  list-style: none; margin: 0; padding: 0;
+}
+.auth-deal-list li {
+  display: flex; gap: 10px; align-items: baseline;
+  padding: 8px 0; border-bottom: 1px solid #f2f2f2;
+  font-size: 12px; line-height: 1.4;
+}
+.auth-deal-list li:last-child { border-bottom: 0; }
+.auth-deal-list .id {
+  flex-shrink: 0; color: #929292; font-family: Consolas, Monaco, monospace;
+}
+.auth-deal-list .nm { color: #1a1a1a; font-weight: 500; }
+.auth-catalog-ph {
+  font-size: 12px; color: #929292; line-height: 1.55; padding: 4px 0 2px;
+}
+.ds--meta {
+  margin-top: 8px; font-size: 13px; color: #666; word-break: break-all;
+}
 .auth-step-ico img { display: block; width: 28px; height: 28px; object-fit: contain; }
 .auth-step:first-child .auth-step-ico img { width: 24px; height: 24px; }
 

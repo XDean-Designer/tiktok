@@ -146,6 +146,11 @@
         <button type="button" class="on" data-auth="ok" data-auth-plat="douyin">已授权</button>
         <button type="button" data-auth="expired" data-auth-plat="douyin">已到期</button>
       </div>
+      <div class="nav-demo-label">抖音门店映射</div>
+      <div class="auth-state-bar" id="mapDyBar">
+        <button type="button" class="on" data-map="ok" data-map-plat="douyin">已绑定</button>
+        <button type="button" data-map="none" data-map-plat="douyin">未绑定</button>
+      </div>
     </div>
     <button type="button" class="nav-item" data-flow="owner-auth-mt"><span class="idx">B</span>美团授权指引</button>
     <div class="nav-demo-auth">
@@ -154,6 +159,11 @@
         <button type="button" data-auth="none" data-auth-plat="meituan">未开通</button>
         <button type="button" class="on" data-auth="ok" data-auth-plat="meituan">已授权</button>
         <button type="button" data-auth="expired" data-auth-plat="meituan">已到期</button>
+      </div>
+      <div class="nav-demo-label">美团门店映射</div>
+      <div class="auth-state-bar" id="mapMtBar">
+        <button type="button" class="on" data-map="ok" data-map-plat="meituan">已绑定</button>
+        <button type="button" data-map="none" data-map-plat="meituan">未绑定</button>
       </div>
     </div>
   </div>
@@ -475,6 +485,8 @@
               <div class="kv"><span class="k">适用门店</span><span class="v">悦颜美肌 · 旗舰店</span></div>
               <div class="kv"><span class="k">有效期</span><span class="v">至 2026-12-31</span></div>
               <div class="kv"><span class="k">券码</span><span class="v" id="resultCode">dy********7781</span></div>
+              <div class="kv"><span class="k">平台单号</span><span class="v" id="resultOid">716829104455</span></div>
+              <div class="kv"><span class="k">团单/商品 ID</span><span class="v" id="resultDealId">product_882910</span></div>
               <div class="kv"><span class="k">平台</span><span class="v" id="resultPlatTag"><span class="tag tag-plat-dy">抖音</span></span></div>
             </div>
           </div>
@@ -503,6 +515,8 @@
             <div class="kv-list">
               <div class="kv"><span class="k">面额</span><span class="v" id="confirmFace">¥268</span></div>
               <div class="kv"><span class="k">券码</span><span class="v" id="confirmCode">dy********7781</span></div>
+              <div class="kv"><span class="k">平台单号</span><span class="v" id="confirmOid">716829104455</span></div>
+              <div class="kv"><span class="k">团单/商品 ID</span><span class="v" id="confirmDealId">product_882910</span></div>
             </div>
           </div>
           <div class="info-card info-card--order">
@@ -590,7 +604,8 @@
             <div class="price"><small>¥</small>268</div>
             <div class="kv-list">
               <div class="kv"><span class="k">券码</span><span class="v copyable copy-row" data-copy="dy9182-ABCD-7781"><span class="copy-text">dy9182-ABCD-7781</span><img class="copy-ico" src="assets/icons/copy.svg" alt="" width="17" height="17"></span></div>
-              <div class="kv"><span class="k">平台单号</span><span class="v copyable copy-row" data-copy="716829104455"><span class="copy-text">716829104455</span><img class="copy-ico" src="assets/icons/copy.svg" alt="" width="17" height="17"></span></div>
+              <div class="kv"><span class="k">平台单号</span><span class="v copyable copy-row" id="successOidRow" data-copy="716829104455"><span class="copy-text" id="successOid">716829104455</span><img class="copy-ico" src="assets/icons/copy.svg" alt="" width="17" height="17"></span></div>
+              <div class="kv"><span class="k">团单/商品 ID</span><span class="v copyable copy-row" id="successDealRow" data-copy="product_882910"><span class="copy-text" id="successDealId">product_882910</span><img class="copy-ico" src="assets/icons/copy.svg" alt="" width="17" height="17"></span></div>
               <div class="kv"><span class="k">核销时间</span><span class="v">2026-09-03 15:42</span></div>
               <div class="kv"><span class="k">操作人</span><span class="v" id="successOp">顾清扬</span></div>
             </div>
@@ -666,6 +681,7 @@
               <div class="kv"><span class="k">状态</span><span class="v" id="detailStatus"><span class="tag tag-ok">已核销</span></span></div>
               <div class="kv"><span class="k">券码</span><span class="v copyable copy-row" id="detailCode" data-copy=""><span class="copy-text">—</span><img class="copy-ico" src="assets/icons/copy.svg" alt="" width="17" height="17"></span></div>
               <div class="kv"><span class="k">平台单号</span><span class="v copyable copy-row" id="detailOid" data-copy=""><span class="copy-text">—</span><img class="copy-ico" src="assets/icons/copy.svg" alt="" width="17" height="17"></span></div>
+              <div class="kv"><span class="k">团单/商品 ID</span><span class="v copyable copy-row" id="detailDeal" data-copy=""><span class="copy-text">—</span><img class="copy-ico" src="assets/icons/copy.svg" alt="" width="17" height="17"></span></div>
               <div class="kv"><span class="k">核销时间</span><span class="v" id="detailTime">—</span></div>
               <div class="kv"><span class="k">操作人</span><span class="v" id="detailOp">顾清扬</span></div>
               <div class="kv"><span class="k">开单号</span><span class="v" id="detailBill">SO20260903018</span></div>
@@ -757,7 +773,7 @@
                   <div class="auth-step-num">4</div>
                   <div class="auth-step-copy">
                     <div class="tt">回到剑琅确认状态</div>
-                    <div class="dd">授权成功后状态变为「已授权」；到期前会提醒续期。</div>
+                    <div class="dd">授权成功后变为「已授权」并自动关联本店。团单目录仅在具备相应权限时同步；验券凭顾客券码。</div>
                   </div>
                   <div class="auth-step-ico auth-step-ico--ok" aria-hidden="true">
                     <img src="assets/icons/auth-4.svg" alt="" width="28" height="28">
@@ -769,7 +785,12 @@
 
           <div class="auth-tips">
             <img class="auth-tips-ico" src="assets/icons/info-circle.svg" alt="" width="16" height="16">
-            <p class="auth-tips-text">在抖音来客完成门店授权后，方可在本店核销抖音团购券。</p>
+            <p class="auth-tips-text">在抖音来客完成门店授权后，方可在本店核销抖音团购券。需为生活服务服务商且授权范围覆盖核销相关能力。</p>
+          </div>
+
+          <div class="auth-extra-actions">
+            <button type="button" class="auth-link-btn" id="btnDySettle">还没有抖音来客门店？去入驻</button>
+            <button type="button" class="auth-link-btn" id="btnDyRefreshAuth">我已完成授权，刷新状态</button>
           </div>
 
           <div class="auth-status-card">
@@ -777,8 +798,19 @@
             <div class="kv-list">
               <div class="kv"><span class="k">门店</span><span class="v">悦颜美肌 · 旗舰店</span></div>
               <div class="kv"><span class="k">状态</span><span class="v" id="authStatusTag"><span class="tag tag-ok">已授权</span></span></div>
+              <div class="kv"><span class="k">已关联平台门店</span><span class="v" id="authDyMapped">是</span></div>
               <div class="kv"><span class="k">到期日</span><span class="v" id="authExpire">2027-03-01</span></div>
+              <div class="kv"><span class="k">门店绑定码</span><span class="v copyable copy-row" id="authDyBindRow" data-copy="JL-DY-5001"><span class="copy-text" id="authDyBindCode">JL-DY-5001</span><img class="copy-ico" src="assets/icons/copy.svg" alt="" width="17" height="17"></span></div>
             </div>
+          </div>
+
+          <div class="auth-catalog-card" id="authDyCatalog">
+            <div class="h">团单目录（已同步示意）</div>
+            <ul class="auth-deal-list">
+              <li><span class="id">product_882910</span><span class="nm">深层补水护理 · 单次体验</span></li>
+              <li><span class="id">product_771204</span><span class="nm">头皮护理套餐</span></li>
+              <li><span class="id">product_660188</span><span class="nm">时尚洗剪吹</span></li>
+            </ul>
           </div>
         </div>
       </div>
@@ -812,7 +844,7 @@
                   <div class="auth-step-num">2</div>
                   <div class="auth-step-copy">
                     <div class="tt">打开汇付天下后台</div>
-                    <div class="dd">登录汇付天下商户 / ISV 后台（美团团购经汇付接入，非 APP 内嵌）。</div>
+                    <div class="dd">登录汇付天下商户 / ISV 后台。美团团购验券核销经汇付透传（非 APP 内嵌 SDK）。</div>
                   </div>
                   <div class="auth-step-ico" aria-hidden="true">
                     <img src="assets/icons/auth-2.svg" alt="" width="28" height="28">
@@ -824,7 +856,7 @@
                   <div class="auth-step-num">3</div>
                   <div class="auth-step-copy">
                     <div class="tt">开通并授权剑琅联盟</div>
-                    <div class="dd">完成对「剑琅联盟」应用的开通/授权，打通本店美团团购核销能力。</div>
+                    <div class="dd">完成对「剑琅联盟」的开通/授权。系统会带上门店标识，便于授权后自动关联本店。</div>
                   </div>
                   <div class="auth-step-ico" aria-hidden="true">
                     <img src="assets/icons/auth-3.svg" alt="" width="28" height="28">
@@ -836,7 +868,7 @@
                   <div class="auth-step-num">4</div>
                   <div class="auth-step-copy">
                     <div class="tt">回到剑琅确认状态</div>
-                    <div class="dd">授权生效后本页变为「已授权」；系统自动关联门店。异常时可后台补录或使用绑定码。</div>
+                    <div class="dd">授权生效后变为「已授权」并自动关联门店。异常时可后台补录或使用绑定码。验券仍凭顾客券码。</div>
                   </div>
                   <div class="auth-step-ico auth-step-ico--ok" aria-hidden="true">
                     <img src="assets/icons/auth-4.svg" alt="" width="28" height="28">
@@ -848,12 +880,13 @@
 
           <div class="auth-tips">
             <img class="auth-tips-ico" src="assets/icons/info-circle.svg" alt="" width="16" height="16">
-            <p class="auth-tips-text">美团团购经汇付天下 ISV 接入。在汇付侧完成授权后，方可在本店核销美团团购券。菜单细路径以汇付正式文档为准。</p>
+            <p class="auth-tips-text">美团团购核销经汇付天下透传。完成汇付侧授权后可在本店用券码验券核销；团单目录能否预同步以汇付能力为准。菜单细路径以汇付正式文档为准。本期不含分账抽佣。</p>
           </div>
 
           <div class="auth-extra-actions">
             <button type="button" class="auth-link-btn" id="btnMtSettle">还没有美团门店？去入驻</button>
             <button type="button" class="auth-link-btn" id="btnMtHuifu">打开汇付授权说明（示意）</button>
+            <button type="button" class="auth-link-btn" id="btnMtRefreshAuth">我已完成授权，刷新状态</button>
           </div>
 
           <div class="auth-status-card">
@@ -862,8 +895,15 @@
               <div class="kv"><span class="k">门店</span><span class="v">悦颜美肌 · 旗舰店</span></div>
               <div class="kv"><span class="k">接入通道</span><span class="v">汇付天下 ISV</span></div>
               <div class="kv"><span class="k">状态</span><span class="v" id="authMtStatusTag"><span class="tag tag-ok">已授权</span></span></div>
+              <div class="kv"><span class="k">已关联平台门店</span><span class="v" id="authMtMapped">是</span></div>
               <div class="kv"><span class="k">到期日</span><span class="v" id="authMtExpire">2027-03-01</span></div>
+              <div class="kv"><span class="k">门店绑定码</span><span class="v copyable copy-row" id="authMtBindRow" data-copy="JL-MT-5001"><span class="copy-text" id="authMtBindCode">JL-MT-5001</span><img class="copy-ico" src="assets/icons/copy.svg" alt="" width="17" height="17"></span></div>
             </div>
+          </div>
+
+          <div class="auth-catalog-card auth-catalog-card--ph" id="authMtCatalog">
+            <div class="h">团单目录</div>
+            <div class="auth-catalog-ph">目录未开通（待汇付确认是否提供团单列表 API）。验券仍可凭顾客券码完成，不依赖预拉目录。</div>
           </div>
         </div>
       </div>
@@ -885,6 +925,18 @@
           <div class="da">
             <button type="button" class="cancel" data-close-mask>取消</button>
             <button type="button" class="ok" id="btnAuthNeedGo">去开通</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dialog-mask" id="mapNeedMask">
+        <div class="dialog">
+          <div class="dt" id="mapNeedTitle">请完善门店绑定</div>
+          <div class="ds" id="mapNeedDesc">当前平台已授权，但尚未关联本 APP 门店，暂时无法验券。请使用绑定码完成关联，或联系店长在后台补录。</div>
+          <div class="ds ds--meta">绑定码：<span id="mapNeedBindCode">JL-DY-5001</span></div>
+          <div class="da">
+            <button type="button" class="cancel" data-close-mask>取消</button>
+            <button type="button" class="ok" id="btnMapNeedGo">去完善绑定</button>
           </div>
         </div>
       </div>
@@ -942,7 +994,7 @@
           <div class="dt">无核销权限</div>
           <div class="ds">当前账号未开启「收银开单」权限，无法扫码核销。请联系店长在角色权限中开启，或查看门店授权状态。</div>
           <div class="da">
-            <button type="button" class="cancel" data-ex-go="owner-auth">查看授权指引</button>
+            <button type="button" class="cancel" id="btnNopermAuth">查看授权指引</button>
             <button type="button" class="ok" data-ex-go="home">返回首页</button>
           </div>
         </div>
