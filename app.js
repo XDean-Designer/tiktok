@@ -60,7 +60,7 @@
     detail: '6.11 订单详情与撤销',
     'revoke-ok': '6.12 撤销成功',
     'owner-auth': '6.13 抖音授权指引',
-    'owner-auth-mt': '6.13b 美团授权（占位）',
+    'owner-auth-mt': '6.13b 美团授权（汇付）',
     'cam-denied': '6.14 相机无权限',
     'tpl-offline': '6.15 断网模板',
     'tpl-timeout': '6.15 超时模板',
@@ -72,7 +72,7 @@
     offline: false,
     camDenied: false,
     plat: 'douyin', // douyin | meituan（当前核销平台）
-    authDouyin: 'ok', // none | pending | ok | expired
+    authDouyin: 'ok', // none | ok | expired
     authMeituan: 'ok',
     rolePerm: true, // 对应 APP 角色权限「收银开单」：关闭则不可扫码核销
     selectedEmpId: null, // 业绩归属默认空：不默认店主，核销时点击选择
@@ -250,8 +250,7 @@
   };
 
   var AUTH_UI = {
-    none: { label: '未发起', tag: 'tag-rev', expire: '—' },
-    pending: { label: '待确认', tag: 'tag-plat-dy', expire: '—' },
+    none: { label: '未开通', tag: 'tag-rev', expire: '—' },
     ok: { label: '已授权', tag: 'tag-ok', expire: '2027-03-01' },
     expired: { label: '已到期', tag: 'tag-rev', expire: '2026-08-01' }
   };
@@ -259,10 +258,14 @@
   /* 账号管理 · 团购核销行状态（文案；颜色对齐授权页标签色） */
   var AUTH_ROW = {
     none: { label: '去开通', cls: 'is-go' },
-    pending: { label: '待确认', cls: 'is-pending' },
     ok: { label: '已授权', cls: 'is-ok' },
     expired: { label: '已到期', cls: 'is-expired' }
   };
+
+  function normalizeAuthState(v) {
+    if (v === 'ok' || v === 'expired') return v;
+    return 'none';
+  }
 
   var pendingAuthPlat = 'douyin';
   var EXCEPTION_MASK = {
@@ -435,7 +438,8 @@
       { key: 'authDouyin', st: '#acctAuthDySt' },
       { key: 'authMeituan', st: '#acctAuthMtSt' }
     ].forEach(function (item) {
-      var state = session[item.key] || 'none';
+      var state = normalizeAuthState(session[item.key]);
+      session[item.key] = state;
       var row = AUTH_ROW[state] || AUTH_ROW.none;
       var el = $(item.st);
       if (!el) return;
@@ -489,6 +493,7 @@
   }
 
   function applyAuthUI() {
+    session.authDouyin = normalizeAuthState(session.authDouyin);
     var ui = AUTH_UI[session.authDouyin] || AUTH_UI.ok;
     $all('#authStateBar button').forEach(function (b) {
       b.classList.toggle('on', b.getAttribute('data-auth') === session.authDouyin);
@@ -501,6 +506,7 @@
   }
 
   function applyAuthMtUI() {
+    session.authMeituan = normalizeAuthState(session.authMeituan);
     var ui = AUTH_UI[session.authMeituan] || AUTH_UI.ok;
     $all('#authMtStateBar button').forEach(function (b) {
       b.classList.toggle('on', b.getAttribute('data-auth') === session.authMeituan);
@@ -1414,12 +1420,21 @@
     var authBtn = e.target.closest('#authStateBar [data-auth], #authMtStateBar [data-auth]');
     if (authBtn) {
       var authPlat = authBtn.getAttribute('data-auth-plat') || 'douyin';
-      var authVal = authBtn.getAttribute('data-auth');
+      var authVal = normalizeAuthState(authBtn.getAttribute('data-auth'));
       if (authPlat === 'meituan') session.authMeituan = authVal;
       else session.authDouyin = authVal;
       applyAuthUI();
       applyAuthMtUI();
-      toast((authPlat === 'meituan' ? '美团' : '抖音') + '授权状态：' + (AUTH_UI[authVal] || {}).label);
+      toast((authPlat === 'meituan' ? '美团' : '抖音') + '授权状态：' + (AUTH_UI[authVal] || AUTH_UI.none).label);
+      return;
+    }
+
+    if (e.target.closest('#btnMtSettle')) {
+      toast('演示：跳转美团商家入驻（外链）');
+      return;
+    }
+    if (e.target.closest('#btnMtHuifu')) {
+      toast('演示：打开汇付天下商户/ISV 后台（外链）');
       return;
     }
 

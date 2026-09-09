@@ -683,6 +683,16 @@
 .auth-tips-text {
   margin: 0; font-size: 13px; color: #6b6b6b; line-height: 1.7; flex: 1;
 }
+.auth-extra-actions {
+  display: flex; flex-direction: column; gap: 8px;
+  margin: 4px 0 0;
+  padding: 0 2px 8px;
+}
+.auth-link-btn {
+  width: 100%; border: 0; background: transparent; padding: 0;
+  font-family: inherit; font-size: 13px; font-weight: 500;
+  color: #3B6FF5; text-align: left; cursor: pointer; line-height: 20px;
+}
 .auth-step-ico img { display: block; width: 28px; height: 28px; object-fit: contain; }
 .auth-step:first-child .auth-step-ico img { width: 24px; height: 24px; }
 
@@ -1362,7 +1372,6 @@
   line-height: 12px; width: 36px; text-align: left;
 }
 .acct-plat-st.is-go { color: #FDA446; }
-.acct-plat-st.is-pending { color: #FF4F72; }
 .acct-plat-st.is-ok { color: #3AB883; }
 .acct-plat-st.is-expired { color: #A9A9A9; }
 .acct-logout {

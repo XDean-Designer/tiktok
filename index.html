@@ -142,18 +142,16 @@
     <div class="nav-demo-auth">
       <div class="nav-demo-label">抖音授权状态</div>
       <div class="auth-state-bar" id="authStateBar">
-        <button type="button" data-auth="none" data-auth-plat="douyin">未发起</button>
-        <button type="button" data-auth="pending" data-auth-plat="douyin">待确认</button>
+        <button type="button" data-auth="none" data-auth-plat="douyin">未开通</button>
         <button type="button" class="on" data-auth="ok" data-auth-plat="douyin">已授权</button>
         <button type="button" data-auth="expired" data-auth-plat="douyin">已到期</button>
       </div>
     </div>
-    <button type="button" class="nav-item" data-flow="owner-auth-mt"><span class="idx">B</span>美团授权（占位）</button>
+    <button type="button" class="nav-item" data-flow="owner-auth-mt"><span class="idx">B</span>美团授权指引</button>
     <div class="nav-demo-auth">
       <div class="nav-demo-label">美团授权状态</div>
       <div class="auth-state-bar" id="authMtStateBar">
-        <button type="button" data-auth="none" data-auth-plat="meituan">未发起</button>
-        <button type="button" data-auth="pending" data-auth-plat="meituan">待确认</button>
+        <button type="button" data-auth="none" data-auth-plat="meituan">未开通</button>
         <button type="button" class="on" data-auth="ok" data-auth-plat="meituan">已授权</button>
         <button type="button" data-auth="expired" data-auth-plat="meituan">已到期</button>
       </div>
@@ -167,7 +165,7 @@
   </div>
   <div class="nav-group grow">
     <div class="g-t">说明</div>
-    <div style="padding:6px 8px;font-size:11px;color:#9a9a9a;line-height:1.55;">APP 首页仅为演示占位。本期单店·团购核销（抖音/美团同款流程，扫码自动识别券类型）；系统优惠券识别为占位页；美团授权指引为占位页。</div>
+    <div style="padding:6px 8px;font-size:11px;color:#9a9a9a;line-height:1.55;">APP 首页仅为演示占位。本期单店·团购核销（抖音直连 / 美团经汇付；扫码自动识别券类型）；系统优惠券为占位页。</div>
   </div>
 </aside>
 
@@ -785,7 +783,7 @@
         </div>
       </div>
 
-      <!-- ========== OWNER AUTH MEITUAN PLACEHOLDER ========== -->
+      <!-- ========== OWNER AUTH MEITUAN (汇付) ========== -->
       <div class="screen" id="screen-owner-auth-mt" data-flow="owner-auth-mt">
         <div class="page-title-bar">
           <button type="button" class="btn-back" data-back aria-label="返回">
@@ -794,15 +792,75 @@
           <span class="title">美团授权</span>
         </div>
         <div class="page-body auth-guide-body">
-          <div class="placeholder-panel" style="margin-top:24px;">
-            <div class="big">美</div>
-            <div>美团授权指引 · 占位</div>
-            <div style="margin-top:8px;line-height:1.55;">正式授权步骤页后续提供。演示可用左侧「美团授权状态」切换门禁；未授权时核销美团券会进入本页。</div>
+          <div class="auth-flow-card">
+            <div class="auth-ribbon">简单四步 完成授权</div>
+            <div class="auth-timeline">
+              <div class="auth-step">
+                <div class="auth-step-main">
+                  <div class="auth-step-num">1</div>
+                  <div class="auth-step-copy">
+                    <div class="tt">确认美团商家门店</div>
+                    <div class="dd">使用美团商家管理员账号。若尚未入驻，先完成美团开店后再授权。</div>
+                  </div>
+                  <div class="auth-step-ico" aria-hidden="true">
+                    <img src="assets/icons/auth-1.svg" alt="" width="24" height="24">
+                  </div>
+                </div>
+              </div>
+              <div class="auth-step">
+                <div class="auth-step-main">
+                  <div class="auth-step-num">2</div>
+                  <div class="auth-step-copy">
+                    <div class="tt">打开汇付天下后台</div>
+                    <div class="dd">登录汇付天下商户 / ISV 后台（美团团购经汇付接入，非 APP 内嵌）。</div>
+                  </div>
+                  <div class="auth-step-ico" aria-hidden="true">
+                    <img src="assets/icons/auth-2.svg" alt="" width="28" height="28">
+                  </div>
+                </div>
+              </div>
+              <div class="auth-step">
+                <div class="auth-step-main">
+                  <div class="auth-step-num">3</div>
+                  <div class="auth-step-copy">
+                    <div class="tt">开通并授权剑琅联盟</div>
+                    <div class="dd">完成对「剑琅联盟」应用的开通/授权，打通本店美团团购核销能力。</div>
+                  </div>
+                  <div class="auth-step-ico" aria-hidden="true">
+                    <img src="assets/icons/auth-3.svg" alt="" width="28" height="28">
+                  </div>
+                </div>
+              </div>
+              <div class="auth-step">
+                <div class="auth-step-main">
+                  <div class="auth-step-num">4</div>
+                  <div class="auth-step-copy">
+                    <div class="tt">回到剑琅确认状态</div>
+                    <div class="dd">授权生效后本页变为「已授权」；系统自动关联门店。异常时可后台补录或使用绑定码。</div>
+                  </div>
+                  <div class="auth-step-ico auth-step-ico--ok" aria-hidden="true">
+                    <img src="assets/icons/auth-4.svg" alt="" width="28" height="28">
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="auth-status-card" style="margin-top:16px;">
+
+          <div class="auth-tips">
+            <img class="auth-tips-ico" src="assets/icons/info-circle.svg" alt="" width="16" height="16">
+            <p class="auth-tips-text">美团团购经汇付天下 ISV 接入。在汇付侧完成授权后，方可在本店核销美团团购券。菜单细路径以汇付正式文档为准。</p>
+          </div>
+
+          <div class="auth-extra-actions">
+            <button type="button" class="auth-link-btn" id="btnMtSettle">还没有美团门店？去入驻</button>
+            <button type="button" class="auth-link-btn" id="btnMtHuifu">打开汇付授权说明（示意）</button>
+          </div>
+
+          <div class="auth-status-card">
             <div class="h">当前门店 · 美团授权状态</div>
             <div class="kv-list">
               <div class="kv"><span class="k">门店</span><span class="v">悦颜美肌 · 旗舰店</span></div>
+              <div class="kv"><span class="k">接入通道</span><span class="v">汇付天下 ISV</span></div>
               <div class="kv"><span class="k">状态</span><span class="v" id="authMtStatusTag"><span class="tag tag-ok">已授权</span></span></div>
               <div class="kv"><span class="k">到期日</span><span class="v" id="authMtExpire">2027-03-01</span></div>
             </div>
