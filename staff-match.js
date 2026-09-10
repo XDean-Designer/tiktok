@@ -22,7 +22,7 @@
     this.staffCardEdit = null;
     this.pickType = 'project';
     this.pickGroup = 'g_proj_all';
-    this.pickSelected = {};
+    this.pickQty = {};
     this._bound = false;
   }
 
@@ -319,14 +319,19 @@
     return g;
   };
 
-  DyMatchStaff.prototype.openMatchPick = function () {
+  DyMatchStaff.prototype.openMatchPick = function (from) {
     var s = this.api.session;
-    this.pickSelected = {};
+    s.matchPickFrom = from === 'tg-config' ? 'tg-config' : 'confirm';
+    this.pickQty = {};
     var ids = (s.selectedMatchIds && s.selectedMatchIds.length)
       ? s.selectedMatchIds
       : (s.selectedProdId ? [s.selectedProdId] : []);
     var self = this;
-    ids.forEach(function (id) { if (id) self.pickSelected[id] = true; });
+    ids.forEach(function (id) {
+      if (!id) return;
+      var q = s.selectedMatchQty && s.selectedMatchQty[id];
+      self.pickQty[id] = (q >= 1 ? Math.min(99, Math.floor(Number(q))) : 1);
+    });
     this.pickType = 'project';
     this.pickGroup = 'g_proj_all';
     this.renderMatchPick();
@@ -376,38 +381,58 @@
     var checkSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>';
     var self = this;
     list.innerHTML = items.map(function (it) {
-      var on = !!self.pickSelected[it.id];
+      var qty = self.pickQty[it.id];
+      var on = qty >= 1;
       var sub = (it.category || '') + (it.spec ? ' · ' + it.spec : '') + ' · ¥' + it.price;
+      var qtyHtml = on
+        ? '<div class="match-pick-qty" data-match-qty-wrap="' + escapeHtml(it.id) + '">' +
+          '<button type="button" class="match-pick-qty__btn" data-match-qty-minus="' + escapeHtml(it.id) + '" aria-label="减少">−</button>' +
+          '<span class="match-pick-qty__n">' + qty + '</span>' +
+          '<button type="button" class="match-pick-qty__btn" data-match-qty-plus="' + escapeHtml(it.id) + '" aria-label="增加">+</button>' +
+          '</div>'
+        : '';
       return '<div class="match-pick-item-wrap' + (on ? ' on' : '') + '">' +
         '<button type="button" class="match-pick-item" data-match-item="' + escapeHtml(it.id) + '">' +
         '<span class="match-pick-item__check">' + (on ? checkSvg : '') + '</span>' +
         '<span class="match-pick-item__text">' +
         '<span class="match-pick-item__name">' + escapeHtml(it.name) + '</span>' +
         '<span class="match-pick-item__sub">' + escapeHtml(sub) + '</span>' +
-        '</span></button></div>';
+        '</span></button>' + qtyHtml + '</div>';
     }).join('') || '<div style="padding:24px;text-align:center;color:#929292;font-size:13px;">该分组暂无项目</div>';
   };
 
   DyMatchStaff.prototype.syncMatchCount = function () {
-    var n = Object.keys(this.pickSelected).length;
+    var n = Object.keys(this.pickQty || {}).length;
     var el = document.getElementById('matchPickCount');
     if (el) el.innerHTML = '已选 <strong>' + n + '</strong> 项';
   };
 
   DyMatchStaff.prototype.commitMatchPick = function () {
-    var ids = Object.keys(this.pickSelected);
+    var ids = Object.keys(this.pickQty || {});
     if (!ids.length) {
       this.api.toast('请至少选择一项');
       return false;
     }
-    var items = ids.map(function (id) { return this.itemById(id); }.bind(this)).filter(Boolean);
+    var self = this;
+    var items = ids.map(function (id) { return self.itemById(id); }).filter(Boolean);
     var s = this.api.session;
-    s.selectedMatchIds = items.map(function (it) { return it.id; });
+    s.selectedMatchQty = {};
+    s.selectedMatchIds = items.map(function (it) {
+      var q = self.pickQty[it.id] >= 1 ? Math.min(99, Math.floor(self.pickQty[it.id])) : 1;
+      s.selectedMatchQty[it.id] = q;
+      return it.id;
+    });
     s.selectedProdId = s.selectedMatchIds[0] || null;
     s.mismatched = false;
     s.matchMemory = s.matchMemory || {};
     s.matchMemory[s.couponName] = items.map(function (it) {
-      return { id: it.id, kind: it.kind || 'project', name: it.name, price: it.price };
+      return {
+        id: it.id,
+        kind: it.kind || 'project',
+        name: it.name,
+        price: it.price,
+        qty: s.selectedMatchQty[it.id] || 1
+      };
     });
     return true;
   };
@@ -497,14 +522,37 @@
       var itemBtn = e.target.closest('[data-match-item]');
       if (itemBtn) {
         var mid = itemBtn.getAttribute('data-match-item');
-        if (self.pickSelected[mid]) delete self.pickSelected[mid];
-        else self.pickSelected[mid] = true;
+        if (self.pickQty[mid]) delete self.pickQty[mid];
+        else self.pickQty[mid] = 1;
+        self.renderMatchList();
+        self.syncMatchCount();
+        return;
+      }
+      var qtyPlus = e.target.closest('[data-match-qty-plus]');
+      if (qtyPlus) {
+        e.preventDefault();
+        e.stopPropagation();
+        var pid = qtyPlus.getAttribute('data-match-qty-plus');
+        var pq = self.pickQty[pid] || 1;
+        self.pickQty[pid] = Math.min(99, pq + 1);
+        self.renderMatchList();
+        self.syncMatchCount();
+        return;
+      }
+      var qtyMinus = e.target.closest('[data-match-qty-minus]');
+      if (qtyMinus) {
+        e.preventDefault();
+        e.stopPropagation();
+        var mid2 = qtyMinus.getAttribute('data-match-qty-minus');
+        var mq = self.pickQty[mid2] || 1;
+        if (mq <= 1) delete self.pickQty[mid2];
+        else self.pickQty[mid2] = mq - 1;
         self.renderMatchList();
         self.syncMatchCount();
         return;
       }
       if (e.target.closest('#btnMatchPickClear')) {
-        self.pickSelected = {};
+        self.pickQty = {};
         self.renderMatchList();
         self.syncMatchCount();
         return;
@@ -512,7 +560,8 @@
       if (e.target.closest('#btnMatchPickOk')) {
         if (self.commitMatchPick()) {
           self.api.toast(self.api.session.selectedMatchIds.length > 1 ? '已匹配多项' : '已匹配');
-          self.api.showScreen('confirm');
+          var from = self.api.session.matchPickFrom === 'tg-config' ? 'tg-config' : 'confirm';
+          self.api.showScreen(from);
           self.api.syncConfirmUI();
         }
         return;

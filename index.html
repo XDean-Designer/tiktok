@@ -6,6 +6,7 @@
 <title>剑琅联盟 · 团购核销</title>
 <link rel="stylesheet" href="shell.css">
 <link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="workbench.css">
 <script>
 (function () {
   var root = document.documentElement;
@@ -57,6 +58,14 @@
   <div class="nav-group">
     <div class="g-t">店员端 · 主链路</div>
     <button type="button" class="nav-item on" data-flow="home"><span class="idx">1</span>APP 首页</button>
+    <div class="nav-arrow">↓</div>
+    <button type="button" class="nav-item" data-flow="workbench"><span class="idx">1a</span>工作台</button>
+    <div class="nav-arrow">↓</div>
+    <button type="button" class="nav-item" data-flow="tg-set"><span class="idx">1c</span>团购设置</button>
+    <div class="nav-arrow">↓</div>
+    <button type="button" class="nav-item" data-flow="tg-deals"><span class="idx">1d</span>目录列表</button>
+    <div class="nav-arrow">↓</div>
+    <button type="button" class="nav-item" data-flow="tg-config"><span class="idx">1e</span>默认配置</button>
     <div class="nav-arrow">↓</div>
     <button type="button" class="nav-item" data-flow="account"><span class="idx">1b</span>账号管理</button>
     <div class="nav-arrow">↓</div>
@@ -139,10 +148,12 @@
   <div class="nav-group">
     <div class="g-t">店长端</div>
     <button type="button" class="nav-item" data-flow="owner-auth"><span class="idx">A</span>抖音授权指引</button>
+    <button type="button" class="nav-item" data-flow="dy-auth-grant"><span class="idx">A2</span>抖音核销授权</button>
     <div class="nav-demo-auth">
       <div class="nav-demo-label">抖音授权状态</div>
       <div class="auth-state-bar" id="authStateBar">
         <button type="button" data-auth="none" data-auth-plat="douyin">未开通</button>
+        <button type="button" data-auth="pending" data-auth-plat="douyin">等待审核</button>
         <button type="button" class="on" data-auth="ok" data-auth-plat="douyin">已授权</button>
         <button type="button" data-auth="expired" data-auth-plat="douyin">已到期</button>
       </div>
@@ -175,7 +186,7 @@
   </div>
   <div class="nav-group grow">
     <div class="g-t">说明</div>
-    <div style="padding:6px 8px;font-size:11px;color:#9a9a9a;line-height:1.55;">APP 首页仅为演示占位。本期单店·团购核销（抖音直连 / 美团经汇付；扫码自动识别券类型）；系统优惠券为占位页。</div>
+    <div style="padding:6px 8px;font-size:11px;color:#9a9a9a;line-height:1.55;">APP 首页仅为演示占位。本期单店·团购核销（抖音/美团均经汇付天下 ISV 接入；扫码自动识别券类型）；系统优惠券为占位页。</div>
   </div>
 </aside>
 
@@ -225,16 +236,196 @@
               <div class="home-grid-item"><div class="ico" style="background:#7B61FF;">报</div><div class="lab">报表</div></div>
               <div class="home-grid-item"><div class="ico" style="background:#E37318;">员</div><div class="lab">员工</div></div>
               <button type="button" class="home-grid-item" id="homeVerifyBtn" style="cursor:pointer;" aria-label="验券" title="验券"><div class="ico" style="background:#FE2C55;">验</div><div class="lab">验券</div></button>
-              <div class="home-grid-item"><div class="ico" style="background:#929292;">更</div><div class="lab">更多</div></div>
+              <button type="button" class="home-grid-item" id="homeMoreBtn" style="cursor:pointer;" aria-label="更多" title="更多"><div class="ico" style="background:#929292;">更</div><div class="lab">更多</div></button>
             </div>
             <p style="margin:14px 4px 0;font-size:12px;color:#929292;line-height:1.5;">提示：本页仅为演示占位首页。核销入口：顶部扫码图标 + 宫格「验券」。点门店名进入「账号管理」→「团购核销」可查看抖音/美团授权状态并进入授权指引。</p>
           </div>
           <div class="home-bottom-tab">
-            <button type="button" class="tab on"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>首页</button>
-            <button type="button" class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>工作台</button>
-            <button type="button" class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>消息</button>
-            <button type="button" class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>我的</button>
+            <button type="button" class="tab on" data-home-tab="home"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>首页</button>
+            <button type="button" class="tab" id="homeTabWorkbench" data-home-tab="workbench"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>工作台</button>
+            <button type="button" class="tab" data-home-tab="msg"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>消息</button>
+            <button type="button" class="tab" data-home-tab="me"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>我的</button>
           </div>
+        </div>
+      </div>
+
+<!-- ========== WORKBENCH ========== -->
+      <div class="screen" id="screen-workbench" data-flow="workbench">
+        <div class="page-title-bar"><span class="title">工作台</span></div>
+        <div class="page-body wb-body">
+          <section class="wb-sec">
+            <h2 class="wb-sec__title">常用功能</h2>
+            <div class="wb-grid">
+              <button type="button" class="wb-tile" data-wb="bill"><span class="wb-tile__icon"><img src="assets/workbench/bill.png" alt="" width="42" height="42"></span><span class="wb-tile__label">开单</span></button>
+              <button type="button" class="wb-tile" data-wb="flow"><span class="wb-tile__icon"><img src="assets/workbench/flow.png" alt="" width="42" height="42"></span><span class="wb-tile__label">订单流水</span></button>
+              <button type="button" class="wb-tile" data-wb="appt"><span class="wb-tile__badge">3</span><span class="wb-tile__icon"><img src="assets/workbench/appt.png" alt="" width="42" height="42"></span><span class="wb-tile__label">预约管理</span></button>
+              <button type="button" class="wb-tile" data-wb="hold"><span class="wb-tile__icon"><img src="assets/workbench/hold.png" alt="" width="42" height="42"></span><span class="wb-tile__label">挂单</span></button>
+            </div>
+          </section>
+          <section class="wb-sec">
+            <h2 class="wb-sec__title">经营管理</h2>
+            <div class="wb-grid">
+              <button type="button" class="wb-tile" data-wb="analysis"><span class="wb-tile__icon"><img src="assets/workbench/analysis.png" alt="" width="42" height="42"></span><span class="wb-tile__label">经营分析</span></button>
+              <button type="button" class="wb-tile" data-wb="customer"><span class="wb-tile__icon"><img src="assets/workbench/customer.png" alt="" width="42" height="42"></span><span class="wb-tile__label">客户管理</span></button>
+              <button type="button" class="wb-tile" data-wb="self"><span class="wb-tile__icon"><img src="assets/workbench/self.png" alt="" width="42" height="42"></span><span class="wb-tile__label">自助收银</span></button>
+              <button type="button" class="wb-tile" data-wb="expense"><span class="wb-tile__icon"><img src="assets/workbench/expense.png" alt="" width="42" height="42"></span><span class="wb-tile__label">支出管理</span></button>
+            </div>
+          </section>
+          <section class="wb-sec">
+            <h2 class="wb-sec__title">营销获客</h2>
+            <div class="wb-grid">
+              <button type="button" class="wb-tile" data-wb="mall"><span class="wb-tile__trial">限时体验</span><span class="wb-tile__icon"><img src="assets/workbench/mall.png" alt="" width="42" height="42"></span><span class="wb-tile__label">商城</span></button>
+              <button type="button" class="wb-tile" data-wb="supplier"><span class="wb-tile__icon"><img src="assets/workbench/supplier.png" alt="" width="42" height="42"></span><span class="wb-tile__label">供应商</span></button>
+              <button type="button" class="wb-tile" data-wb="works"><span class="wb-tile__icon"><img src="assets/workbench/works.png" alt="" width="42" height="42"></span><span class="wb-tile__label">作品管理</span></button>
+              <button type="button" class="wb-tile" data-wb="coupon"><span class="wb-tile__trial">限时体验</span><span class="wb-tile__icon"><img src="assets/workbench/coupon.png" alt="" width="42" height="42"></span><span class="wb-tile__label">优惠券</span></button>
+              <button type="button" class="wb-tile" data-wb="reputation"><span class="wb-tile__icon"><img src="assets/workbench/reputation.png" alt="" width="42" height="42"></span><span class="wb-tile__label">店铺口碑</span></button>
+              <button type="button" class="wb-tile" data-wb="poster"><span class="wb-tile__icon"><img src="assets/workbench/poster.png" alt="" width="42" height="42"></span><span class="wb-tile__label">海报工坊</span></button>
+              <button type="button" class="wb-tile" data-wb="newguest"><span class="wb-tile__icon"><img src="assets/workbench/newguest.png" alt="" width="42" height="42"></span><span class="wb-tile__label">新客礼遇</span></button>
+            </div>
+          </section>
+          <section class="wb-sec">
+            <h2 class="wb-sec__title">店铺管理</h2>
+            <div class="wb-grid">
+              <button type="button" class="wb-tile" data-wb="price"><span class="wb-tile__icon"><img src="assets/workbench/price.png" alt="" width="42" height="42"></span><span class="wb-tile__label">价目表</span></button>
+              <button type="button" class="wb-tile" data-wb="card"><span class="wb-tile__icon"><img src="assets/workbench/card.png" alt="" width="42" height="42"></span><span class="wb-tile__label">卡管理</span></button>
+              <button type="button" class="wb-tile" data-wb="store"><span class="wb-tile__icon"><img src="assets/workbench/store.png" alt="" width="42" height="42"></span><span class="wb-tile__label">门店管理</span></button>
+              <button type="button" class="wb-tile" data-wb="decor"><span class="wb-tile__icon"><img src="assets/workbench/decor.png" alt="" width="42" height="42"></span><span class="wb-tile__label">店铺装修</span></button>
+              <button type="button" class="wb-tile" data-wb="stock"><span class="wb-tile__trial">限时体验</span><span class="wb-tile__icon"><img src="assets/workbench/stock.png" alt="" width="42" height="42"></span><span class="wb-tile__label">库存管理</span></button>
+              <button type="button" class="wb-tile" data-wb="device"><span class="wb-tile__icon"><img src="assets/workbench/device.png" alt="" width="42" height="42"></span><span class="wb-tile__label">设备管理</span></button>
+              <button type="button" class="wb-tile" data-wb="popup"><span class="wb-tile__icon"><img src="assets/workbench/popup.png" alt="" width="42" height="42"></span><span class="wb-tile__label">小程序弹窗</span></button>
+              <button type="button" class="wb-tile" data-wb="tuangou-set"><span class="wb-tile__icon"><img src="assets/workbench/tuangou-set.svg" alt="" width="42" height="42"></span><span class="wb-tile__label">团购设置</span></button>
+            </div>
+          </section>
+          <section class="wb-sec">
+            <h2 class="wb-sec__title">员工管理</h2>
+            <div class="wb-grid">
+              <button type="button" class="wb-tile" data-wb="staff"><span class="wb-tile__icon"><img src="assets/workbench/staff.png" alt="" width="42" height="42"></span><span class="wb-tile__label">员工管理</span></button>
+              <button type="button" class="wb-tile" data-wb="rank"><span class="wb-tile__trial">限时体验</span><span class="wb-tile__icon"><img src="assets/workbench/rank.png" alt="" width="42" height="42"></span><span class="wb-tile__label">业绩排行</span></button>
+              <button type="button" class="wb-tile" data-wb="salary"><span class="wb-tile__icon"><img src="assets/workbench/salary.png" alt="" width="42" height="42"></span><span class="wb-tile__label">员工薪资</span></button>
+              <button type="button" class="wb-tile" data-wb="commission"><span class="wb-tile__icon"><img src="assets/workbench/commission.png" alt="" width="42" height="42"></span><span class="wb-tile__label">提成设置</span></button>
+            </div>
+          </section>
+          <section class="wb-sec">
+            <h2 class="wb-sec__title">学习培训</h2>
+            <div class="wb-grid">
+              <button type="button" class="wb-tile" data-wb="learn"><span class="wb-tile__icon"><img src="assets/workbench/learn.png" alt="" width="42" height="42"></span><span class="wb-tile__label">学习培训</span></button>
+              <button type="button" class="wb-tile" data-wb="course"><span class="wb-tile__icon"><img src="assets/workbench/course.png" alt="" width="42" height="42"></span><span class="wb-tile__label">课程广场</span></button>
+              <button type="button" class="wb-tile" data-wb="signup"><span class="wb-tile__icon"><img src="assets/workbench/signup.png" alt="" width="42" height="42"></span><span class="wb-tile__label">我的报名</span></button>
+              <button type="button" class="wb-tile" data-wb="teacher"><span class="wb-tile__icon"><img src="assets/workbench/teacher.png" alt="" width="42" height="42"></span><span class="wb-tile__label">讲师入驻</span></button>
+            </div>
+          </section>
+        </div>
+        <nav class="wb-tabbar wb-tabbar--four" aria-label="底部导航">
+          <button type="button" class="wb-tab" data-wb-tab="home" aria-label="首页">
+            <span class="wb-tab__icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></span>
+            <span>首页</span>
+          </button>
+          <button type="button" class="wb-tab is-on" data-wb-tab="workbench" aria-label="工作台">
+            <span class="wb-tab__icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+            <span>工作台</span>
+          </button>
+          <button type="button" class="wb-tab" data-wb-tab="msg" aria-label="消息">
+            <span class="wb-tab__icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg></span>
+            <span>消息</span>
+          </button>
+          <button type="button" class="wb-tab" data-wb-tab="me" aria-label="我的">
+            <span class="wb-tab__icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></span>
+            <span>我的</span>
+          </button>
+        </nav>
+      </div>
+<!-- ========== /WORKBENCH ========== -->
+
+      <!-- ========== 团购设置 ========== -->
+      <div class="screen" id="screen-tg-set" data-flow="tg-set">
+        <div class="page-title-bar">
+          <button type="button" class="btn-back" data-back aria-label="返回">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <span class="title">团购设置</span>
+        </div>
+        <div class="page-body tg-set-body">
+          <button type="button" class="tg-plat-card" id="tgCardDy" data-tg-plat="douyin">
+            <div class="tg-plat-card__logo"><img src="assets/icons/douyin-logo.svg" alt="" width="48" height="48"></div>
+            <div class="tg-plat-card__main">
+              <div class="tg-plat-card__title">抖音核销</div>
+              <div class="tg-plat-card__status" id="tgCardDyStatus">共3项</div>
+            </div>
+            <img class="tg-plat-card__chev" src="assets/icons/chevron-circle-right.svg" alt="" width="24" height="24" aria-hidden="true">
+          </button>
+          <button type="button" class="tg-plat-card" id="tgCardMt" data-tg-plat="meituan">
+            <div class="tg-plat-card__logo"><img src="assets/icons/meituan-logo.svg" alt="" width="48" height="48"></div>
+            <div class="tg-plat-card__main">
+              <div class="tg-plat-card__title">美团核销</div>
+              <div class="tg-plat-card__status" id="tgCardMtStatus">共3项</div>
+            </div>
+            <img class="tg-plat-card__chev" src="assets/icons/chevron-circle-right.svg" alt="" width="24" height="24" aria-hidden="true">
+          </button>
+        </div>
+      </div>
+
+      <!-- ========== 团购券列表 ========== -->
+      <div class="screen" id="screen-tg-deals" data-flow="tg-deals">
+        <div class="page-title-bar">
+          <button type="button" class="btn-back" data-back aria-label="返回">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <span class="title" id="tgDealsTitle">抖音团购券</span>
+        </div>
+        <div class="page-body tg-deals-body">
+          <div class="tg-deal-list" id="tgDealList"></div>
+          <div class="tg-deal-empty" id="tgDealEmpty" hidden>
+            <div class="tg-deal-empty__t" id="tgDealEmptyTitle">暂无团购券</div>
+            <div class="tg-deal-empty__s" id="tgDealEmptyDesc">请确认授权范围含商品同步能力。</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== 团购券默认配置 ========== -->
+      <div class="screen" id="screen-tg-config" data-flow="tg-config">
+        <div class="page-title-bar">
+          <button type="button" class="btn-back" data-back aria-label="返回">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <span class="title">默认配置</span>
+        </div>
+        <div class="page-body">
+          <div class="info-card tg-config-deal-card">
+            <div class="tg-config-deal-card__head" id="tgConfigPlatHead">
+              <img src="assets/icons/douyin-logo.svg" alt="" width="24" height="24"><span>团购券</span>
+            </div>
+            <div class="tg-config-deal-card__name" id="tgConfigName">深层补水护理 · 单次体验</div>
+            <div class="tg-config-deal-card__divider" aria-hidden="true"></div>
+            <div class="tg-config-deal-card__face">
+              <span class="k">面额</span>
+              <span class="v" id="tgConfigFace">¥268</span>
+            </div>
+          </div>
+          <div class="info-card info-card--order">
+            <div class="kv-list">
+              <div class="kv" id="tgConfigMatchRow">
+                <span class="k">匹配项目</span>
+                <div class="v match-row-block">
+                  <button type="button" class="match-pick-cta" id="btnTgPickMatch">
+                    <span>选择消费项</span>
+                    <img src="assets/icons/match-chevron.svg" alt="" width="16" height="16">
+                  </button>
+                  <div class="match-row-head" id="tgConfigMatchHead" hidden>
+                    <div class="match-items" id="tgConfigMatchItems"></div>
+                    <button type="button" class="match-edit-btn" id="tgConfigMatchEdit">修改</button>
+                  </div>
+                  <div class="match-ratio-box" id="tgConfigMatchRatio" hidden>
+                    <img src="assets/icons/info-circle.svg" alt="" width="16" height="16">
+                    <span>多项匹配按门店原价占比分摊计算业绩</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footer-actions">
+          <button type="button" class="btn-ghost" id="btnTgConfigCancel">取消</button>
+          <button type="button" class="btn-primary" id="btnTgConfigSave">保存</button>
         </div>
       </div>
 
@@ -299,12 +490,12 @@
               </div>
               <div class="acct-plat-stack">
                 <button type="button" class="acct-plat-line" id="acctAuthDy" data-auth-entry="douyin">
-                  <span class="acct-plat-name"><img src="assets/account/plat-tiktok.svg" alt="" width="12" height="12"><span>抖音</span></span>
+                  <span class="acct-plat-name"><img src="assets/icons/douyin-logo.svg" alt="" width="16" height="16"><span>抖音</span></span>
                   <span class="acct-plat-st" id="acctAuthDySt">去开通</span>
                   <img class="acct-chev-img" src="assets/account/chevron.svg" alt="" width="16" height="16">
                 </button>
                 <button type="button" class="acct-plat-line" id="acctAuthMt" data-auth-entry="meituan">
-                  <span class="acct-plat-name"><span class="acct-mt-badge" aria-hidden="true">美团</span><span>美团</span></span>
+                  <span class="acct-plat-name"><img src="assets/icons/meituan-logo.svg" alt="" width="16" height="16"><span>美团</span></span>
                   <span class="acct-plat-st" id="acctAuthMtSt">去开通</span>
                   <img class="acct-chev-img" src="assets/account/chevron.svg" alt="" width="16" height="16">
                 </button>
@@ -423,10 +614,10 @@
             <span class="logo logo-plain"><img src="assets/icons/ticket-01.svg" alt="" width="20" height="20"></span>优惠券
           </button>
           <button type="button" class="plat-tab on" data-plat="douyin">
-            <span class="logo logo-plain"><img src="assets/icons/tiktok.svg" alt="" width="18" height="18"></span>抖音
+            <span class="logo logo-plain"><img src="assets/icons/douyin-logo.svg" alt="" width="18" height="18"></span>抖音
           </button>
           <button type="button" class="plat-tab" data-plat="meituan">
-            <span class="logo logo-mt" aria-hidden="true"><span class="mt-mark">美团</span></span>美团
+            <span class="logo logo-plain"><img src="assets/icons/meituan-logo.svg" alt="" width="18" height="18"></span>美团
           </button>
         </div>
         <div class="page-body">
@@ -475,7 +666,7 @@
         <div class="page-body">
           <div class="note-banner ok"><img src="assets/icons/check-ok.svg" alt="" width="18" height="18"><span>验券成功，请确认商品信息后继续核销</span></div>
           <div class="info-card">
-            <div class="h h-plat" id="resultPlatHead"><img src="assets/icons/tiktok-sm.svg" alt="" width="12" height="12"><span>抖音团购</span></div>
+            <div class="h h-plat" id="resultPlatHead"><img src="assets/icons/douyin-logo.svg" alt="" width="16" height="16"><span>抖音团购</span></div>
             <div class="prod prod-with-tag">
               <span id="resultProdName">深层补水护理 · 单次体验</span>
               <span class="tag tag-unmatch" id="resultUnmatchTag">未匹配</span>
@@ -486,7 +677,6 @@
               <div class="kv"><span class="k">有效期</span><span class="v">至 2026-12-31</span></div>
               <div class="kv"><span class="k">券码</span><span class="v" id="resultCode">dy********7781</span></div>
               <div class="kv"><span class="k">平台单号</span><span class="v" id="resultOid">716829104455</span></div>
-              <div class="kv"><span class="k">团单/商品 ID</span><span class="v" id="resultDealId">product_882910</span></div>
               <div class="kv"><span class="k">平台</span><span class="v" id="resultPlatTag"><span class="tag tag-plat-dy">抖音</span></span></div>
             </div>
           </div>
@@ -507,7 +697,7 @@
         </div>
         <div class="page-body">
           <div class="info-card">
-            <div class="h h-plat" id="confirmPlatHead"><img src="assets/icons/tiktok-confirm.svg" alt="" width="12" height="12"><span>待核销券</span></div>
+            <div class="h h-plat" id="confirmPlatHead"><img src="assets/icons/douyin-logo.svg" alt="" width="16" height="16"><span>待核销券</span></div>
             <div class="prod prod-with-tag">
               <span id="confirmCouponName">深层补水护理 · 单次体验</span>
               <span class="tag tag-unmatch" id="confirmUnmatchTag">未匹配</span>
@@ -516,7 +706,6 @@
               <div class="kv"><span class="k">面额</span><span class="v" id="confirmFace">¥268</span></div>
               <div class="kv"><span class="k">券码</span><span class="v" id="confirmCode">dy********7781</span></div>
               <div class="kv"><span class="k">平台单号</span><span class="v" id="confirmOid">716829104455</span></div>
-              <div class="kv"><span class="k">团单/商品 ID</span><span class="v" id="confirmDealId">product_882910</span></div>
             </div>
           </div>
           <div class="info-card info-card--order">
@@ -605,7 +794,6 @@
             <div class="kv-list">
               <div class="kv"><span class="k">券码</span><span class="v copyable copy-row" data-copy="dy9182-ABCD-7781"><span class="copy-text">dy9182-ABCD-7781</span><img class="copy-ico" src="assets/icons/copy.svg" alt="" width="17" height="17"></span></div>
               <div class="kv"><span class="k">平台单号</span><span class="v copyable copy-row" id="successOidRow" data-copy="716829104455"><span class="copy-text" id="successOid">716829104455</span><img class="copy-ico" src="assets/icons/copy.svg" alt="" width="17" height="17"></span></div>
-              <div class="kv"><span class="k">团单/商品 ID</span><span class="v copyable copy-row" id="successDealRow" data-copy="product_882910"><span class="copy-text" id="successDealId">product_882910</span><img class="copy-ico" src="assets/icons/copy.svg" alt="" width="17" height="17"></span></div>
               <div class="kv"><span class="k">核销时间</span><span class="v">2026-09-03 15:42</span></div>
               <div class="kv"><span class="k">操作人</span><span class="v" id="successOp">顾清扬</span></div>
             </div>
@@ -653,8 +841,8 @@
         </div>
         <div class="plat-tabs" id="orderTabs">
           <button type="button" class="plat-tab" data-order-plat="coupon"><span class="logo logo-plain"><img src="assets/icons/ticket-01.svg" alt="" width="20" height="20"></span>优惠券</button>
-          <button type="button" class="plat-tab on" data-order-plat="douyin"><span class="logo logo-plain"><img src="assets/icons/tiktok.svg" alt="" width="18" height="18"></span>抖音</button>
-          <button type="button" class="plat-tab" data-order-plat="meituan"><span class="logo logo-mt" aria-hidden="true"><span class="mt-mark">美团</span></span>美团</button>
+          <button type="button" class="plat-tab on" data-order-plat="douyin"><span class="logo logo-plain"><img src="assets/icons/douyin-logo.svg" alt="" width="18" height="18"></span>抖音</button>
+          <button type="button" class="plat-tab" data-order-plat="meituan"><span class="logo logo-plain"><img src="assets/icons/meituan-logo.svg" alt="" width="18" height="18"></span>美团</button>
         </div>
         <div class="page-body">
           <div id="orderListDouyin" class="order-list"></div>
@@ -681,7 +869,6 @@
               <div class="kv"><span class="k">状态</span><span class="v" id="detailStatus"><span class="tag tag-ok">已核销</span></span></div>
               <div class="kv"><span class="k">券码</span><span class="v copyable copy-row" id="detailCode" data-copy=""><span class="copy-text">—</span><img class="copy-ico" src="assets/icons/copy.svg" alt="" width="17" height="17"></span></div>
               <div class="kv"><span class="k">平台单号</span><span class="v copyable copy-row" id="detailOid" data-copy=""><span class="copy-text">—</span><img class="copy-ico" src="assets/icons/copy.svg" alt="" width="17" height="17"></span></div>
-              <div class="kv"><span class="k">团单/商品 ID</span><span class="v copyable copy-row" id="detailDeal" data-copy=""><span class="copy-text">—</span><img class="copy-ico" src="assets/icons/copy.svg" alt="" width="17" height="17"></span></div>
               <div class="kv"><span class="k">核销时间</span><span class="v" id="detailTime">—</span></div>
               <div class="kv"><span class="k">操作人</span><span class="v" id="detailOp">顾清扬</span></div>
               <div class="kv"><span class="k">开单号</span><span class="v" id="detailBill">SO20260903018</span></div>
@@ -726,7 +913,7 @@
           <button type="button" class="btn-back" data-back aria-label="返回">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
-          <span class="title">抖音来客授权</span>
+          <span class="title">抖音授权</span>
         </div>
         <div class="page-body auth-guide-body">
           <div class="auth-flow-card">
@@ -736,8 +923,8 @@
                 <div class="auth-step-main">
                   <div class="auth-step-num">1</div>
                   <div class="auth-step-copy">
-                    <div class="tt">打开抖音来客</div>
-                    <div class="dd">使用门店管理员账号登录抖音来客 App / 网页。</div>
+                    <div class="tt">确认抖音来客门店</div>
+                    <div class="dd">使用门店管理员账号。若尚未入驻抖音来客，先完成开店后再授权。</div>
                   </div>
                   <div class="auth-step-ico" aria-hidden="true">
                     <img src="assets/icons/auth-1.svg" alt="" width="24" height="24">
@@ -748,8 +935,8 @@
                 <div class="auth-step-main">
                   <div class="auth-step-num">2</div>
                   <div class="auth-step-copy">
-                    <div class="tt">找到「服务市场 / 授权管理」</div>
-                    <div class="dd">搜索并选择剑琅联盟（技术服务商），发起授权。</div>
+                    <div class="tt">打开汇付天下后台</div>
+                    <div class="dd">登录汇付天下商户 / ISV 后台。抖音团购验券核销经汇付透传（非 APP 内嵌 SDK）。</div>
                   </div>
                   <div class="auth-step-ico" aria-hidden="true">
                     <img src="assets/icons/auth-2.svg" alt="" width="28" height="28">
@@ -760,8 +947,8 @@
                 <div class="auth-step-main">
                   <div class="auth-step-num">3</div>
                   <div class="auth-step-copy">
-                    <div class="tt">勾选核销相关能力</div>
-                    <div class="dd">按最小集授权：门店信息、团购核销、团购对账。</div>
+                    <div class="tt">开通并授权剑琅联盟</div>
+                    <div class="dd">完成对「剑琅联盟」的抖音核销开通/授权。系统会带上门店标识，便于授权后自动关联本店。</div>
                   </div>
                   <div class="auth-step-ico" aria-hidden="true">
                     <img src="assets/icons/auth-3.svg" alt="" width="28" height="28">
@@ -773,7 +960,7 @@
                   <div class="auth-step-num">4</div>
                   <div class="auth-step-copy">
                     <div class="tt">回到剑琅确认状态</div>
-                    <div class="dd">授权成功后变为「已授权」并自动关联本店。团单目录仅在具备相应权限时同步；验券凭顾客券码。</div>
+                    <div class="dd">提交后进入「等待审核」，APP 后台通过后变为「已授权」并自动关联本店。团购券目录以汇付能力为准；验券凭顾客券码。</div>
                   </div>
                   <div class="auth-step-ico auth-step-ico--ok" aria-hidden="true">
                     <img src="assets/icons/auth-4.svg" alt="" width="28" height="28">
@@ -781,37 +968,147 @@
                 </div>
               </div>
             </div>
+            <div class="auth-tips auth-tips--in-card">
+              <img class="auth-tips-ico" src="assets/icons/info-circle.svg" alt="" width="16" height="16">
+              <p class="auth-tips-text">抖音团购核销经汇付天下透传。完成汇付侧授权并审核通过后，方可在本店核销抖音团购券。</p>
+            </div>
           </div>
 
-          <div class="auth-tips">
-            <img class="auth-tips-ico" src="assets/icons/info-circle.svg" alt="" width="16" height="16">
-            <p class="auth-tips-text">在抖音来客完成门店授权后，方可在本店核销抖音团购券。需为生活服务服务商且授权范围覆盖核销相关能力。</p>
-          </div>
-
-          <div class="auth-extra-actions">
-            <button type="button" class="auth-link-btn" id="btnDySettle">还没有抖音来客门店？去入驻</button>
-            <button type="button" class="auth-link-btn" id="btnDyRefreshAuth">我已完成授权，刷新状态</button>
+          <div class="auth-action-card">
+            <div class="auth-action-row">
+              <span class="auth-action-label">·还没有抖音来客门店？</span>
+              <button type="button" class="auth-action-btn" id="btnDySettle">去入驻</button>
+            </div>
+            <div class="auth-action-row">
+              <span class="auth-action-label">·已有抖音来客门店</span>
+              <button type="button" class="auth-action-btn" id="btnDyOpenGrant">去开通</button>
+            </div>
+            <div class="auth-action-row">
+              <span class="auth-action-label">·已完成授权</span>
+              <button type="button" class="auth-action-btn auth-action-btn--refresh" id="btnDyRefreshAuth">刷新</button>
+            </div>
           </div>
 
           <div class="auth-status-card">
             <div class="h">当前门店授权状态</div>
             <div class="kv-list">
               <div class="kv"><span class="k">门店</span><span class="v">悦颜美肌 · 旗舰店</span></div>
+              <div class="kv"><span class="k">接入通道</span><span class="v">汇付天下 ISV</span></div>
               <div class="kv"><span class="k">状态</span><span class="v" id="authStatusTag"><span class="tag tag-ok">已授权</span></span></div>
               <div class="kv"><span class="k">已关联平台门店</span><span class="v" id="authDyMapped">是</span></div>
               <div class="kv"><span class="k">到期日</span><span class="v" id="authExpire">2027-03-01</span></div>
               <div class="kv"><span class="k">门店绑定码</span><span class="v copyable copy-row" id="authDyBindRow" data-copy="JL-DY-5001"><span class="copy-text" id="authDyBindCode">JL-DY-5001</span><img class="copy-ico" src="assets/icons/copy.svg" alt="" width="17" height="17"></span></div>
             </div>
           </div>
+        </div>
+      </div>
 
-          <div class="auth-catalog-card" id="authDyCatalog">
-            <div class="h">团单目录（已同步示意）</div>
-            <ul class="auth-deal-list">
-              <li><span class="id">product_882910</span><span class="nm">深层补水护理 · 单次体验</span></li>
-              <li><span class="id">product_771204</span><span class="nm">头皮护理套餐</span></li>
-              <li><span class="id">product_660188</span><span class="nm">时尚洗剪吹</span></li>
-            </ul>
+      <!-- ========== 抖音核销授权（开通 / 待审 / 已授权） ========== -->
+      <div class="screen" id="screen-dy-auth-grant" data-flow="dy-auth-grant">
+        <div class="page-title-bar">
+          <button type="button" class="btn-back" data-back aria-label="返回">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <span class="title">抖音核销授权</span>
+        </div>
+        <div class="page-body dy-grant-body">
+          <!-- 未开通 / 已到期：开通表单 -->
+          <div id="dyGrantPanelForm">
+            <div class="dy-grant-hero">
+              <span class="dy-grant-logo" aria-hidden="true">
+                <img src="assets/icons/douyin-logo.svg" alt="" width="28" height="28">
+              </span>
+              <div class="dy-grant-hero-txt">
+                <div class="dy-grant-hero-title">经汇付开通「剑琅联盟」抖音核销</div>
+                <div class="dy-grant-hero-sub">提交后需等待审核，通过后方可核销</div>
+              </div>
+            </div>
+            <div class="dy-grant-card">
+              <div class="dy-grant-meta">
+                <div class="dy-grant-meta-row"><span class="k">接入通道</span><span class="v">汇付天下 ISV</span></div>
+                <div class="dy-grant-meta-row"><span class="k">应用</span><span class="v">剑琅联盟 · 到综解决方案</span></div>
+                <div class="dy-grant-meta-row"><span class="k">门店</span><span class="v">悦颜美肌 · 旗舰店</span></div>
+              </div>
+              <div class="dy-grant-sec-label">授权范围</div>
+              <div class="dy-grant-perms" id="dyGrantPerms">
+                <button type="button" class="dy-grant-perm is-on is-locked" data-perm="store" aria-pressed="true">
+                  <span class="dy-grant-check" aria-hidden="true"></span>
+                  <span class="dy-grant-perm-main">
+                    <span class="tt">门店信息</span>
+                    <span class="badge">必选</span>
+                  </span>
+                </button>
+                <button type="button" class="dy-grant-perm is-on is-locked" data-perm="verify" aria-pressed="true">
+                  <span class="dy-grant-check" aria-hidden="true"></span>
+                  <span class="dy-grant-perm-main">
+                    <span class="tt">团购核销</span>
+                    <span class="badge">必选</span>
+                  </span>
+                </button>
+                <button type="button" class="dy-grant-perm is-on is-locked" data-perm="reconcile" aria-pressed="true">
+                  <span class="dy-grant-check" aria-hidden="true"></span>
+                  <span class="dy-grant-perm-main">
+                    <span class="tt">团购对账</span>
+                    <span class="badge">必选</span>
+                  </span>
+                </button>
+                <button type="button" class="dy-grant-perm" data-perm="catalog" aria-pressed="false">
+                  <span class="dy-grant-check" aria-hidden="true"></span>
+                  <span class="dy-grant-perm-main">
+                    <span class="tt">商品同步</span>
+                    <span class="badge is-opt">可选</span>
+                  </span>
+                </button>
+              </div>
+              <p class="dy-grant-note">开通申请经汇付天下提交。提交后进入「等待审核」，需 APP 后台通过后变为「已授权」。</p>
+            </div>
           </div>
+
+          <!-- 等待审核 -->
+          <div id="dyGrantPanelPending" hidden>
+            <div class="dy-grant-result">
+              <div class="dy-grant-result-ico is-wait" aria-hidden="true">…</div>
+              <div class="dy-grant-result-title">开通申请已提交</div>
+              <div class="dy-grant-result-sub">当前状态：等待审核</div>
+            </div>
+            <div class="dy-grant-card">
+              <div class="dy-grant-meta">
+                <div class="dy-grant-meta-row"><span class="k">状态</span><span class="v"><span class="tag tag-wait">等待审核</span></span></div>
+                <div class="dy-grant-meta-row"><span class="k">接入通道</span><span class="v">汇付天下 ISV</span></div>
+                <div class="dy-grant-meta-row"><span class="k">应用</span><span class="v">剑琅联盟 · 到综解决方案</span></div>
+                <div class="dy-grant-meta-row"><span class="k">门店</span><span class="v">悦颜美肌 · 旗舰店</span></div>
+                <div class="dy-grant-meta-row"><span class="k">授权范围</span><span class="v" id="dyGrantPendingScope">门店信息、团购核销、团购对账</span></div>
+              </div>
+              <p class="dy-grant-note">审核通过后本店即可核销抖音团购券。演示：在左侧状态条点「已授权」模拟后台通过。</p>
+            </div>
+          </div>
+
+          <!-- 已授权 -->
+          <div id="dyGrantPanelOk" hidden>
+            <div class="dy-grant-result">
+              <div class="dy-grant-result-ico is-ok" aria-hidden="true"></div>
+              <div class="dy-grant-result-title">已获得抖音核销授权</div>
+              <div class="dy-grant-result-sub">可在本店核销抖音团购券</div>
+            </div>
+            <div class="dy-grant-card">
+              <div class="dy-grant-meta">
+                <div class="dy-grant-meta-row"><span class="k">状态</span><span class="v"><span class="tag tag-ok">已授权</span></span></div>
+                <div class="dy-grant-meta-row"><span class="k">接入通道</span><span class="v">汇付天下 ISV</span></div>
+                <div class="dy-grant-meta-row"><span class="k">应用</span><span class="v">剑琅联盟 · 到综解决方案</span></div>
+                <div class="dy-grant-meta-row"><span class="k">门店</span><span class="v">悦颜美肌 · 旗舰店</span></div>
+                <div class="dy-grant-meta-row"><span class="k">授权范围</span><span class="v" id="dyGrantOkScope">门店信息、团购核销、团购对账</span></div>
+                <div class="dy-grant-meta-row"><span class="k">到期日</span><span class="v" id="dyGrantOkExpire">2027-03-01</span></div>
+                <div class="dy-grant-meta-row"><span class="k">已关联平台门店</span><span class="v" id="dyGrantOkMapped">是</span></div>
+              </div>
+              <p class="dy-grant-note">如需变更授权范围或续期，请在汇付 / 抖音来客完成操作后返回本页刷新状态。</p>
+            </div>
+          </div>
+        </div>
+        <div class="footer-actions" id="dyGrantFooterForm">
+          <button type="button" class="btn-primary" id="btnDyGrantAgree">同意并开通</button>
+        </div>
+        <div class="footer-actions" id="dyGrantFooterBack" hidden>
+          <button type="button" class="btn-primary" id="btnDyGrantBack">返回指引</button>
         </div>
       </div>
 
@@ -880,7 +1177,7 @@
 
           <div class="auth-tips">
             <img class="auth-tips-ico" src="assets/icons/info-circle.svg" alt="" width="16" height="16">
-            <p class="auth-tips-text">美团团购核销经汇付天下透传。完成汇付侧授权后可在本店用券码验券核销；团单目录能否预同步以汇付能力为准。菜单细路径以汇付正式文档为准。本期不含分账抽佣。</p>
+            <p class="auth-tips-text">美团团购核销经汇付天下透传。完成汇付侧授权后可在本店用券码验券核销；团购券目录能否预同步以汇付能力为准。菜单细路径以汇付正式文档为准。本期不含分账抽佣。</p>
           </div>
 
           <div class="auth-extra-actions">
@@ -902,8 +1199,8 @@
           </div>
 
           <div class="auth-catalog-card auth-catalog-card--ph" id="authMtCatalog">
-            <div class="h">团单目录</div>
-            <div class="auth-catalog-ph">目录未开通（待汇付确认是否提供团单列表 API）。验券仍可凭顾客券码完成，不依赖预拉目录。</div>
+            <div class="h">团购券目录</div>
+            <div class="auth-catalog-ph">目录能力以汇付确认为准。验券仍可凭顾客券码完成，不依赖预拉目录。</div>
           </div>
         </div>
       </div>
@@ -1005,7 +1302,7 @@
           <div class="dialog-ico"><img src="assets/icons/x-circle.svg" alt="" width="40" height="40"></div>
           <div class="dt" id="failTitle">券状态异常</div>
           <div class="ds" id="failDesc">核销提交时平台返回券不可用。请核对后重试或改输码。</div>
-          <div class="ds ds--meta" id="failMetaLine">建议：<span id="failAction">重新扫码或改输码</span> · <span id="failCode">RESULT_EXPIRED</span></div>
+          <div class="ds ds--meta" id="failMetaLine">建议：<span id="failAction">重新扫码或改输码</span></div>
           <div class="da">
             <button type="button" class="cancel" data-ex-go="input">手动输码</button>
             <button type="button" class="ok" id="failPrimaryBtn" data-ex-go="scan">重新扫码</button>
@@ -1037,7 +1334,7 @@
 
       <div class="picker-mask" id="empMask">
         <div class="sheet">
-          <div class="sheet-h">选择服务员工</div>
+          <div class="sheet-h" id="empMaskTitle">选择服务员工</div>
           <div class="staff-pick-body" id="empPickRoot" data-staff-root></div>
           <div class="sheet-footer-actions">
             <button type="button" class="btn-ghost" data-close-mask>取消</button>

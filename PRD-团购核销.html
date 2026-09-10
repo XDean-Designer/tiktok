@@ -96,13 +96,13 @@
 
 <div class="main">
 
-<h1>PRD：团购核销 <span class="tag">v1.4.2</span></h1>
+<h1>PRD：团购核销 <span class="tag">v1.5.2</span></h1>
 <p>（单店 · 商户端）</p>
 
 <table>
   <tr><th>字段</th><th>内容</th></tr>
-  <tr><td>文档版本</td><td>v1.4.2</td></tr>
-  <tr><td>日期</td><td>2026-09-09</td></tr>
+  <tr><td>文档版本</td><td>v1.5.2</td></tr>
+  <tr><td>日期</td><td>2026-09-10</td></tr>
   <tr><td>交互原型（唯一可视依据）</td><td>同目录 <code>index.html</code></td></tr>
   <tr><td>画布</td><td>390 × 844</td></tr>
   <tr><td>目的</td><td>供前端 / 后端 / 测试及 AI 工具落地「团购核销」；<b>只需本文 + 交互原型</b></td></tr>
@@ -124,7 +124,7 @@
   <tr><td>10</td><td>验收 P0 + 造数场景</td><td>了解</td><td>了解</td><td><b>必看</b></td><td>Given→When→Then</td></tr>
   <tr><td>11</td><td>非功能（极简）</td><td>✓</td><td>✓</td><td>✓</td><td></td></tr>
   <tr><td>12</td><td>交付物</td><td>✓</td><td>—</td><td>✓</td><td>仅 PRD + 原型</td></tr>
-  <tr><td>13</td><td>接入架构 / 授权闭环 / 门店·券 ID 映射</td><td>✓</td><td><b>必看</b></td><td>✓</td><td>抖音直连 vs 美团经汇付；流程图 + 联调清单</td></tr>
+  <tr><td>13</td><td>接入架构 / 授权闭环 / 门店·券 ID 映射</td><td>✓</td><td><b>必看</b></td><td>✓</td><td>抖音/美团均经汇付天下 ISV；流程图 + 联调清单</td></tr>
 </table>
 
 <p><b>先读这几条（贯穿全文）</b></p>
@@ -133,7 +133,7 @@
   <li><b>单店模式</b>：本期无总部/多分店；核销、授权、订单均按当前登录门店。<b>映射约束</b>：1 APP 门店 ↔ ≤1 抖音门店 + ≤1 美团（汇付）门店。</li>
   <li><b>APP 首页仅为演示占位，并非真实 APP 首页</b>。原型用占位首页承载扫码按钮，便于演示主链路；<b>真实产品入口以线上 APP 首页扫码核销入口为准</b>。占位首页提供 <b>2 个核销入口</b>：顶部右侧扫码图标（与线上一致）+ 宫格<b>「验券」</b>（功能入口，替换原仅展示的「抖音核销」格）；两者进入同一 <code>scan</code> 链路，门禁一致。详见模块 1 / 3 / 6.1。</li>
   <li><b>双平台同屏链路</b>：抖音与美团共用同一屏幕链（扫码→输码→结果→确认→成功/失败→明细→详情→撤销→匹配/员工）；仅平台文案、种子订单与演示数据不同。<b>扫码页无平台 Tab</b>：扫码后<b>自动识别券类型</b>（抖音团购券 / 美团团购券 / 系统优惠券），识别为系统优惠券进入<b>系统券占位页</b>；输码与明细 Tab 为 <b>优惠券（占位）/ 抖音 / 美团</b>。</li>
-  <li><b>授权分平台、相互独立</b>：抖音走「抖音来客授权」；美团经<b>汇付天下 ISV</b>（<code>owner-auth-mt</code> 四步指引）。授权态为 <b>未开通 / 已授权 / 已到期</b>。</li>
+  <li><b>授权分平台、相互独立</b>：抖音与美团<b>均经汇付天下 ISV</b>（独立指引页 <code>owner-auth</code> / <code>owner-auth-mt</code>，各四步）。授权态为 <b>未开通 / 已授权 / 已到期</b>。</li>
   <li><b>业绩归属一律默认空</b>：核销确认页点击选择服务员工；<b>不选也可确认核销</b>，按「未选服务员工」生成订单，<b>该单不计业绩</b>。成功页「操作人」= 当前登录账号，<b>与业绩归属解耦</b>。未选时「未选」与箭头均为错误红 <code>#F32F41</code>；已选为信息蓝。</li>
   <li><b>团购券无事先价目映射</b>：验券后默认「未匹配」；核销时手工「选择消费项」（项目/产品分组多选）。同一会话内按券名记忆匹配；标签在「未匹配」↔「已匹配」间切换。多项时展示文案「多项匹配按门店原价占比分摊计算业绩」（<b>不展示具体百分比</b>）。单匹配时「匹配项目」标签与项目名垂直居中对齐，「修改」同行居中；未匹配 CTA 亦垂直居中。</li>
   <li><b>账号无核销权限</b>：<code>rolePerm</code> <b>对应 APP「角色权限 · 收银开单」</b>；该权限关闭则不可扫码核销。拦截全部核销入口（扫码 / 输码 / 主链路导航 / 重新扫码 / 手动输码等）→「无核销权限」页；验券、核销等动作时仍做兜底拦截。原型演示条文案为「收银开单权限 / 已开启 / 已关闭」。</li>
@@ -146,8 +146,10 @@
   <li><b>账号管理入口</b>：演示首页点门店名进入「账号管理」；团购核销行展示授权态（去开通 / 已授权 / 已到期）。</li>
   <li><b>未开通弹窗</b>：当前平台授权非 <code>ok</code> 时扫码/验券 → <b>居中弹窗</b>；「去开通」进对应授权指引，「取消」关闭。</li>
   <li><b>异常态</b>：原整页异常改为<b>居中弹窗</b>并保留功能按钮；既有 toast / 既有弹窗不改动。</li>
-  <li><b>接入身份（v1.4.1）</b>：抖音=生活服务技术服务商直连；美团团购核销<b>仅经汇付透传</b>。绑定主路径 <code>state</code>/<code>external_id</code>↔<code>store_id</code>。ID 分 L1 目录 / L2 订单 / L3 券实例。详见<b>模块 13</b>。</li>
+  <li><b>接入身份（v1.5.0）</b>：<b>抖音/美团均经汇付天下 ISV</b>（非抖音直连）。绑定主路径 <code>external_id</code>/<code>out_request_no</code>↔<code>store_id</code>（失败再人工/绑定码 K1）。ID 分 L1 目录 / L2 订单 / L3 券实例。L1 能力待汇付确认；原型双平台 seed。详见<b>模块 13</b>。</li>
   <li><b>授权态（v1.4）</b>：产品与原型均为 <b>未开通 / 已授权 / 已到期</b>（已去掉待确认）。</li>
+  <li><b>团购设置（v1.5.1）</b>：双平台阴影卡片 + Figma 品牌方标（<code>douyin-logo.svg</code> / <code>meituan-logo.svg</code>）；已授权显示「共 N 项」→ 阴影券卡列表（分割线 + 已配置/未配置）→ 默认配置顶卡仅匹配项目+数量（无默认业绩归属、<b>无页底「保存后预填」提示</b>）；确认页仍可改归属。</li>
+  <li><b>品牌方标 vs 订单标签（v1.5.1）</b>：全站品牌方标用上述 SVG；核销明细黄底「美团」标签仍为 <code>meituan-tag.svg</code>。</li>
 </ol>
 <p class="reader-note">交互行为与文案以 <code>index.html</code> 当前表现为准；<b>接入 / 映射 / 授权产品态以模块 13 为准</b>。</p>
 
@@ -162,7 +164,7 @@
   <li>本期按 <b>单店</b> 交付，不做总部/多分店与「业绩归属配置」页；</li>
   <li>团购券与门店价目 <b>无事先映射</b>，需在核销时手工选择消费项，并支持会话记忆；</li>
   <li>业绩归属与操作人解耦：归属可空（不计业绩），操作人固定为登录账号；</li>
-  <li>抖音来客授权与美团授权<b>相互独立</b>；美团授权经汇付四步指引；</li>
+  <li>抖音与美团授权<b>相互独立</b>；<b>双平台均经汇付天下 ISV</b>（独立四步指引页）；</li>
   <li>需覆盖账号无「收银开单」权限、门店未授权/到期、断网、相机权限、已核销幂等等异常；</li>
   <li>原型首页仅为演示占位，真实入口对齐线上扫码核销。</li>
 </ul>
@@ -175,10 +177,10 @@
   <tr><td>业绩归属可选</td><td>默认空；选员工可计业绩；不选不计业绩；未选红/已选蓝</td></tr>
   <tr><td>确认核销开单</td><td>成功后自动开单；内部 orderType/payType 约定见 8</td></tr>
   <tr><td>核销明细与撤销</td><td>列表/详情；1h 内可撤；列表不展示已退款；详情可达已退款</td></tr>
-  <tr><td>双平台授权门禁</td><td>抖音来客 + 美团独立授权（汇付指引）；按当前平台拦动作</td></tr>
+  <tr><td>双平台授权门禁</td><td>抖音 + 美团均经汇付 ISV（独立指引页）；按当前平台拦动作</td></tr>
   <tr><td>权限门禁</td><td>无「收银开单」权限（rolePerm）进页即拦</td></tr>
   <tr><td>异常可达</td><td>相机无权限、断网、超时、验券失败、核销失败、幂等已核销</td></tr>
-  <tr><td>范围可控</td><td>优惠券仅占位；单店；无业绩归属配置页；美团授权经汇付（菜单细路径待材料）</td></tr>
+  <tr><td>范围可控</td><td>优惠券仅占位；单店；无业绩归属配置页；目录能力待汇付确认</td></tr>
 </table>
 
 <h3>1.3 本期做（In）</h3>
@@ -191,7 +193,7 @@
   <li>选择服务员工：卡片翻转（点客/散客 → 小工/中工/大工），多选，照片头像；默认未选可核销；未选红提示</li>
   <li>核销成功：操作人=登录账号；成功页内联选填手机号/称呼/性别；称呼+性别齐全时自动注册会员（写入线上会员列表）</li>
   <li>核销明细（优惠券占位 + 抖音列表 + 美团列表 + 筛选；<b>列表不展示 refund</b>；筛选无「已退款」）→ 订单详情 → 撤销（1h）→ 撤销成功</li>
-  <li>抖音授权指引（none/ok/expired）；美团授权指引（汇付四步，独立于来客）</li>
+  <li>抖音授权指引（汇付四步，汇付 ISV）；美团授权指引（汇付四步，独立页）</li>
   <li>相机无权限、断网/超时/无权限模板、验券失败、已核销幂等弹窗等异常页/层</li>
   <li>演示条复用 + 美团演示订单；扫码演示尊重当前平台</li>
   <li>内部开单：<code>orderType=快捷开单</code>，<code>payType=团购</code>；UI 支付方式「抖音团购」或「美团团购」</li>
@@ -218,7 +220,7 @@
   <tr><td>券与价目事先绑定</td><td><b>无事先映射</b>；确认页「选择消费项」手工多选 + 会话记忆</td></tr>
   <tr><td>业绩强制选员工</td><td>默认空；可不选；未选则该单不计业绩；未选红提示</td></tr>
   <tr><td>操作人=业绩人</td><td>操作人=登录账号；业绩归属独立字段</td></tr>
-  <tr><td>无授权引导</td><td>抖音来客授权状态机 + 指引页；美团独立授权（汇付）；动作时拦截</td></tr>
+  <tr><td>无授权引导</td><td>抖音/美团均经汇付 ISV 授权状态机 + 独立指引页；动作时拦截</td></tr>
   <tr><td>无权限仍可进扫码</td><td><code>rolePerm</code>=收银开单关闭 → 全部核销入口拦截 → 无核销权限页；动作兜底</td></tr>
   <tr><td>已核销重复扫</td><td>幂等弹窗，可查看原单</td></tr>
   <tr><td>误核销无法回退</td><td>1 小时内可撤销；超时不可撤；已退款态（内部 <code>refund</code>，列表不展示）</td></tr>
@@ -234,7 +236,7 @@
 <table>
   <tr><th>角色</th><th>说明</th></tr>
   <tr><td>店员</td><td>日常扫码/输码核销（需开启「收银开单」权限）</td></tr>
-  <tr><td>店长</td><td>核销 + 门店授权协同（抖音来客 / 美团授权）</td></tr>
+  <tr><td>店长</td><td>核销 + 门店授权协同（抖音/美团均经汇付）</td></tr>
   <tr><td>店主</td><td>门店授权与权限发放</td></tr>
 </table>
 <p>本期权限差异：<b>账号是否开启 APP「角色权限 · 收银开单」</b>（会话字段 <code>rolePerm</code>）与 <b>当前平台门店是否已授权</b>（抖音 <code>auth</code> / 美团 <code>authMeituan</code>）分开判定，见模块 4 / 8 / 9。店员日常核销依赖收银开单权限。</p>
@@ -249,7 +251,7 @@
   <tr><td>多匹配 / 记忆匹配</td><td>组合券选多项；下次同券名自动带出</td><td>多项提示分摊文案；记忆后标签「已匹配」</td></tr>
   <tr><td>归属空可核销</td><td>赶时间不选员工</td><td>默认「未选」红字+红箭头；确认成功；该单不计业绩；操作人仍显示登录账号</td></tr>
   <tr><td>无收银开单权限</td><td>权限关闭账号无法核销</td><td>任何核销入口 → 无核销权限页（副文说明未开启收银开单）</td></tr>
-  <tr><td>未授权 / 到期（抖音）</td><td>引导完成来客授权</td><td>动作拦截 → <code>owner-auth</code>；状态展示正确</td></tr>
+  <tr><td>未授权 / 到期（抖音）</td><td>引导完成汇付授权</td><td>动作拦截 → <code>owner-auth</code>；状态展示正确</td></tr>
   <tr><td>未授权（美团）</td><td>引导美团授权（汇付）</td><td>动作拦截 → <code>owner-auth-mt</code>（汇付）页</td></tr>
   <tr><td>已核销幂等</td><td>重复扫不重复开单</td><td>dup 弹窗；可看原单</td></tr>
   <tr><td>1h 撤销</td><td>误核销可撤</td><td>详情可撤 → 撤销成功；状态已撤销</td></tr>
@@ -291,8 +293,10 @@
  ├─ detail 订单详情                &lt;!-- #detail --&gt;
  │    └─ 撤销 → revokeMask → revoke-ok
  ├─ revoke-ok 撤销成功             &lt;!-- #revoke-ok --&gt;
- ├─ owner-auth 抖音来客授权指引    &lt;!-- #owner-auth --&gt;
+ ├─ owner-auth 抖音授权指引（汇付）    &lt;!-- #owner-auth --&gt;
  ├─ owner-auth-mt 美团授权指引（汇付）   &lt;!-- #owner-auth-mt --&gt;
+ ├─ tg-set 团购设置（双平台卡片）       &lt;!-- #tg-set --&gt;
+ ├─ tg-deals / tg-config 团购券列表与默认匹配
  ├─ cam-denied 相机无权限          &lt;!-- #cam-denied --&gt;
  ├─ tpl-offline / tpl-timeout / tpl-noperm
  ├─ verify-fail 验券失败           &lt;!-- #verify-fail --&gt;
@@ -321,7 +325,7 @@
   ORDERS --> DETAIL
   DETAIL -->|1h内撤销| ROK[撤销成功]
   NOP[[无核销权限]] -.拦截入口.-> SCAN
-  AUTH[[抖音来客授权]] -.抖音动作拦截.-> CONFIRM
+  AUTH[[抖音授权·汇付]] -.抖音动作拦截.-> CONFIRM
   authMeituan[[美团授权·汇付]] -.美团动作拦截.-> CONFIRM
 </pre>
 
@@ -333,14 +337,15 @@
   <tr><td>输码验券</td><td><code>input</code></td><td>输入券号</td><td>优惠券占位；抖音/美团可用</td></tr>
   <tr><td>验券结果</td><td><code>result</code></td><td>验券结果</td><td>券信息 + 匹配标签；平台文案动态</td></tr>
   <tr><td>核销确认</td><td><code>confirm</code></td><td>确认核销</td><td>匹配/金额/归属/支付方式（随平台）</td></tr>
-  <tr><td>选择消费项</td><td><code>match-pick</code></td><td>选择消费项</td><td>项目/产品多选</td></tr>
+  <tr><td>选择消费项</td><td><code>match-pick</code></td><td>选择消费项</td><td>项目/产品多选 + 数量 1–99</td></tr>
   <tr><td>核销成功</td><td><code>success</code></td><td>核销成功</td><td>操作人 + 内联会员选填（手机号/称呼/性别）</td></tr>
   <tr><td>核销失败</td><td><code>fail</code></td><td>核销失败</td><td>确认后平台失败</td></tr>
   <tr><td>核销明细</td><td><code>orders</code></td><td>核销明细</td><td>抖音/美团列表 + 筛选；<b>不展示 refund</b></td></tr>
   <tr><td>订单详情</td><td><code>detail</code></td><td>核销详情</td><td>撤销入口；可达已退款态</td></tr>
   <tr><td>撤销成功</td><td><code>revoke-ok</code></td><td>撤销结果</td><td></td></tr>
-  <tr><td>抖音来客授权</td><td><code>owner-auth</code></td><td>抖音来客授权</td><td>四步指引 + 状态</td></tr>
+  <tr><td>抖音授权（汇付）</td><td><code>owner-auth</code></td><td>抖音授权</td><td>汇付四步指引 + 状态（接入通道汇付）</td></tr>
   <tr><td>美团授权（汇付）</td><td><code>owner-auth-mt</code></td><td>美团授权</td><td>汇付四步指引 + 状态</td></tr>
+  <tr><td>团购设置</td><td><code>tg-set</code></td><td>团购设置</td><td>双平台卡片 → 团购券列表 → 默认匹配</td></tr>
   <tr><td>相机无权限</td><td><code>cam-denied</code></td><td>无法使用相机</td><td></td></tr>
   <tr><td>断网模板</td><td><code>tpl-offline</code></td><td>—</td><td></td></tr>
   <tr><td>超时模板</td><td><code>tpl-timeout</code></td><td>—</td><td></td></tr>
@@ -369,14 +374,14 @@
 <h3>4.2 当前平台 <code>platform</code></h3>
 <table>
   <tr><th>值</th><th>含义</th><th>UI 文案要点</th></tr>
-  <tr><td><code>douyin</code></td><td>抖音团购</td><td>「抖音」「抖音团购」；授权走 <code>auth</code> → <code>owner-auth</code></td></tr>
+  <tr><td><code>douyin</code></td><td>抖音团购</td><td>「抖音」「抖音团购」；授权走 <code>auth</code> → <code>owner-auth</code>（汇付）</td></tr>
   <tr><td><code>meituan</code></td><td>美团团购</td><td>「美团」「美团团购」；授权走 <code>authMeituan</code> → <code>owner-auth-mt</code>（汇付）</td></tr>
   <tr><td>（优惠券 Tab）</td><td>占位</td><td>不进入完整验券/核销</td></tr>
 </table>
 <p>扫码页无平台 Tab：扫码后<b>自动识别券类型</b>并更新 <code>platform</code>（识别为系统券进入占位页，不改 <code>platform</code>）；输码页、明细页切换平台 Tab 亦更新 <code>platform</code>。结果/确认/成功等页文案、头部标识与授权门禁随 <code>platform</code> 切换。</p>
 
 <h3>4.3 门店授权（分平台）</h3>
-<h4>4.3.1 抖音来客 <code>auth</code></h4>
+<h4>4.3.1 抖音授权 <code>auth</code>（经汇付）</h4>
 <table>
   <tr><th>状态</th><th>含义</th><th>UI 标签</th><th>动作（验券/核销，当前平台=抖音）</th></tr>
   <tr><td><code>none</code></td><td>未开通</td><td>未开通</td><td>弹窗「去开通」→ <code>owner-auth</code></td></tr>
@@ -384,15 +389,15 @@
   <tr><td><code>expired</code></td><td>已到期</td><td>已到期</td><td>弹窗「去续期」→ <code>owner-auth</code></td></tr>
 </table>
 
-<h4>4.3.2 美团授权 <code>authMeituan</code>（独立于来客）</h4>
+<h4>4.3.2 美团授权 <code>authMeituan</code>（独立于抖音；经汇付）</h4>
 <table>
   <tr><th>状态</th><th>含义</th><th>行为（当前平台=美团）</th></tr>
   <tr><td><code>none</code> / <code>expired</code></td><td>未开通 / 已到期</td><td>弹窗去开通/续期 → <code>owner-auth-mt</code> 汇付指引</td></tr>
   <tr><td><code>ok</code></td><td>已授权</td><td>允许（仍须门店映射已绑定）</td></tr>
 </table>
 <ul>
-  <li><b>美团授权与抖音来客授权相互独立</b>；一侧 <code>ok</code> 不影响另一侧。</li>
-  <li><code>owner-auth-mt</code> 为汇付四步指引（菜单细路径待材料）；状态卡含已关联是/否与绑定码。</li>
+  <li><b>美团授权与抖音授权相互独立</b>；一侧 <code>ok</code> 不影响另一侧。</li>
+  <li><code>owner-auth</code> / <code>owner-auth-mt</code> 均为汇付四步指引（菜单细路径待材料）；状态卡含接入通道汇付、已关联是/否与绑定码（K1）。</li>
   <li><b>进页</b>（仅看 <code>rolePerm</code>）与 <b>动作</b>（<code>rolePerm</code> + 授权 <code>===ok</code> + 映射已绑定）分层。</li>
 </ul>
 
@@ -593,7 +598,10 @@
 <ul>
   <li>标题「选择消费项」。</li>
   <li>Tab：项目 / 产品；左侧分组（全部及分类）；列表多选；「已选 N 项」；「清空」。</li>
-  <li>「取消」/ 返回不写入；「确定」写入会话 <code>selectedMatchIds</code> + <code>matchMemory[券名]</code>，标签改「已匹配」，回 <code>confirm</code>。</li>
+  <li><b>每项已选后带数量步进器 1–99</b>（默认 1）；写入会话时带数量。</li>
+  <li><b>步进器布局</b>：选中卡片内横排——左侧勾选+名称/副文，右侧步进器；步进器相对左侧内容区<b>垂直居中对齐</b>。</li>
+  <li>「取消」/ 返回不写入；「确定」写入会话 <code>selectedMatchIds</code>（及数量）+ <code>matchMemory[券名]</code>，标签改「已匹配」，回 <code>confirm</code>。</li>
+  <li>自团购设置进入时：写入 <code>dealDefaults[L1].matches: [{ id, qty }]</code>（仅匹配，无业绩）。</li>
   <li>价目数据接门店项目/产品；演示数据见 seed。</li>
 </ul>
 
@@ -663,16 +671,18 @@
 </ul>
 
 <h3 id="owner-auth">6.13 授权指引</h3>
-<h4>6.13.1 抖音来客授权</h4>
+<h4>6.13.1 抖音授权（汇付天下 ISV）</h4>
 <ul>
-  <li>标题「抖音来客授权」；四步：打开来客 → 服务市场/授权管理 → 勾选核销相关能力 → 回剑琅确认状态。</li>
-  <li>「去入驻」「我已完成授权，刷新状态」（原型模拟回调绑定）；状态卡含状态、到期日、<b>已关联平台门店</b>是/否、可复制<b>门店绑定码</b>；授权且已绑定时展示团单目录示意。</li>
+  <li>标题「抖音授权」（与美团同为汇付四步结构，<b>独立页面</b>）。</li>
+  <li>四步：确认抖音来客/商家门店 → 打开汇付天下商户/ISV 后台 → 开通并授权剑琅联盟 → 回剑琅确认状态。</li>
+  <li>「去入驻」「打开汇付说明」「我已完成授权，刷新状态」；<code>dy-auth-grant</code> 保留<b>待审核</b>态示意。</li>
+  <li>状态卡：授权态、到期日、<b>接入通道：汇付天下 ISV</b>、「已关联平台门店」是/否、可复制<b>门店绑定码</b>（K1）。</li>
   <li><b>仅服务抖音平台动作拦截</b>；与美团授权无关。</li>
 </ul>
 <h4 id="owner-auth-mt">6.13.2 美团授权（汇付天下 ISV）</h4>
 <ul>
   <li>标题「美团授权」；四步：确认美团门店 → 打开汇付后台 → 开通授权剑琅联盟 → 回剑琅确认状态。</li>
-  <li>「去入驻」「打开汇付说明」「刷新状态」；状态卡含接入通道、已关联是/否、绑定码；团单目录为「目录未开通（待汇付确认）」占位。</li>
+  <li>「去入驻」「打开汇付说明」「刷新状态」；状态卡含<b>接入通道：汇付天下 ISV</b>、已关联是/否、绑定码。</li>
   <li>抖音侧动作<b>不</b>进入本页；本页仅承接美团验券/核销门禁。菜单细路径【待汇付材料】。</li>
 </ul>
 <h4>6.13.3 映射门禁</h4>
@@ -680,6 +690,17 @@
   <li>动作顺序：<code>rolePerm</code> → 平台授权三态 → <b>门店映射已绑定</b>。</li>
   <li>授权 ok 未映射：弹窗「请完善门店绑定」+ 绑定码 → 对应授权指引。演示条可独立切双平台映射。</li>
   <li>无核销权限弹窗「查看授权指引」按当前平台跳转。</li>
+</ul>
+<h4 id="tg-set">6.13.4 团购设置</h4>
+<ul>
+  <li>入口：工作台「团购设置」→ 双平台大卡片（抖音核销 / 美团核销）。</li>
+  <li>视觉：白底圆角 14 + 阴影 <code>1px 2px 5px rgba(0,0,0,0.08)</code>；左侧 <b>48×48</b> Figma 方标（<code>douyin-logo.svg</code> / <code>meituan-logo.svg</code>）；右侧圆底右箭头（<code>chevron-circle-right.svg</code>）。</li>
+  <li>状态：未开通「去开通」；已到期「授权已到期，去续期」；其它非 ok tip 橙色；<b>已授权显示「共 N 项」</b>（目录条数，灰色 <code>#929292</code>）。</li>
+  <li>点击：非 ok → 授权指引；ok 未映射 → 绑定码弹窗；ok 且已映射 → 团购券列表（L1）。</li>
+  <li>列表：接口目录能力<b>待汇付确认</b>；<b>原型双平台均有 seed</b>。标题「抖音团购券」/「美团团购券」（不用「美团团单」）。阴影券卡：首行 24 方标 + 券名 + 金额（<code>#FE2C55</code>）+ 右侧 16 chevron；分割线后次行与券名对齐，胶囊已配置（绿）/未配置（灰）；摘要=全部匹配项目名（<code>×N</code>）可换行，不含员工。</li>
+  <li>默认配置顶卡：24 方标 +「团购券」→ 券名 → 分割线 → 面额；<b>仅可配匹配项目</b>（数量 1–99）；<b>无默认业绩归属</b>；<b>无</b>页底「保存后预填」提示。匹配区 tip：「多项匹配按门店原价占比分摊计算业绩」。存 <code>dealDefaults.matches:[{id,qty}]</code>。</li>
+  <li>核销预填：团购设置默认匹配 &gt; 会话记忆 &gt; 空；确认页仍可改匹配与业绩归属。</li>
+  <li>用户端不展示「团单/商品 ID」（结果/确认/成功/详情）。</li>
 </ul>
 
 <h3 id="cam-denied">6.14 相机无权限</h3>
@@ -726,17 +747,18 @@
   <tr><td><code>offline</code></td><td>是否离线演示</td></tr>
   <tr><td><code>camDenied</code></td><td>相机是否拒绝</td></tr>
   <tr><td><code>platform</code></td><td><code>douyin</code> | <code>meituan</code>（当前验券/核销平台）</td></tr>
-  <tr><td><code>auth</code> / <code>authDouyin</code></td><td>抖音来客：<code>none</code> | <code>ok</code> | <code>expired</code></td></tr>
-  <tr><td><code>authMeituan</code></td><td>美团授权：<code>none</code> | <code>ok</code> | <code>expired</code>（独立于抖音）</td></tr>
+  <tr><td><code>auth</code> / <code>authDouyin</code></td><td>抖音授权（经汇付）：<code>none</code> | <code>ok</code> | <code>expired</code></td></tr>
+  <tr><td><code>authMeituan</code></td><td>美团授权（经汇付）：<code>none</code> | <code>ok</code> | <code>expired</code>（独立于抖音）</td></tr>
   <tr><td><code>mapDouyin</code> / <code>mapMeituan</code></td><td>平台门店是否已绑定本 APP 门店</td></tr>
   <tr><td><code>bindCodeDy</code> / <code>bindCodeMt</code></td><td>门店专属绑定码（示意）</td></tr>
   <tr><td><code>orderId</code> / <code>dealId</code></td><td>当前券 L2 平台单号 / L1 团单或商品 ID</td></tr>
   <tr><td><code>rolePerm</code></td><td>是否开启 APP「角色权限 · 收银开单」；关闭则不可扫码核销</td></tr>
-  <tr><td><code>selectedEmpId</code> / <code>selectedEmpIds</code></td><td>业绩归属员工；默认空</td></tr>
+  <tr><td><code>selectedEmpId</code> / <code>selectedEmpIds</code></td><td>业绩归属员工（<b>仅确认页</b>）；默认空</td></tr>
   <tr><td><code>staffRoles</code> / <code>staffDesignated</code></td><td>工位（大/中/小工）与点客/散客</td></tr>
   <tr><td><code>opName</code></td><td>当前登录账号名（成功页操作人）</td></tr>
   <tr><td><code>selectedProdId</code> / <code>selectedMatchIds</code></td><td>匹配消费项</td></tr>
-  <tr><td><code>matchMemory</code></td><td><code>{ [券名]: [{id,kind,name,price}, ...] }</code> 会话记忆</td></tr>
+  <tr><td><code>dealDefaults</code></td><td><code>{ [L1Id]: { matches: [{ id, qty }] } }</code> 团购设置默认匹配（数量 1–99）</td></tr>
+  <tr><td><code>matchMemory</code></td><td><code>{ [券名]: [{id,kind,name,price,qty?}, ...] }</code> 会话记忆</td></tr>
   <tr><td><code>orderType</code></td><td>内部固定 <code>快捷开单</code></td></tr>
   <tr><td><code>payType</code></td><td>内部固定 <code>团购</code></td></tr>
   <tr><td><code>couponName</code> / <code>couponPrice</code> / <code>couponCode</code></td><td>当前券</td></tr>
@@ -754,8 +776,10 @@
   <tr><td>验券</td><td>扫码/输码提交券码（带平台）；返回券信息或失败码；已核销返回幂等</td><td>【待联调确认】</td></tr>
   <tr><td>核销</td><td>提交券码 + 平台 + 匹配消费项（可空）+ 服务员工（可空）+ 开单字段；成功生成快捷开单</td><td>【待联调确认】</td></tr>
   <tr><td>撤销</td><td>核销后 1h 内撤销；冲销开单与业绩；超时拒绝</td><td>【待联调确认】</td></tr>
-  <tr><td>抖音授权查询</td><td>查询/刷新门店来客授权状态与到期日</td><td>【待联调确认】</td></tr>
-  <tr><td>美团授权查询</td><td>查询/刷新美团门店授权（独立通道）</td><td>【待联调确认】</td></tr>
+  <tr><td>抖音授权查询</td><td>经汇付查询/刷新抖音门店授权状态与到期日；驱动映射</td><td>见模块 13.6【待联调确认】</td></tr>
+  <tr><td>美团授权查询</td><td>经汇付查询/刷新美团门店授权（独立通道）</td><td>见模块 13.6【待联调确认】</td></tr>
+  <tr><td>门店映射绑定</td><td>回调自动绑定 / 人工补录 / 绑定码（K1）</td><td>见模块 13.3【待联调确认】</td></tr>
+  <tr><td>团购券目录同步</td><td>双平台 L1 能力待汇付确认；原型双端 seed</td><td>见模块 13.3.2【待联调确认】</td></tr>
   <tr><td>核销明细</td><td>列表筛选（状态/时间/平台）；<b>列表排除 refund</b>；详情</td><td>【待联调确认】</td></tr>
   <tr><td>价目</td><td>门店项目/产品分组列表（供匹配多选）</td><td>沿用线上价目【待联调确认】</td></tr>
   <tr><td>员工</td><td>在职员工头像/姓名/职位</td><td>沿用线上员工【待联调确认】</td></tr>
@@ -801,7 +825,7 @@
   <li><b>演示首页占位</b>：非正式产品首页；正式入口=线上扫码核销。占位页提供顶部扫码图标与宫格「验券」两个演示入口，两者共用 <code>scan</code> 链路与权限/授权门禁（见 §6.1）。</li>
   <li><b>双平台同链</b>：美团与抖音共用同一屏幕链；仅文案、seed、演示数据不同；扫码页无平台 Tab，扫码自动识别券类型（输码/明细 Tab 分平台）。</li>
   <li><b>平台动态文案</b>：当前平台为抖音时用「抖音 / 抖音团购」；美团时用「美团 / 美团团购」。</li>
-  <li><b>授权独立</b>：抖音来客（<code>auth</code>/<code>owner-auth</code>）与美团（<code>authMeituan</code>/<code>owner-auth-mt</code> 汇付）互不影响；验券另须门店映射已绑定。</li>
+  <li><b>授权独立</b>：抖音与美团均经汇付（<code>auth</code>/<code>owner-auth</code> 与 <code>authMeituan</code>/<code>owner-auth-mt</code>）互不影响；验券另须门店映射已绑定。</li>
   <li><b>无事先价目映射</b>：验券不自动绑价目；仅手工匹配 + 会话记忆。</li>
   <li><b>未匹配可核销</b>：按券面额开单；标签「未匹配」。</li>
   <li><b>已匹配</b>：至少一项消费项；标签「已匹配」；多项显示分摊提示文案，<b>不展示百分比</b>；业绩按门店原价占比分摊（算法服务端实现，UI 不透出比例）。</li>
@@ -813,6 +837,9 @@
   <li><b>内部开单</b>：<code>orderType=快捷开单</code>，<code>payType=团购</code>；UI 支付方式随平台「抖音团购」或「美团团购」。</li>
   <li><b>rolePerm=false</b>（收银开单已关闭）：拦截全部核销入口 + 动作兜底 → <code>tpl-noperm</code>。</li>
   <li><b>平台授权非 ok</b>：拦验券/核销 → 未开通「去开通」/到期「去续期」→ 抖音 <code>owner-auth</code> / 美团 <code>owner-auth-mt</code>；授权 ok 未映射 → 绑定码弹窗。</li>
+  <li><b>团购设置</b>：工作台入口；阴影卡片 + Figma 方标；已授权「共 N 项」；阴影券卡列表；默认顶卡仅匹配+数量（无页底预填提示；<code>dealDefaults.matches:[{id,qty}]</code>）；核销预填优先默认匹配；业绩归属仅确认页手工选。</li>
+  <li><b>品牌资源</b>：方标 <code>douyin-logo.svg</code> / <code>meituan-logo.svg</code>；订单黄底「美团」标签仍为 <code>meituan-tag.svg</code>。</li>
+  <li><b>用户端不展示团单/商品 ID</b>（结果/确认/成功/详情）。</li>
   <li><b>撤销窗口 1 小时</b>；超时不可撤；<b>已退款</b>态（内部 <code>refund</code>）不可撤且业绩已回滚示意；详情文案「已退款」；<b>列表永不展示 refund</b>；筛选无「已退款」芯片。</li>
   <li><b>幂等已核销</b>：不重复开单；弹窗可看原单。</li>
   <li><b>优惠券 Tab</b>：仅占位，本期不做完整核销。</li>
@@ -828,7 +855,7 @@
 <h3>9.1 文案清单（须与原型一致）</h3>
 <p><b>导航/按钮</b>：扫码、验券订单、输入券号、立即验券、重新扫码、去核销、选择消费项、修改、取消、确认核销、确定、清空、继续核销、完成、筛选、重置、应用、撤销核销、返回核销明细、查看原单、手动输码、查看订单、查看授权指引、重试核销、项目、产品、优惠券、抖音、美团、点客、散客、大工、中工、小工、男、女。</p>
 <p><b>标签/状态</b>：未匹配、已匹配、已核销、已撤销、已退款（<b>仅详情等非列表场景</b>）、未开通、已授权、已到期、已绑定、未绑定、抖音、美团、抖音团购、美团团购。</p>
-<p><b>关键提示</b>：将券码放入框内，扫码后自动识别券类型；多项匹配按门店原价占比分摊计算业绩；未匹配价目时，将按券面额开单；业绩归属未选则该单不计业绩；已自动生成开单，可在验券订单中查看明细；对应开单已冲销，员工业绩已回滚，撤销流水已保留；在抖音来客完成门店授权后，方可在本店核销抖音团购券；美团授权·汇付提示（以原型为准）；当前账号未开启「收银开单」权限，无法扫码核销…</p>
+<p><b>关键提示</b>：将券码放入框内，扫码后自动识别券类型；多项匹配按门店原价占比分摊计算业绩；未匹配价目时，将按券面额开单；业绩归属未选则该单不计业绩；已自动生成开单，可在验券订单中查看明细；对应开单已冲销，员工业绩已回滚，撤销流水已保留；经汇付完成门店授权后，方可在本店核销对应平台团购券；当前账号未开启「收银开单」权限，无法扫码核销…</p>
 <p><b>占位符</b>：请输入券码；请输入手机号；如：王 / 王芳（称呼）。</p>
 <p><b>成功页字段标签</b>：手机号（选填）、称呼（选填）、性别（选填）。</p>
 <p><b>Toast</b>：见 5.5。</p>
@@ -838,8 +865,8 @@
 <table>
   <tr><th>维度</th><th>规则</th></tr>
   <tr><td>账号核销权限 <code>rolePerm</code></td><td><b>映射 APP「角色权限 · 收银开单」</b>；关闭：全部入口 → 无核销权限页；动作兜底。演示条：「收银开单权限 / 已开启 / 已关闭」</td></tr>
-  <tr><td>抖音门店授权 <code>auth</code></td><td>仅 <code>ok</code> 可验券/核销（平台=抖音）；否则引导 <code>owner-auth</code></td></tr>
-  <tr><td>美团门店授权 <code>authMeituan</code></td><td>仅 <code>ok</code> 可验券/核销（平台=美团）；否则引导 <code>owner-auth-mt</code>（汇付）；<b>独立于</b> <code>authDouyin</code></td></tr>
+  <tr><td>抖音门店授权 <code>auth</code></td><td>仅 <code>ok</code> 可验券/核销（平台=抖音）；否则引导 <code>owner-auth</code>（汇付）</td></tr>
+  <tr><td>美团门店授权 <code>authMeituan</code></td><td>仅 <code>ok</code> 可验券/核销（平台=美团）；否则引导 <code>owner-auth-mt</code>（汇付）；<b>独立于</b> <code>auth</code></td></tr>
   <tr><td>店员/店长/店主</td><td>角色展示沿用线上；是否开启「收银开单」由账号角色权限配置决定</td></tr>
 </table>
 
@@ -891,7 +918,7 @@
 <p><b>未授权（分平台）</b></p>
 <ol start="5">
   <li><b>Given</b> 有核销权限但 <code>auth=none|expired</code> 且当前平台=抖音，<b>When</b> 点立即验券或确认核销，<b>Then</b> 弹出未开通「去开通」/到期「去续期」并进入 <code>owner-auth</code>。</li>
-  <li><b>Given</b> 有核销权限但 <code>authMeituan</code> 非 ok 且当前平台=美团，<b>When</b> 点立即验券或确认核销，<b>Then</b> 进入 <code>owner-auth-mt</code>（汇付）页（不进入抖音来客页）。</li>
+  <li><b>Given</b> 有核销权限但 <code>authMeituan</code> 非 ok 且当前平台=美团，<b>When</b> 点立即验券或确认核销，<b>Then</b> 进入 <code>owner-auth-mt</code>（汇付）页（不进入抖音授权页）。</li>
   <li><b>Given</b> 授权 ok 但当前平台映射未绑定，<b>When</b> 点验券或确认核销，<b>Then</b> 弹出绑定码弹窗，可去完善绑定。</li>
 </ol>
 
@@ -998,70 +1025,70 @@
 
 <!-- ===================== 模块 13 ===================== -->
 <h2 id="m13"><span class="no">13</span>接入架构 / 授权闭环 / 门店·券 ID 映射</h2>
-<div class="reader-note">读者：前端 ✓ · 后端 <b>必看</b> · 测试 ✓　·　依据 2026-09-09 产品确认。Markdown 含完整 Mermaid 源图；本节为 HTML 可读版。</div>
+<div class="reader-note">读者：前端 ✓ · 后端 <b>必看</b> · 测试 ✓　·　依据 2026-09-10 修订：<b>抖音/美团均经汇付天下 ISV</b>；团购设置 UI v1.5.1。Markdown 含完整 Mermaid 源图；本节为 HTML 可读版。</div>
 
 <h3>13.0 确认结论摘要</h3>
 <table>
   <tr><th>主题</th><th>结论</th></tr>
-  <tr><td>抖音</td><td>生活服务 ISV 直连；拉 L1 须资质+授权范围；绑定用 <code>state</code>↔<code>store_id</code></td></tr>
-  <tr><td>美团</td><td><b>仅经汇付透传</b>团购验券/核销；绑定用 <code>external_id</code>↔<code>store_id</code>；L1 列表待汇付确认</td></tr>
+  <tr><td>接入通道</td><td><b>抖音/美团均经汇付天下 ISV</b>（非抖音直连；非另接美团开放平台双通道）</td></tr>
+  <tr><td>抖音 / 美团</td><td>同为汇付下游；验券/核销经汇付透传；绑定用 <code>external_id</code>/<code>out_request_no</code>↔<code>store_id</code>；失败再人工/绑定码（K1）</td></tr>
   <tr><td>三层 ID</td><td>L1 <code>product_id/deal_id</code> · L2 <code>order_id</code> · L3 券码/券实例（验券时）</td></tr>
-  <tr><td>汇付边界</td><td>本期不做分账/抽佣；产品确认团购业务经汇付透传（非「仅支付流水」假设）</td></tr>
-  <tr><td>SDK</td><td>不做内嵌官方 SDK；平台/汇付授权即生效，我方不做二次审核</td></tr>
+  <tr><td>L1 目录</td><td>双平台能力均<b>待汇付确认</b>；原型双端 seed；验券主路径不依赖预拉</td></tr>
+  <tr><td>汇付边界</td><td>本期不做分账/抽佣；双平台团购业务经汇付透传（非「仅支付流水」假设）</td></tr>
+  <tr><td>SDK</td><td>不做内嵌官方 SDK；汇付授权即生效，我方不做二次审核（<code>dy-auth-grant</code> 可示意待审核）</td></tr>
   <tr><td>授权产品态</td><td><b>未开通 / 已授权 / 已到期</b></td></tr>
 </table>
-<p>完整流程图、映射表与联调清单见 Markdown <code>PRD-团购核销.md</code> 模块 13（v1.4.1）。</p>
+<p>完整流程图、映射表与联调清单见 Markdown <code>PRD-团购核销.md</code> 模块 13（v1.5.1）。</p>
 
 <h3>13.1 接入架构</h3>
 <pre><code>剑琅 APP/后端
-  ├─ 授权引导 → 抖音来客·服务市场「剑琅联盟」→ 回调/查询 → 门店映射 → 拉团单目录 → 验券核销
-  └─ 授权引导 → 汇付商户/ISV 后台 → 回调/查询 → 门店映射 → (团单目录·待汇付确认) → 经汇付验券核销
-不做内嵌官方 SDK
+  ├─ 抖音授权引导 → 汇付商户/ISV 后台 → 回调/查询 → 门店映射 → (团购券目录·待汇付确认) → 经汇付验券核销
+  └─ 美团授权引导 → 汇付商户/ISV 后台 → 回调/查询 → 门店映射 → (团购券目录·待汇付确认) → 经汇付验券核销
+不做内嵌官方 SDK；不做抖音开放平台直连
 </code></pre>
 
 <h3>13.2 业务闭环</h3>
-<h4>抖音（直连）</h4>
+<h4>抖音（经汇付）</h4>
 <ol>
   <li>APP 登录当前门店 → 账号管理看抖音授权态</li>
-  <li>未开通 → 指引；无来客门店则「去入驻」官方</li>
-  <li>来客服务市场找「剑琅联盟」→ 发起授权（核销相关能力）</li>
-  <li>平台授权生效 → 剑琅同步状态（非人工审）→ 回调自动绑定 <code>storeId</code>（失败则人工/绑定码）</li>
-  <li>拉取本店团单/商品列表并关联 APP 门店</li>
-  <li>顾客出示码 → 扫码/输码验券 → 确认核销（手工匹配消费项）→ 开单</li>
+  <li>未开通 → 汇付四步指引；无来客/商家门店则「去入驻」官方</li>
+  <li>汇付后台开通授权剑琅联盟（带 <code>external_id</code>↔<code>store_id</code>）</li>
+  <li>汇付生效 → 剑琅同步状态 → 回调自动绑定（失败则人工/绑定码；状态卡展示已关联）</li>
+  <li>团购券目录预拉：待汇付确认；确认前以验券响应落订单字段兜底</li>
+  <li>顾客出示码 → 经汇付验券 → 确认核销（手工匹配消费项）→ 开单</li>
 </ol>
-<h4>美团（汇付）</h4>
+<h4>美团（经汇付）</h4>
 <ol>
-  <li>APP 看美团授权态 → 未开通则指引进<b>汇付后台</b></li>
+  <li>APP 看美团授权态 → 未开通则指引进<b>汇付后台</b>（同结构独立页）</li>
   <li>无美团门店则「去入驻」→ 再回汇付完成对剑琅授权</li>
   <li>汇付生效 → 回调自动映射（失败降级人工/绑定码）</li>
-  <li>团单预拉：待汇付确认；确认前以验券响应落订单字段兜底</li>
+  <li>团购券预拉：待汇付确认；确认前以验券响应落订单字段兜底</li>
   <li>同屏核销链路；支付方式 UI「美团团购」</li>
 </ol>
 
 <h3>13.3 研发映射</h3>
 <pre><code>APP账号 + rolePerm(收银开单)
-    └─ APP storeId ──1:1── 抖音门店ID → 抖音团单目录(可拉)
-                 └─1:1── 美团门店ID/汇付商户号 → 美团团单目录(待确认)
-顾客券码 → 验券 → 券实例ID + 团单ID → 校验归属本店映射 → 核销订单+快捷开单
+    └─ APP storeId ──1:1── 抖音门店ID/汇付商户号 → 抖音团购券目录(待确认)
+                 └─1:1── 美团门店ID/汇付商户号 → 美团团购券目录(待确认)
+顾客券码 → 经汇付验券 → 券实例ID + L1 ID → 校验归属本店映射 → 核销订单+快捷开单
 </code></pre>
-<p><b>绑定优先级：</b>① 授权回调自动绑定 → ② 人工补录平台门店 ID → ③ 门店专属绑定码。</p>
-<p><b>说明：</b>目录落库 ≠ 价目事先映射；确认页仍手工选择消费项。</p>
+<p><b>绑定优先级（K1）：</b>① 汇付开通/进件回调自动绑定 → ② 人工补录平台门店 ID → ③ 门店专属绑定码 + 已关联展示。</p>
+<p><b>说明：</b>目录落库 ≠ 价目事先映射；确认页仍手工选择消费项；团购设置可预填匹配+数量。</p>
 
 <h3>13.4 授权三态（产品目标）</h3>
 <table>
   <tr><th>状态</th><th>含义</th><th>验券/核销</th></tr>
   <tr><td>未开通</td><td>未授权或已解除</td><td>拦截 → 引导开通</td></tr>
-  <tr><td>已授权</td><td>平台/汇付有效且映射可用</td><td>允许（仍须 rolePerm）</td></tr>
+  <tr><td>已授权</td><td>汇付有效且映射可用</td><td>允许（仍须 rolePerm）</td></tr>
   <tr><td>已到期</td><td>授权过期</td><td>拦截 → 续期</td></tr>
 </table>
 
 <h3>13.6 技术联调清单（摘要）</h3>
-<p><b>抖音：</b>服务市场能力集、授权回调、门店 ID、绑定码/state、团单列表拉取、验券核销撤销、到期刷新。【待联调确认】</p>
-<p><b>汇付/美团：</b>商户开通文档、回调字段、绑定码、验券核销 API；<b>H4 能否拉团单列表【待与汇付确认】</b>。</p>
-<p><b>剑琅：</b>映射唯一约束、验券前门禁、目录同步任务、订单落平台单号、后台人工补录、去入驻外链。</p>
-<blockquote><p>开放问题：美团团单预拉可行性（H4）；汇付后台菜单截图。已落地：映射缺失弹窗文案、绑定码展示（授权卡+弹窗）、授权三态 UI。完整表见 <code>PRD-团购核销.md</code> 模块 13.6。</p></blockquote>
+<p><b>汇付（抖音+美团共通）：</b>商户开通文档、回调字段、<code>external_id</code> 绑定、绑定码（K1）、验券核销撤销 API；<b>H4 双平台能否拉团购券列表【待与汇付确认】</b>。</p>
+<p><b>剑琅：</b>映射唯一约束、验券前门禁、目录同步任务（视 H4）、订单落平台单号、后台人工补录、去入驻外链、<code>dealDefaults.matches:[{id,qty}]</code>。</p>
+<blockquote><p>开放问题：双平台 L1 预拉可行性（H4）；汇付后台菜单截图。已落地：映射缺失弹窗、绑定码+已关联、授权三态、团购设置默认仅匹配+数量、美团称「团购券」、品牌方标 SVG、1C/1D/1E 阴影券卡、默认配置去页底预填提示、用户端隐藏团单/商品 ID。完整表见 <code>PRD-团购核销.md</code> 模块 13.6。</p></blockquote>
 
-<div class="foot">PRD：团购核销 · v1.4.1 · 2026-09-09 · 交互原型 index.html（390 × 844）</div>
+<div class="foot">PRD：团购核销 · v1.5.2 · 2026-09-10 · 交互原型 index.html（390 × 844）</div>
 
 </div>
 
@@ -1100,7 +1127,7 @@
 
   var screenAnchors = [
     'home','scan','input','result','confirm','match-pick','empMask','success','fail',
-    'orders','detail','revoke-ok','owner-auth','owner-auth-mt','cam-denied','tpl-offline','tpl-timeout',
+    'orders','detail','revoke-ok','owner-auth','owner-auth-mt','tg-set','cam-denied','tpl-offline','tpl-timeout',
     'tpl-noperm','verify-fail','masks'
   ];
 
