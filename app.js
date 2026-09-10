@@ -308,7 +308,7 @@
     fail: 'failMask'
   };
 
-  /* 扫码演示当前券类型：douyin | meituan | coupon */
+  /* 扫码演示当前券类型：douyin | meituan | coupon | voucher | times */
   var scanKind = 'douyin';
 
   function isMeituan() { return session.plat === 'meituan'; }
@@ -638,15 +638,23 @@
     return !!session.selectedProdId;
   }
   function syncMatchStatusTags() {
-    var matched = isCouponMatched();
-    ['#resultUnmatchTag', '#confirmUnmatchTag'].forEach(function (sel) {
-      var el = $(sel);
-      if (!el) return;
-      el.hidden = false;
-      el.textContent = matched ? '已匹配' : '未匹配';
-      el.classList.toggle('tag-unmatch', !matched);
-      el.classList.toggle('tag-matched', matched);
-    });
+    /* 验券流程不再展示「已匹配 / 未匹配」标签；匹配能力仍由 mismatched / selectedMatchIds 驱动 */
+  }
+
+  function showUnsupportedCoupon(kind) {
+    var title = $('#unsupportedCouponTitle');
+    var desc = $('#unsupportedCouponDesc');
+    if (kind === 'voucher') {
+      if (title) title.textContent = '暂不支持核销代金券';
+      if (desc) desc.textContent = '当前只能核销团购套餐券，请换一张团购券再试。';
+    } else if (kind === 'times') {
+      if (title) title.textContent = '暂不支持核销计次卡';
+      if (desc) desc.textContent = '当前只能核销团购套餐券，请换一张团购券再试。';
+    } else {
+      if (title) title.textContent = '暂不支持核销';
+      if (desc) desc.textContent = '当前只能核销团购套餐券，请换一张团购券再试。';
+    }
+    openMask('unsupportedCouponMask');
   }
 
   function toast(msg) {
@@ -1010,11 +1018,16 @@
     }
   }
 
-  /* 扫码后自动识别：douyin/meituan → 对应平台主流程；coupon → 系统券占位页 */
+  /* 扫码自动识别：douyin/meituan → 团购主流程；coupon → 线上系统券示意；voucher/times → 不支持 */
   function scanCouponAuto(kind) {
     if (kind === 'coupon') {
       flashScanOk('识别成功', '系统优惠券');
       setTimeout(function () { showScreen('coupon-ph'); }, 750);
+      return;
+    }
+    if (kind === 'voucher' || kind === 'times') {
+      flashScanOk('识别成功', kind === 'voucher' ? '代金券' : '计次卡');
+      setTimeout(function () { showUnsupportedCoupon(kind); }, 750);
       return;
     }
     session.plat = kind;
@@ -1026,18 +1039,18 @@
     $all('#scanCouponBar [data-scan-coupon]').forEach(function (b) {
       b.classList.toggle('on', b.getAttribute('data-scan-coupon') === scanKind);
     });
-    var isCoupon = scanKind === 'coupon';
+    var isGroupbuy = scanKind === 'douyin' || scanKind === 'meituan';
     $all('#scanScenarioBar [data-demo-scan]').forEach(function (b) {
       var k = b.getAttribute('data-demo-scan');
       var platOnly = k === 'matched' || k === 'mismatch' || k === 'multi';
-      b.disabled = isCoupon && platOnly;
+      b.disabled = !isGroupbuy && platOnly;
     });
   }
 
   function runScanDemo(kind) {
     if (kind === 'ok' || kind === 'matched') {
-      if (scanKind === 'coupon') {
-        scanCouponAuto('coupon');
+      if (scanKind === 'coupon' || scanKind === 'voucher' || scanKind === 'times') {
+        scanCouponAuto(scanKind);
         return;
       }
       syncScanPlatForDemo();
@@ -1047,16 +1060,30 @@
       ];
       startVerify({ fromScan: true, name: demo.name, price: demo.price, code: demo.code });
     } else if (kind === 'dup') {
+      if (scanKind === 'voucher' || scanKind === 'times') {
+        scanCouponAuto(scanKind);
+        return;
+      }
       startVerify({ dup: true, fromScan: true });
     } else if (kind === 'mismatch') {
-      if (scanKind === 'coupon') { scanCouponAuto('coupon'); return; }
+      if (scanKind === 'coupon' || scanKind === 'voucher' || scanKind === 'times') {
+        scanCouponAuto(scanKind);
+        return;
+      }
       syncScanPlatForDemo();
       startVerify({ mismatch: true, fromScan: true });
     } else if (kind === 'multi') {
-      if (scanKind === 'coupon') { scanCouponAuto('coupon'); return; }
+      if (scanKind === 'coupon' || scanKind === 'voucher' || scanKind === 'times') {
+        scanCouponAuto(scanKind);
+        return;
+      }
       syncScanPlatForDemo();
       startVerify({ multi: true, fromScan: true });
     } else {
+      if (scanKind === 'voucher' || scanKind === 'times') {
+        scanCouponAuto(scanKind);
+        return;
+      }
       reinforceScanFail();
     }
   }
@@ -2042,12 +2069,6 @@
     var timeChip = e.target.closest('#filterTimeChips [data-f-time]');
     if (timeChip) {
       filterDraft.time = timeChip.getAttribute('data-f-time');
-      syncFilterChips(filterDraft);
-      return;
-    }
-
-    if (e.target.closest('#btnFilterReset')) {
-      filterDraft = { status: 'all', time: 'all' };
       syncFilterChips(filterDraft);
       return;
     }

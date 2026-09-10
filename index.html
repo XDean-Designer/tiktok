@@ -76,6 +76,8 @@
         <button type="button" class="on" data-scan-coupon="douyin">抖音团购券</button>
         <button type="button" data-scan-coupon="meituan">美团团购券</button>
         <button type="button" data-scan-coupon="coupon">系统优惠券</button>
+        <button type="button" data-scan-coupon="voucher">代金券</button>
+        <button type="button" data-scan-coupon="times">计次卡</button>
       </div>
       <div class="nav-demo-label" style="margin-top:8px;">扫码结果演示（当前券类型）</div>
       <div class="auth-state-bar nav-demo-actions" id="scanScenarioBar">
@@ -186,7 +188,7 @@
   </div>
   <div class="nav-group grow">
     <div class="g-t">说明</div>
-    <div style="padding:6px 8px;font-size:11px;color:#9a9a9a;line-height:1.55;">APP 首页仅为演示占位。本期单店·团购核销（抖音/美团均经汇付天下 ISV 接入；扫码自动识别券类型）；系统优惠券为占位页。</div>
+    <div style="padding:6px 8px;font-size:11px;color:#9a9a9a;line-height:1.55;">APP 首页仅为演示占位。本期单店·团购核销（抖音/美团均经汇付天下 ISV；扫码自动识别券类型）。系统优惠券走线上 APP 既有核销；代金券/计次卡提示不支持。</div>
   </div>
 </aside>
 
@@ -579,7 +581,7 @@
         </div>
       </div>
 
-      <!-- ========== 系统优惠券（扫码识别占位） ========== -->
+      <!-- ========== 系统优惠券（线上 APP 既有核销 · 示意） ========== -->
       <div class="screen" id="screen-coupon-ph" data-flow="coupon-ph">
         <div class="page-title-bar">
           <button type="button" class="btn-back" data-back aria-label="返回">
@@ -593,8 +595,8 @@
             <div class="h h-plat"><img src="assets/icons/ticket-01.svg" alt="" width="16" height="16"><span>系统优惠券</span></div>
             <div class="placeholder-panel">
               <div class="big">🎫</div>
-              <div>优惠券核销 · 示意占位</div>
-              <div style="margin-top:8px;">已识别为系统优惠券，该通道本期暂未开放；抖音 / 美团团购核销主链路已打通。</div>
+              <div>系统优惠券核销</div>
+              <div style="margin-top:8px;">已识别为系统优惠券。核销沿用线上 APP 既有优惠券能力（本页为示意入口）；抖音 / 美团<strong>团购券</strong>走团购核销主链路。代金券、计次卡暂不支持。</div>
             </div>
           </div>
         </div>
@@ -636,8 +638,8 @@
           <div id="inputPanelCoupon" hidden>
             <div class="placeholder-panel">
               <div class="big">🎫</div>
-              <div>优惠券核销 · 示意占位</div>
-              <div style="margin-top:8px;">本期原型已打通抖音 / 美团团购核销主链路</div>
+              <div>系统优惠券核销</div>
+              <div style="margin-top:8px;">沿用线上 APP 既有优惠券核销能力（本 Tab 为示意）。团购券请用抖音 / 美团 Tab 或扫码；代金券、计次卡暂不支持。</div>
             </div>
           </div>
           <div id="inputPanelMeituan" hidden>
@@ -667,9 +669,8 @@
           <div class="note-banner ok"><img src="assets/icons/check-ok.svg" alt="" width="18" height="18"><span>验券成功，请确认商品信息后继续核销</span></div>
           <div class="info-card">
             <div class="h h-plat" id="resultPlatHead"><img src="assets/icons/douyin-logo.svg" alt="" width="16" height="16"><span>抖音团购</span></div>
-            <div class="prod prod-with-tag">
+            <div class="prod">
               <span id="resultProdName">深层补水护理 · 单次体验</span>
-              <span class="tag tag-unmatch" id="resultUnmatchTag">未匹配</span>
             </div>
             <div class="price"><small>¥</small><span id="resultPrice">268</span></div>
             <div class="kv-list">
@@ -698,9 +699,8 @@
         <div class="page-body">
           <div class="info-card">
             <div class="h h-plat" id="confirmPlatHead"><img src="assets/icons/douyin-logo.svg" alt="" width="16" height="16"><span>待核销券</span></div>
-            <div class="prod prod-with-tag">
+            <div class="prod">
               <span id="confirmCouponName">深层补水护理 · 单次体验</span>
-              <span class="tag tag-unmatch" id="confirmUnmatchTag">未匹配</span>
             </div>
             <div class="kv-list">
               <div class="kv"><span class="k">面额</span><span class="v" id="confirmFace">¥268</span></div>
@@ -1262,6 +1262,17 @@
         </div>
       </div>
 
+      <div class="dialog-mask" id="unsupportedCouponMask">
+        <div class="dialog dialog--alert">
+          <div class="dialog-ico"><img src="assets/icons/info-circle-fill.svg" alt="" width="40" height="40"></div>
+          <div class="dt" id="unsupportedCouponTitle">暂不支持核销</div>
+          <div class="ds" id="unsupportedCouponDesc">当前只能核销团购套餐券，请换一张团购券再试。</div>
+          <div class="da">
+            <button type="button" class="ok" data-close-mask>我知道了</button>
+          </div>
+        </div>
+      </div>
+
       <div class="dialog-mask" id="offlinePageMask">
         <div class="dialog dialog--alert">
           <div class="dialog-ico"><img src="assets/icons/wifi-off.svg" alt="" width="40" height="40"></div>
@@ -1355,7 +1366,6 @@
         <div class="sheet filter-sheet">
           <div class="sheet-h sheet-h-bar">
             <span class="sheet-h-title">筛选</span>
-            <button type="button" class="sheet-h-link" id="btnFilterReset">重置</button>
           </div>
           <div class="filter-section">
             <div class="filter-sec-label">核销状态</div>
