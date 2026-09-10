@@ -1,5 +1,11 @@
 (function () {
   var historyStack = ['home'];
+  /* 逻辑父级：返回栈为空时兜底，并用于按入口初始化历史栈 */
+  var BACK_PARENT = {
+    'tg-set': 'workbench',
+    'tg-deals': 'tg-set',
+    'tg-config': 'tg-deals'
+  };
   var currentOrder = null;
   var filterState = { status: 'all', time: 'all' };
   var filterDraft = { status: 'all', time: 'all' };
@@ -1260,9 +1266,38 @@
   }
 
   function goBack() {
-    if (historyStack.length > 1) historyStack.pop();
-    var prev = historyStack[historyStack.length - 1] || 'home';
-    showScreen(prev, false);
+    if (historyStack.length > 1) {
+      historyStack.pop();
+      showScreen(historyStack[historyStack.length - 1] || 'home', false);
+      return;
+    }
+    var cur = historyStack[historyStack.length - 1];
+    var parent = BACK_PARENT[cur];
+    if (parent) {
+      historyStack = initialStackFor(parent);
+      showScreen(parent, false);
+      return;
+    }
+    showScreen(historyStack[0] || 'home', false);
+  }
+
+  /* 按逻辑父级链生成初始历史栈；无父级定义的页面保持单页栈（原行为） */
+  function initialStackFor(flow) {
+    if (!BACK_PARENT[flow]) return [flow];
+    var chain = [];
+    var cur = flow;
+    var guard = 0;
+    while (cur && guard++ < 10) {
+      chain.unshift(cur);
+      cur = BACK_PARENT[cur];
+    }
+    if (chain[0] !== 'home') chain.unshift('home');
+    return chain;
+  }
+
+  /* 统一入口：按页面逻辑父级初始化历史栈 */
+  function seedHistoryFor(flow) {
+    historyStack = initialStackFor(flow);
   }
 
   function tryEnterScan() {
@@ -1624,7 +1659,7 @@
         openException(navFlow);
         return;
       }
-      historyStack = [navFlow];
+      seedHistoryFor(navFlow);
       showScreen(navFlow, false);
       return;
     }
@@ -2212,7 +2247,7 @@
         session.mapDouyin = true;
         session.mapMeituan = true;
         syncTgSetCards();
-        showScreen('tg-set', false); historyStack = ['tg-set'];
+        showScreen('tg-set', false); seedHistoryFor('tg-set');
       },
       'tg-deals-dy': function () {
         session.plat = 'douyin';
@@ -2226,7 +2261,7 @@
         delete session.dealDefaults.product_771204;
         delete session.dealDefaults.product_660188;
         syncPlatformChrome();
-        showScreen('tg-deals', false); historyStack = ['tg-set', 'tg-deals'];
+        showScreen('tg-deals', false); seedHistoryFor('tg-deals');
       },
       'tg-deals-mt': function () {
         session.plat = 'meituan';
@@ -2240,7 +2275,7 @@
         delete session.dealDefaults.deal_910301;
         delete session.dealDefaults.deal_910455;
         syncPlatformChrome();
-        showScreen('tg-deals', false); historyStack = ['tg-set', 'tg-deals'];
+        showScreen('tg-deals', false); seedHistoryFor('tg-deals');
       },
       'tg-config-dy': function () {
         session.plat = 'douyin';
@@ -2256,7 +2291,7 @@
           };
           loadTgConfigDraft(deal);
         }
-        showScreen('tg-config', false); historyStack = ['tg-set', 'tg-deals', 'tg-config'];
+        showScreen('tg-config', false); seedHistoryFor('tg-config');
       },
       'tg-config-mt': function () {
         session.plat = 'meituan';
@@ -2272,7 +2307,7 @@
           };
           loadTgConfigDraft(deal);
         }
-        showScreen('tg-config', false); historyStack = ['tg-set', 'tg-deals', 'tg-config'];
+        showScreen('tg-config', false); seedHistoryFor('tg-config');
       }
     };
     var run = routes[key];
@@ -2290,7 +2325,7 @@
   } else {
     var deepFlow = new URLSearchParams(location.search).get('flow');
     if (deepFlow && deepFlow !== 'home') {
-      historyStack = [deepFlow];
+      seedHistoryFor(deepFlow);
       showScreen(deepFlow, false);
     } else {
       showScreen('home', false);

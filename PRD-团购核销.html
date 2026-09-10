@@ -96,12 +96,12 @@
 
 <div class="main">
 
-<h1>PRD：团购核销 <span class="tag">v1.5.3</span></h1>
+<h1>PRD：团购核销 <span class="tag">v1.5.4</span></h1>
 <p>（单店 · 商户端）</p>
 
 <table>
   <tr><th>字段</th><th>内容</th></tr>
-  <tr><td>文档版本</td><td>v1.5.3</td></tr>
+  <tr><td>文档版本</td><td>v1.5.4</td></tr>
   <tr><td>日期</td><td>2026-09-10</td></tr>
   <tr><td>交互原型（唯一可视依据）</td><td>同目录 <code>index.html</code></td></tr>
   <tr><td>画布</td><td>390 × 844</td></tr>
@@ -153,6 +153,7 @@
   <li><b>匹配标签移除（v1.5.3）</b>：验券结果 / 确认核销页不再展示「已匹配 / 未匹配」标签；匹配能力保留。</li>
   <li><b>券类型范围（v1.5.3）</b>：团购核销主链路仅团购套餐券；代金券/计次卡不支持弹窗；系统优惠券走线上 APP 既有能力。</li>
   <li><b>筛选无重置（v1.5.3）</b>：核销明细筛选 sheet 无「重置」，仅取消/确定。</li>
+  <li><b>1C/1D/1E 返回层级（v1.5.4）</b>：1C→工作台、1D→1C、1E→1D；工作台 / 左侧演示导航 / <code>?flow=</code> 深链一致。</li>
 </ol>
 
 <p>交互行为与文案以 <code>index.html</code> 当前表现为准；<b>接入 / 映射 / 授权产品态以模块 13 为准</b>。</p>
@@ -698,6 +699,7 @@
 <h4 id="tg-set">6.13.4 团购设置</h4>
 <ul>
   <li>入口：工作台「团购设置」→ 双平台大卡片（抖音核销 / 美团核销）。</li>
+  <li><b>标题栏返回层级（v1.5.4）</b>：1C 团购设置 → <b>工作台</b>；1D 团购券列表 → 1C；1E 默认配置 → 1D。与进入路径无关（工作台宫格 / 左侧演示导航 / <code>?flow=</code> 深链一致）。</li>
   <li>视觉：白底圆角 14 + 阴影 <code>1px 2px 5px rgba(0,0,0,0.08)</code>；左侧 <b>48×48</b> Figma 方标（<code>douyin-logo.svg</code> / <code>meituan-logo.svg</code>）；右侧圆底右箭头（<code>chevron-circle-right.svg</code>）。</li>
   <li>状态：未开通「去开通」；已到期「授权已到期，去续期」；其它非 ok tip 橙色；<b>已授权显示「共 N 项」</b>（目录条数，灰色 <code>#929292</code>）。</li>
   <li>点击：非 ok → 授权指引；ok 未映射 → 绑定码弹窗；ok 且已映射 → 团购券列表（L1）。</li>
@@ -1093,7 +1095,7 @@
 <p><b>剑琅：</b>映射唯一约束、验券前门禁、目录同步任务（视 H4）、订单落平台单号、后台人工补录、去入驻外链、<code>dealDefaults.matches:[{id,qty}]</code>。</p>
 <blockquote><p>开放问题：双平台 L1 预拉可行性（H4）；汇付后台菜单截图。已落地：映射缺失弹窗、绑定码+已关联、授权三态、团购设置默认仅匹配+数量、美团称「团购券」、品牌方标 SVG、1C/1D/1E 阴影券卡、默认配置去页底预填提示、用户端隐藏团单/商品 ID。完整表见 <code>PRD-团购核销.md</code> 模块 13.6。</p></blockquote>
 
-<div class="foot">PRD：团购核销 · v1.5.3 · 2026-09-10 · 交互原型 index.html（390 × 844）</div>
+<div class="foot">PRD：团购核销 · v1.5.4 · 2026-09-10 · 交互原型 index.html（390 × 844）</div>
 
 </div>
 
