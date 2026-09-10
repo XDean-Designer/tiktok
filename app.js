@@ -319,7 +319,10 @@
 
   function isMeituan() { return session.plat === 'meituan'; }
   function platLabel() { return isMeituan() ? '美团' : '抖音'; }
-  function platPayLabel() { return isMeituan() ? '美团团购' : '抖音团购'; }
+  /* 支付方式字段：对齐线上称呼，仅「抖音」/「美团」 */
+  function platPayLabel() { return isMeituan() ? '美团' : '抖音'; }
+  /* 结果页等头部平台标识：保留「抖音团购」/「美团团购」 */
+  function platHeadLabel() { return isMeituan() ? '美团团购' : '抖音团购'; }
   function platAuthKey() { return isMeituan() ? 'authMeituan' : 'authDouyin'; }
   function platMapKey() { return isMeituan() ? 'mapMeituan' : 'mapDouyin'; }
   function currentAuth() { return session[platAuthKey()]; }
@@ -960,7 +963,7 @@
         img.width = 16;
         img.height = 16;
       }
-      if (span) span.textContent = platPayLabel();
+      if (span) span.textContent = platHeadLabel();
     }
     var cHead = $('#confirmPlatHead');
     if (cHead) {
