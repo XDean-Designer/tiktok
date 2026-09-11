@@ -139,8 +139,11 @@ html.view-mobile .stage {
   display: block; position: fixed; top: var(--app-top, 0); left: var(--app-left, 0); overflow: hidden;
 }
 html.view-mobile #frame { box-shadow: none; border: none; width: 100%; height: 100%; max-width: none; }
-/* 真机演示：去掉假 Home Indicator 预留，内容贴底 */
-html.view-mobile { --safe-bottom: 0px; }
+/* 真机演示：藏假状态栏；底部避让系统导航栏/手势条（勿置 0，否则页脚被挡） */
+html.view-mobile {
+  /* env 优先；部分 Android 在 viewport-fit=cover 下 inset 为 0，用 34px 兜底 */
+  --safe-bottom: max(34px, env(safe-area-inset-bottom, 0px));
+}
 html.view-mobile .status-bar { display: none !important; }
 
 /* 真机：左滑抽屉唤出完整导航 / 演示条 */
