@@ -6,14 +6,14 @@
     'tg-deals': 'tg-set',
     'tg-config': 'tg-deals',
     'order-flow': 'workbench',
-    'auth-open': 'account'
+    'auth-open': 'account',
+    'pick-member': 'confirm'
   };
-  var pendingSuccessAction = null; /* 'done' | 'continue' */
   var currentOrder = null;
   var filterState = { status: 'all', time: 'all' };
   var filterDraft = { status: 'all', time: 'all' };
   /* 无核销权限时禁止进入的主链路（防绕过） */
-  var CONSUME_ENTRY = { scan: 1, input: 1, result: 1, confirm: 1, success: 1 };
+  var CONSUME_ENTRY = { scan: 1, input: 1, result: 1, confirm: 1, 'pick-member': 1, success: 1 };
   /* 页面/弹层 → PRD 屏级锚点（PRD-团购核销.html） */
   var PRD_ANCHOR = {
     home: 'home',
@@ -25,6 +25,7 @@
     result: 'result',
     confirm: 'confirm',
     'match-pick': 'match-pick',
+    'pick-member': 'pick-member',
     'coupon-ph': 'scan',
     success: 'success',
     fail: 'fail',
@@ -70,6 +71,7 @@
     result: '6.4 验券结果',
     confirm: '6.5 核销确认',
     'match-pick': '6.6 选择消费项',
+    'pick-member': '6.5b 选择顾客',
     empMask: '6.7 选择服务员工',
     success: '6.8 核销成功',
     fail: '6.9 核销失败',
@@ -135,20 +137,59 @@
     timesUnitPrice: 0, /* 单次结算价 */
     lastBillAmount: 0,
     mismatched: true,
-    phone: '',
-    nickname: '',
-    gender: null, // male | female | null
-    registeredMembers: [] // 演示：核销成功页自动注册的会员
+    /* 确认页 · 消费顾客（与员工业绩点客/散客解耦） */
+    customerMode: 'guest', /* member | guest */
+    guestJoin: 'no', /* yes | no */
+    guestGender: 'male',
+    joinGender: 'male',
+    joinPhone: '',
+    joinNick: '',
+    selectedMember: null,
+    tgCustomerSeq: 1,
+    lastCustomerLabel: '男散客',
+    registeredMembers: [] /* 演示：确认核销时新建的会员 */
   };
 
   var seed = window.DySeed || { staff: [], products: [], projects: [], shopProducts: [], catalogGroups: {}, couponDemos: {} };
   var matchStaff = null;
 
+  /* 选择顾客页：仅真实会员（无散客快捷入口）· 对齐 Figma 58:111 */
+  var DEMO_MEMBERS = [
+    {
+      id: 'm1', name: '陈女士', phone: '19900000255', letter: 'C', vip: true, cards: 3,
+      gender: 'female', avatar: 'assets/icons/avatar-female.png',
+      last: '最近消费：2026.8.15 水光三次卡【¥300.00】'
+    },
+    {
+      id: 'm2', name: '陈昕然', phone: '19900000256', letter: 'C', vip: false, cards: 0,
+      gender: 'male', avatar: 'assets/icons/avatar-male.png',
+      last: '最近消费：未消费'
+    },
+    {
+      id: 'm3', name: '高海泉', phone: '13800001122', letter: 'G', vip: false, cards: 0,
+      gender: 'male', avatar: 'assets/icons/avatar-male.png',
+      last: '最近消费：未消费'
+    },
+    {
+      id: 'm4', name: '李女士', phone: '18600003344', letter: 'L', vip: true, cards: 2,
+      gender: 'female', avatar: 'assets/icons/avatar-female.png',
+      last: '最近消费：2026.8.10 御方九物【¥198.00】'
+    },
+    {
+      id: 'm5', name: '马婷', phone: '13600006677', letter: 'M', vip: false, cards: 0,
+      gender: 'female', avatar: 'assets/icons/avatar-female.png',
+      last: '最近消费：未消费'
+    }
+  ];
+  var PICK_INDEX_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('');
+
   var ORDERS = [
     {
       id: 'o1',
       plat: 'douyin',
-      name: '深层补水护理 · 单次体验',
+      couponName: '深层补水护理 · 单次体验',
+      name: '深层补水护理',
+      customer: '陈女士',
       price: 268,
       code: 'dy9182-ABCD-7781',
       oid: '716829104455',
@@ -163,7 +204,9 @@
     {
       id: 'o2',
       plat: 'douyin',
-      name: '时尚洗剪吹',
+      couponName: '时尚洗剪吹',
+      name: '洗剪吹',
+      customer: '男散客',
       price: 98,
       code: 'dy4410-KK92-1203',
       oid: '716829088120',
@@ -178,7 +221,9 @@
     {
       id: 'o3',
       plat: 'douyin',
-      name: '头皮护理套餐',
+      couponName: '头皮护理套餐',
+      name: '头皮护理',
+      customer: '女散客',
       price: 168,
       code: 'dy2201-PL88-0091',
       oid: '716828901144',
@@ -193,7 +238,9 @@
     {
       id: 'o4',
       plat: 'douyin',
+      couponName: '美白淡斑护理',
       name: '美白淡斑护理',
+      customer: '李女士',
       price: 398,
       code: 'dy5502-RF01-3344',
       oid: '716828700221',
@@ -208,7 +255,9 @@
     {
       id: 'o5',
       plat: 'meituan',
-      name: '深层补水护理 · 美团专享',
+      couponName: '深层补水护理 · 美团专享',
+      name: '深层补水护理',
+      customer: '陈女士',
       price: 258,
       code: 'mt7182-ABCD-9901',
       oid: 'MT202609031102',
@@ -223,7 +272,9 @@
     {
       id: 'o6',
       plat: 'meituan',
-      name: '时尚洗剪吹 · 美团',
+      couponName: '时尚洗剪吹 · 美团',
+      name: '快捷开单',
+      customer: '男散客',
       price: 88,
       code: 'mt3301-KK11-8822',
       oid: 'MT202609021455',
@@ -339,6 +390,286 @@
   function platLabel() { return isMeituan() ? '美团' : '抖音'; }
   /* 支付方式字段：对齐线上称呼，仅「抖音」/「美团」 */
   function platPayLabel() { return isMeituan() ? '美团' : '抖音'; }
+  function platGroupbuyTitle(plat) {
+    return (plat === 'meituan') ? '美团团购' : '抖音团购';
+  }
+  function orderListTitle(o) {
+    /* 门店流水 / 核销明细列表：显示核销团购券名；详情仍用 o.name（匹配项或快捷开单） */
+    if (o && o.couponName) return o.couponName;
+    return (o && o.name) || '团购核销';
+  }
+  function pad2(n) {
+    n = Number(n) || 0;
+    return n < 10 ? '0' + n : String(n);
+  }
+  function resolveMemberDisplayName(raw, gender) {
+    var name = String(raw || '').trim();
+    if (!name) return '';
+    if (name.length === 1) {
+      return name + (gender === 'female' ? '小姐' : '先生');
+    }
+    return name;
+  }
+  function currentMatchItems() {
+    var ids = session.selectedMatchIds && session.selectedMatchIds.length
+      ? session.selectedMatchIds
+      : (session.selectedProdId ? [session.selectedProdId] : []);
+    return ids.map(prodById).filter(Boolean);
+  }
+  function orderDetailNameFromSession() {
+    var items = currentMatchItems();
+    if (!items.length) return '快捷开单';
+    return items.map(function (it) {
+      var q = matchQtyOf(it.id);
+      return q > 1 ? (it.name + '×' + q) : it.name;
+    }).join('、');
+  }
+  function allMembers() {
+    return DEMO_MEMBERS.concat(session.registeredMembers || []).filter(function (m, i, arr) {
+      return arr.findIndex(function (x) { return x.id === m.id; }) === i;
+    });
+  }
+  function saveJoinDraftFromDom() {
+    var p = $('#custJoinPhone');
+    var n = $('#custJoinNick');
+    if (p) session.joinPhone = String(p.value || '');
+    if (n) session.joinNick = String(n.value || '');
+  }
+  function restoreJoinDraftToDom() {
+    var p = $('#custJoinPhone');
+    var n = $('#custJoinNick');
+    if (p) p.value = session.joinPhone || '';
+    if (n) n.value = session.joinNick || '';
+  }
+  function syncConfirmCustUI() {
+    var mode = session.customerMode === 'member' ? 'member' : 'guest';
+    $all('#custModeSeg [data-cust-mode]').forEach(function (b) {
+      b.classList.toggle('on', b.getAttribute('data-cust-mode') === mode);
+    });
+    var panelM = $('#custPanelMember');
+    var panelG = $('#custPanelGuest');
+    if (panelM) panelM.hidden = mode !== 'member';
+    if (panelG) panelG.hidden = mode !== 'guest';
+
+    var mem = session.selectedMember;
+    var cta = $('#btnPickMember');
+    var sum = $('#custMemberSummary');
+    if (mode === 'member') {
+      if (mem) {
+        if (cta) cta.hidden = true;
+        if (sum) sum.hidden = false;
+        var av = $('#custMemberAvatar');
+        var nm = $('#custMemberName');
+        var ph = $('#custMemberPhone');
+        if (av) {
+          av.src = mem.avatar || (mem.gender === 'male'
+            ? 'assets/icons/avatar-male.png'
+            : 'assets/icons/avatar-female.png');
+        }
+        if (nm) nm.textContent = mem.name || '—';
+        if (ph) ph.textContent = mem.phone || '—';
+      } else {
+        if (cta) cta.hidden = false;
+        if (sum) sum.hidden = true;
+      }
+    }
+
+    var join = session.guestJoin === 'yes' ? 'yes' : 'no';
+    $all('#custJoinSeg [data-cust-join]').forEach(function (b) {
+      b.classList.toggle('on', b.getAttribute('data-cust-join') === join);
+    });
+    var noJoin = $('#custGuestNoJoin');
+    var yesJoin = $('#custGuestJoin');
+    if (noJoin) noJoin.hidden = join === 'yes';
+    if (yesJoin) yesJoin.hidden = join !== 'yes';
+    if (join === 'yes') restoreJoinDraftToDom();
+
+    var gGuest = session.guestGender || 'male';
+    $all('#custGuestGender [data-guest-gender]').forEach(function (b) {
+      var on = b.getAttribute('data-guest-gender') === gGuest;
+      b.classList.toggle('on', on);
+      b.classList.toggle('is-male', b.getAttribute('data-guest-gender') === 'male');
+      b.classList.toggle('is-female', b.getAttribute('data-guest-gender') === 'female');
+    });
+    var gJoin = session.joinGender || 'male';
+    $all('#custJoinGender [data-join-gender]').forEach(function (b) {
+      var on = b.getAttribute('data-join-gender') === gJoin;
+      b.classList.toggle('on', on);
+      b.classList.toggle('is-male', b.getAttribute('data-join-gender') === 'male');
+      b.classList.toggle('is-female', b.getAttribute('data-join-gender') === 'female');
+    });
+
+    var btn = $('#btnConfirmVerify');
+    if (btn) {
+      var ok = mode !== 'member' || !!(mem && mem.id);
+      btn.disabled = !ok;
+    }
+  }
+  function scrollConfirmCustCard() {
+    var card = $('#confirmCustCard');
+    var body = card && card.closest('.page-body');
+    if (!card || !body) return;
+    requestAnimationFrame(function () {
+      try {
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      } catch (e) {
+        var top = card.offsetTop - 12;
+        body.scrollTop = Math.max(0, top);
+      }
+      /* 保证卡片底部（含展开内容）尽量进入可视区 */
+      setTimeout(function () {
+        var bodyRect = body.getBoundingClientRect();
+        var cardRect = card.getBoundingClientRect();
+        if (cardRect.bottom > bodyRect.bottom - 8) {
+          body.scrollTop += (cardRect.bottom - bodyRect.bottom + 16);
+        }
+        if (cardRect.top < bodyRect.top + 8) {
+          body.scrollTop -= (bodyRect.top + 8 - cardRect.top);
+        }
+      }, 60);
+    });
+  }
+  function renderPickMemberIndex() {
+    var idx = $('#pickMemberIndex');
+    if (!idx) return;
+    idx.innerHTML = PICK_INDEX_LETTERS.map(function (L) {
+      return '<button type="button" data-pick-letter="' + L + '">' + L + '</button>';
+    }).join('');
+  }
+  function renderPickMemberList() {
+    var list = $('#pickMemberList');
+    if (!list) return;
+    renderPickMemberIndex();
+    var members = allMembers().slice().sort(function (a, b) {
+      return String(a.letter || '#').localeCompare(String(b.letter || '#')) ||
+        String(a.name || '').localeCompare(String(b.name || ''), 'zh');
+    });
+    var html = '';
+    var last = '';
+    members.forEach(function (m) {
+      var L = m.letter || '#';
+      if (L !== last) {
+        html += '<div class="pick-member-h" id="pick-letter-' + L + '" data-letter="' + L + '">' + L + '</div>';
+        last = L;
+      }
+      var av = m.avatar || (m.gender === 'male'
+        ? 'assets/icons/avatar-male.png'
+        : 'assets/icons/avatar-female.png');
+      var vipHtml = m.vip
+        ? '<span class="vip-wrap"><span>VIP</span></span>' +
+          (m.cards ? '<span class="cnt">(' + m.cards + ')</span>' : '')
+        : '';
+      html +=
+        '<button type="button" class="pick-member-row" data-member-id="' + m.id + '">' +
+          '<img class="av" src="' + av + '" alt="" width="44" height="44">' +
+          '<span class="info">' +
+            '<span class="line1">' +
+              '<span class="nm">' + m.name + '</span>' + vipHtml +
+              '<span class="ph">' + (m.phone || '') + '</span>' +
+            '</span>' +
+            '<span class="sub">' + (m.last || '最近消费：未消费') + '</span>' +
+          '</span>' +
+        '</button>';
+    });
+    list.innerHTML = html || '<div class="pick-member-h">暂无会员</div>';
+  }
+  function jumpPickLetter(letter) {
+    var el = document.getElementById('pick-letter-' + letter);
+    var list = $('#pickMemberList');
+    if (!el || !list) return;
+    list.scrollTop = el.offsetTop - list.offsetTop;
+  }
+  function openPickMember() {
+    renderPickMemberList();
+    showScreen('pick-member');
+  }
+  function pickMemberById(id) {
+    var m = allMembers().filter(function (x) { return x.id === id; })[0];
+    if (!m) return;
+    session.selectedMember = {
+      id: m.id,
+      name: m.name,
+      phone: m.phone || '',
+      letter: m.letter || '#',
+      vip: !!m.vip,
+      gender: m.gender || 'female',
+      avatar: m.avatar || ''
+    };
+    session.customerMode = 'member';
+    showScreen('confirm');
+    syncConfirmCustUI();
+    toast('已选择：' + m.name);
+  }
+  function resetCustomerDraftForNewCoupon() {
+    session.customerMode = 'guest';
+    session.guestJoin = 'no';
+    session.guestGender = 'male';
+    session.joinGender = 'male';
+    session.joinPhone = '';
+    session.joinNick = '';
+    session.selectedMember = null;
+    session.lastCustomerLabel = '男散客';
+    restoreJoinDraftToDom();
+  }
+  function resolveCustomerSnapshot() {
+    if (session.customerMode === 'member') {
+      if (!session.selectedMember || !session.selectedMember.id) {
+        return { error: '请选择会员' };
+      }
+      return {
+        kind: 'member',
+        label: session.selectedMember.name,
+        memberId: session.selectedMember.id,
+        phone: session.selectedMember.phone || ''
+      };
+    }
+    saveJoinDraftFromDom();
+    if (session.guestJoin === 'yes') {
+      var phone = String(session.joinPhone || '').trim();
+      var nick = String(session.joinNick || '').trim();
+      var gender = session.joinGender || 'male';
+      if (phone && !/^1\d{10}$/.test(phone)) {
+        return { error: '请输入 11 位手机号' };
+      }
+      if (phone || nick) {
+        var displayName = nick
+          ? resolveMemberDisplayName(nick, gender)
+          : ('团购顾客' + pad2(session.tgCustomerSeq));
+        if (!nick) session.tgCustomerSeq += 1;
+        var mem = {
+          id: 'm_tg_' + Date.now(),
+          name: displayName,
+          phone: phone,
+          letter: '#',
+          vip: false,
+          cards: 0,
+          gender: gender,
+          avatar: gender === 'male' ? 'assets/icons/avatar-male.png' : 'assets/icons/avatar-female.png',
+          last: '最近消费：未消费',
+          from: 'verify-confirm'
+        };
+        session.registeredMembers.push(mem);
+        DEMO_MEMBERS.push(mem);
+        toast('已注册为会员：' + displayName);
+        return {
+          kind: 'member',
+          label: displayName,
+          memberId: mem.id,
+          phone: phone,
+          newlyRegistered: true
+        };
+      }
+      return {
+        kind: 'guest',
+        label: (gender === 'female' ? '女' : '男') + '散客'
+      };
+    }
+    var g = session.guestGender || 'male';
+    return {
+      kind: 'guest',
+      label: (g === 'female' ? '女' : '男') + '散客'
+    };
+  }
   /* 结果页等头部平台标识：保留「抖音团购」/「美团团购」 */
   function platHeadLabel() { return isMeituan() ? '美团团购' : '抖音团购'; }
   function platAuthKey() { return isMeituan() ? 'authMeituan' : 'authDouyin'; }
@@ -477,24 +808,28 @@
     return ids.map(function (id) { return DEAL_MASTER[id]; }).filter(Boolean);
   }
 
-  function uniqueDealCount(plat) {
+  function boundDealCountSum(plat) {
+    /* 已绑门店目录券数累加（同券多店各算 1） */
     var pk = platKeyOf(plat);
-    var seen = {};
     var n = 0;
-    boundStoresOf(pk).forEach(function (st) {
-      var ids = (DEAL_IDS_BY_STORE[pk] && DEAL_IDS_BY_STORE[pk][st.id]) || [];
-      ids.forEach(function (id) {
-        if (!seen[id]) { seen[id] = 1; n += 1; }
+    var stores = boundStoresOf(pk);
+    if (stores.length) {
+      stores.forEach(function (st) {
+        var ids = (DEAL_IDS_BY_STORE[pk] && DEAL_IDS_BY_STORE[pk][st.id]) || [];
+        n += ids.length;
       });
-    });
-    if (!n) {
-      Object.keys(DEAL_IDS_BY_STORE[pk] || {}).forEach(function (sid) {
-        (DEAL_IDS_BY_STORE[pk][sid] || []).forEach(function (id) {
-          if (!seen[id]) { seen[id] = 1; n += 1; }
-        });
-      });
+      return n;
     }
+    /* 无绑店时回落：全部门店目录累加（演示兜底） */
+    Object.keys(DEAL_IDS_BY_STORE[pk] || {}).forEach(function (sid) {
+      n += ((DEAL_IDS_BY_STORE[pk][sid] || []).length);
+    });
     return n;
+  }
+
+  function uniqueDealCount(plat) {
+    /* 兼容旧调用：团购设置「共 N 项」改为绑店累加 */
+    return boundDealCountSum(plat);
   }
 
   function getDealDefault(storeId, dealId) {
@@ -641,6 +976,19 @@
       return;
     }
     ensureTgStoreId(session.plat);
+    showScreen('tg-deals');
+  }
+
+  /* 开通页「去设置团购券」：直达对应平台团购券列表，返回回开通页 */
+  function openTgDealsFromAuth(plat) {
+    session.plat = (plat === 'meituan' || plat === 'mt') ? 'meituan' : 'douyin';
+    syncPlatformChrome();
+    ensureTgStoreId(session.plat);
+    if (historyStack[historyStack.length - 1] !== 'auth-open') {
+      var i = historyStack.lastIndexOf('auth-open');
+      if (i >= 0) historyStack = historyStack.slice(0, i + 1);
+      else historyStack = ['home', 'account', 'auth-open'];
+    }
     showScreen('tg-deals');
   }
 
@@ -1527,6 +1875,7 @@
     if (so) so.textContent = session.opName || '顾清扬';
     var cfgScreen = $('#screen-tg-config');
     if (cfgScreen && cfgScreen.classList.contains('active')) syncTgConfigUI();
+    syncConfirmCustUI();
   }
 
   function applyCouponToResult(name, price, code, prodId, mismatched) {
@@ -1548,6 +1897,7 @@
     }
     session.orderType = '快捷开单';
     session.payType = '团购';
+    resetCustomerDraftForNewCoupon();
     if (mismatched) {
       resolveCouponMatch(name, session.dealId);
     } else if (Array.isArray(prodId)) {
@@ -1618,6 +1968,7 @@
       'owner-auth-mt': 'screen-auth-open',
       'dy-auth-grant': 'screen-auth-open',
       'match-pick': 'screen-match-pick',
+      'pick-member': 'screen-pick-member',
       'coupon-ph': 'screen-coupon-ph'
     };
     var id = map[flow];
@@ -1630,7 +1981,11 @@
       if (historyStack[historyStack.length - 1] !== flow) historyStack.push(flow);
     }
     if (flow === 'orders') renderOrders();
-    if (flow === 'confirm') syncConfirmUI();
+    if (flow === 'confirm') {
+      syncConfirmUI();
+      syncConfirmCustUI();
+    }
+    if (flow === 'pick-member') renderPickMemberList();
     if (flow === 'owner-auth' || flow === 'owner-auth-mt' || flow === 'auth-open' || flow === 'dy-auth-grant') {
       if (window.AuthOpen) {
         var openPlat = (flow === 'owner-auth-mt' || session.plat === 'meituan') ? 'mt' : 'dy';
@@ -1652,7 +2007,6 @@
     if (flow === 'tg-config') syncTgConfigUI();
     if (flow === 'result' || flow === 'confirm') syncTimesRows();
     if (flow === 'scan' || flow === 'result' || flow === 'confirm' || flow === 'input') syncPlatformChrome();
-    if (flow === 'success') resetSuccessMemberForm();
     if (flow !== 'scan') {
       var entry = $('#scanInputEntry');
       if (entry) entry.classList.remove('pulse');
@@ -1787,18 +2141,26 @@
     if (leftRow) leftRow.hidden = !show;
     if (useEl) useEl.textContent = (session.timesUse || 1) + ' 次';
     if (leftEl) leftEl.textContent = (session.timesLeft || 0) + ' 次';
+
+    var custEl = $('#successCustomer');
+    if (custEl) custEl.textContent = session.lastCustomerLabel || '男散客';
+    var so = $('#successOp');
+    if (so) so.textContent = session.opName || '顾清扬';
   }
 
-  function pushVerifyOrder(consumedTimes) {
+  function pushVerifyOrder(consumedTimes, customerSnap) {
     var bill = isTimesCoupon() ? timesBillAmount() : Number(session.couponPrice || 0);
     var now = new Date();
     var pad = function (n) { return n < 10 ? '0' + n : String(n); };
     var time = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) +
       ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+    var plat = session.plat || 'douyin';
     var order = {
       id: 'o' + Date.now(),
-      plat: session.plat || 'douyin',
-      name: session.couponName || '团购核销',
+      plat: plat,
+      couponName: session.couponName || '团购核销',
+      name: orderDetailNameFromSession(),
+      customer: (customerSnap && customerSnap.label) || session.lastCustomerLabel || '男散客',
       price: bill,
       code: session.couponCode || '',
       oid: session.orderId || defaultOrderId(),
@@ -1811,7 +2173,9 @@
       revokeHint: '剩余 59 分钟可撤销',
       couponKind: session.couponKind || 'groupbuy',
       timesConsumed: consumedTimes || 0,
-      timesRestored: false
+      timesRestored: false,
+      orderType: session.orderType || '快捷开单',
+      payType: session.payType || '团购'
     };
     ORDERS.unshift(order);
     return order;
@@ -1823,6 +2187,17 @@
       openException('tpl-offline');
       return;
     }
+    if (session.customerMode === 'member' && !(session.selectedMember && session.selectedMember.id)) {
+      toast('请选择会员');
+      syncConfirmCustUI();
+      return;
+    }
+    var snap = resolveCustomerSnapshot();
+    if (snap.error) {
+      toast(snap.error);
+      return;
+    }
+    session.lastCustomerLabel = snap.label;
     if (isTimesCoupon()) {
       var need = clampTimesUse();
       if (need > Number(session.timesLeft || 0)) {
@@ -1841,7 +2216,7 @@
         session.timesLeft = Math.max(0, Number(session.timesLeft || 0) - consumed);
         syncTimesRows();
       }
-      pushVerifyOrder(consumed);
+      pushVerifyOrder(consumed, snap);
       syncSuccessCard();
       showScreen('success');
     });
@@ -1887,8 +2262,9 @@
         : '<span class="tag tag-plat-dy">抖音</span>';
       return (
         '<button type="button" class="order-card" data-order-id="' + o.id + '">' +
-          '<div class="row1"><div class="name">' + o.name + '</div><div class="amt">¥' + o.price + '</div></div>' +
-          '<div class="meta">' + o.time + ' · ' + o.op + '</div>' +
+          '<div class="row1"><div class="name">' + orderListTitle(o) + '</div><div class="amt">¥' + o.price + '</div></div>' +
+          '<div class="meta">' + o.time + ' · ' + o.op +
+            (o.customer ? (' · ' + o.customer) : '') + '</div>' +
           '<div class="tags">' + platTag + st + '</div>' +
         '</button>'
       );
@@ -1899,7 +2275,7 @@
     var o = ORDERS.filter(function (x) { return x.id === id; })[0];
     if (!o) return;
     currentOrder = o;
-    $('#detailName').textContent = o.name;
+    $('#detailName').textContent = o.name || '快捷开单';
     $('#detailPrice').textContent = o.price;
     var statusHtml =
       o.status === 'revoked' ? '<span class="tag tag-rev">已撤销</span>'
@@ -1916,6 +2292,8 @@
     oidEl.setAttribute('data-copy', o.oid);
     $('#detailTime').textContent = o.time;
     $('#detailOp').textContent = o.op;
+    var dc = $('#detailCustomer');
+    if (dc) dc.textContent = o.customer || '—';
     $('#detailBill').textContent = o.bill;
     $('#detailRevokeHint').textContent = o.revokeHint;
     var cs = $('#detailCsGuide');
@@ -1950,70 +2328,6 @@
     if (dot) dot.hidden = !active;
   }
 
-  function resetSuccessMemberForm() {
-    session.phone = '';
-    session.nickname = '';
-    session.gender = null;
-    var phoneEl = $('#successPhone');
-    var nickEl = $('#successNickname');
-    if (phoneEl) phoneEl.value = '';
-    if (nickEl) nickEl.value = '';
-    $all('#successGender [data-gender]').forEach(function (b) {
-      b.classList.remove('on');
-    });
-  }
-
-  function resolveMemberDisplayName(raw, gender) {
-    var name = String(raw || '').trim();
-    if (!name) return '';
-    if (name.length === 1) {
-      return name + (gender === 'female' ? '小姐' : '先生');
-    }
-    return name;
-  }
-
-  function readSuccessMemberDraft() {
-    var phoneEl = $('#successPhone');
-    var nickEl = $('#successNickname');
-    return {
-      phone: phoneEl ? String(phoneEl.value || '').trim() : '',
-      nick: nickEl ? String(nickEl.value || '').trim() : '',
-      gender: session.gender || null
-    };
-  }
-
-  function successMemberFillState() {
-    var d = readSuccessMemberDraft();
-    var any = !!(d.phone || d.nick || d.gender);
-    var all = !!(d.phone && d.nick && d.gender);
-    var phoneOk = !d.phone || /^1\d{10}$/.test(d.phone);
-    return { any: any, all: all, phoneOk: phoneOk, draft: d };
-  }
-
-  function tryRegisterMemberOnDone() {
-    var st = successMemberFillState();
-    var d = st.draft;
-    if (d.phone && !st.phoneOk) {
-      toast('请输入 11 位手机号');
-      return false;
-    }
-    session.phone = d.phone;
-    session.nickname = d.nick;
-
-    if (d.nick && d.gender) {
-      var displayName = resolveMemberDisplayName(d.nick, d.gender);
-      session.registeredMembers.push({
-        name: displayName,
-        gender: d.gender,
-        phone: d.phone || '',
-        from: 'verify-success',
-        at: Date.now()
-      });
-      toast('已注册为会员：' + displayName);
-    }
-    return true;
-  }
-
   function proceedSuccessAction(action) {
     if (action === 'continue') {
       showScreen('scan');
@@ -2022,30 +2336,8 @@
     showScreen('home');
   }
 
-  function requestLeaveSuccess(action) {
-    var st = successMemberFillState();
-    /* 手机号有值但不合法：仅 toast，不弹放弃窗 */
-    if (st.draft.phone && !st.phoneOk) {
-      toast('请输入 11 位手机号');
-      return;
-    }
-    if (st.any && !st.all) {
-      pendingSuccessAction = action;
-      openMask('memberAbandonMask');
-      return;
-    }
-    if (st.any && st.all) {
-      if (!tryRegisterMemberOnDone()) return;
-    } else {
-      /* 三项全空：不拦截、不注册 */
-      session.phone = '';
-      session.nickname = '';
-    }
-    proceedSuccessAction(action);
-  }
-
   function finishSuccess() {
-    requestLeaveSuccess('done');
+    proceedSuccessAction('done');
   }
 
   function isFlowActive(flow) {
@@ -2156,6 +2448,11 @@
   }
 
   // events
+  document.addEventListener('focusin', function (e) {
+    if (e.target.closest && e.target.closest('#confirmCustCard')) {
+      scrollConfirmCustCard();
+    }
+  });
   document.addEventListener('click', function (e) {
     var t = e.target.closest('[data-flow]');
     if (t && t.classList.contains('nav-item')) {
@@ -2187,7 +2484,7 @@
       if (target === 'scan') {
         var successActive = $('#screen-success') && $('#screen-success').classList.contains('active');
         if (successActive) {
-          requestLeaveSuccess('continue');
+          proceedSuccessAction('continue');
           return;
         }
         tryEnterScan();
@@ -2496,7 +2793,63 @@
     }
 
     if (e.target.closest('#btnConfirmVerify')) {
+      if ($('#btnConfirmVerify') && $('#btnConfirmVerify').disabled) return;
       startConsume();
+      return;
+    }
+
+    if (e.target.closest('#btnPickMember') || e.target.closest('#btnReselectMember')) {
+      openPickMember();
+      return;
+    }
+    if (e.target.closest('#btnPickMemberBack')) {
+      goBack();
+      return;
+    }
+    var memRow = e.target.closest('#pickMemberList [data-member-id]');
+    if (memRow) {
+      pickMemberById(memRow.getAttribute('data-member-id'));
+      return;
+    }
+    var custModeBtn = e.target.closest('#custModeSeg [data-cust-mode]');
+    if (custModeBtn) {
+      saveJoinDraftFromDom();
+      session.customerMode = custModeBtn.getAttribute('data-cust-mode') === 'member' ? 'member' : 'guest';
+      syncConfirmCustUI();
+      scrollConfirmCustCard();
+      return;
+    }
+    var custJoinBtn = e.target.closest('#custJoinSeg [data-cust-join]');
+    if (custJoinBtn) {
+      saveJoinDraftFromDom();
+      session.guestJoin = custJoinBtn.getAttribute('data-cust-join') === 'yes' ? 'yes' : 'no';
+      syncConfirmCustUI();
+      scrollConfirmCustCard();
+      return;
+    }
+    var guestGenderBtn = e.target.closest('#custGuestGender [data-guest-gender]');
+    if (guestGenderBtn) {
+      session.guestGender = guestGenderBtn.getAttribute('data-guest-gender') === 'female' ? 'female' : 'male';
+      syncConfirmCustUI();
+      scrollConfirmCustCard();
+      return;
+    }
+    var joinGenderBtn = e.target.closest('#custJoinGender [data-join-gender]');
+    if (joinGenderBtn) {
+      session.joinGender = joinGenderBtn.getAttribute('data-join-gender') === 'female' ? 'female' : 'male';
+      syncConfirmCustUI();
+      scrollConfirmCustCard();
+      return;
+    }
+    if (e.target.closest('#confirmCustCard')) {
+      /* 点卡片内其它控件（输入框等）也滚到完整可见 */
+      if (e.target.closest('input, button, .cust-seg, .gender-seg, .cust-pick-cta, .cust-reselect')) {
+        scrollConfirmCustCard();
+      }
+    }
+    var pickLetter = e.target.closest('#pickMemberIndex [data-pick-letter]');
+    if (pickLetter) {
+      jumpPickLetter(pickLetter.getAttribute('data-pick-letter'));
       return;
     }
 
@@ -2519,31 +2872,6 @@
 
     if (e.target.closest('#btnSuccessDone')) {
       finishSuccess();
-      return;
-    }
-
-    if (e.target.closest('#btnMemberKeep')) {
-      closeMasks();
-      pendingSuccessAction = null;
-      return;
-    }
-
-    if (e.target.closest('#btnMemberAbandon')) {
-      var act = pendingSuccessAction || 'done';
-      pendingSuccessAction = null;
-      closeMasks();
-      resetSuccessMemberForm();
-      proceedSuccessAction(act);
-      return;
-    }
-
-    var genderBtn = e.target.closest('#successGender [data-gender]');
-    if (genderBtn) {
-      var g = genderBtn.getAttribute('data-gender');
-      session.gender = g;
-      $all('#successGender [data-gender]').forEach(function (b) {
-        b.classList.toggle('on', b === genderBtn);
-      });
       return;
     }
 
@@ -3031,6 +3359,7 @@
       showScreen: showScreen,
       goBack: goBack,
       toast: toast,
+      openTgDealsFromAuth: openTgDealsFromAuth,
       onAuthOpenChange: function () {
         syncAcctAuthUI();
         syncTgSetCards();

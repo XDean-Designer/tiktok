@@ -113,6 +113,8 @@
     <div class="nav-arrow">↓</div>
     <button type="button" class="nav-item" data-flow="confirm"><span class="idx">5</span>核销确认</button>
     <div class="nav-arrow">↓</div>
+    <button type="button" class="nav-item" data-flow="pick-member"><span class="idx">5a</span>选择顾客</button>
+    <div class="nav-arrow">↓</div>
     <button type="button" class="nav-item" data-flow="success"><span class="idx">6</span>核销成功</button>
   </div>
   <div class="nav-group">
@@ -336,9 +338,9 @@
           <button type="button" class="btn-side" id="btnOrderFlowFilter" aria-label="筛选">筛选</button>
         </div>
         <div class="of-tabs" role="tablist">
-          <button type="button" class="of-tab on" data-of-tab="all">全部 <small>2</small></button>
-          <button type="button" class="of-tab" data-of-tab="project">项目 <small>1</small></button>
-          <button type="button" class="of-tab" data-of-tab="product">产品 <small>1</small></button>
+          <button type="button" class="of-tab on" data-of-tab="all">全部<small>2</small></button>
+          <button type="button" class="of-tab" data-of-tab="project">项目<small>1</small></button>
+          <button type="button" class="of-tab" data-of-tab="product">产品<small>1</small></button>
           <button type="button" class="of-tab" data-of-tab="card">会员卡</button>
           <button type="button" class="of-tab" data-of-tab="void">作废</button>
         </div>
@@ -346,7 +348,7 @@
           <div class="of-card" data-of-plat="douyin">
             <div class="of-card__head">
               <div class="of-card__user">
-                <span class="of-card__avatar" aria-hidden="true">陈</span>
+                <img class="of-card__avatar" src="assets/icons/of-avatar-female.png" alt="" width="38" height="38">
                 <span class="of-card__uname">陈女士</span>
               </div>
               <span class="of-card__status">已完成</span>
@@ -355,8 +357,8 @@
               <img class="of-card__logo" src="assets/icons/douyin-logo.svg" alt="" width="48" height="48">
               <div class="of-card__goods-main">
                 <div class="of-card__goods-row">
-                  <span class="of-card__flash" aria-hidden="true">⚡</span>
-                  <span class="of-card__gname">快速消费</span>
+                  <span class="of-card__tuan" aria-hidden="true">团</span>
+                  <span class="of-card__gname">深层补水护理 · 单次体验</span>
                   <span class="of-card__gprice">¥ 268.00</span>
                 </div>
                 <div class="of-card__staff">服务人 <span>|</span> 顾清扬</div>
@@ -373,7 +375,7 @@
           <div class="of-card" data-of-plat="meituan">
             <div class="of-card__head">
               <div class="of-card__user">
-                <span class="of-card__avatar of-card__avatar--mt" aria-hidden="true">陈</span>
+                <img class="of-card__avatar" src="assets/icons/of-avatar-female.png" alt="" width="38" height="38">
                 <span class="of-card__uname">陈女士</span>
               </div>
               <span class="of-card__status">已完成</span>
@@ -382,8 +384,8 @@
               <img class="of-card__logo" src="assets/icons/meituan-logo.svg" alt="" width="48" height="48">
               <div class="of-card__goods-main">
                 <div class="of-card__goods-row">
-                  <span class="of-card__flash" aria-hidden="true">⚡</span>
-                  <span class="of-card__gname">快速消费</span>
+                  <span class="of-card__tuan" aria-hidden="true">团</span>
+                  <span class="of-card__gname">深层补水护理 · 美团专享</span>
                   <span class="of-card__gprice">¥ 258.00</span>
                 </div>
                 <div class="of-card__staff">服务人 <span>|</span> 顾清扬</div>
@@ -397,7 +399,7 @@
             <div class="of-card__dash" aria-hidden="true"></div>
             <div class="of-card__time"><span>开单时间：</span><span>2026.09.03 16:10</span></div>
           </div>
-          <p class="of-note">示意：团购核销订单商品图使用 48×48 平台方标，便于与其它订单区分。撤销后在「作废」Tab 展示（产品规则见 PRD；本页样例为已完成）。</p>
+          <p class="of-note">示意：团购核销订单左侧商品图为 48×48 平台方标；消费项标题为核销团购券名，左侧「团」标区分团购单。撤销后在「作废」Tab 展示（产品规则见 PRD；本页样例为已完成）。</p>
         </div>
       </div>
 
@@ -414,7 +416,7 @@
             <div class="tg-plat-card__logo"><img src="assets/icons/douyin-logo.svg" alt="" width="48" height="48"></div>
             <div class="tg-plat-card__main">
               <div class="tg-plat-card__title">抖音团购</div>
-              <div class="tg-plat-card__status" id="tgCardDyStatus">共3项</div>
+              <div class="tg-plat-card__status" id="tgCardDyStatus">共9项</div>
             </div>
             <img class="tg-plat-card__chev" src="assets/icons/chevron-circle-right.svg" alt="" width="24" height="24" aria-hidden="true">
           </button>
@@ -422,7 +424,7 @@
             <div class="tg-plat-card__logo"><img src="assets/icons/meituan-logo.svg" alt="" width="48" height="48"></div>
             <div class="tg-plat-card__main">
               <div class="tg-plat-card__title">美团团购</div>
-              <div class="tg-plat-card__status" id="tgCardMtStatus">共3项</div>
+              <div class="tg-plat-card__status" id="tgCardMtStatus">共9项</div>
             </div>
             <img class="tg-plat-card__chev" src="assets/icons/chevron-circle-right.svg" alt="" width="24" height="24" aria-hidden="true">
           </button>
@@ -823,11 +825,71 @@
               <div class="kv"><span class="k">支付方式</span><span class="v" id="confirmPayWay">抖音</span></div>
             </div>
           </div>
+          <div class="info-card cust-card" id="confirmCustCard">
+            <div class="cust-card__title">消费顾客</div>
+            <div class="cust-seg cust-seg--primary" id="custModeSeg" role="group" aria-label="顾客类型">
+              <button type="button" class="cust-seg__btn" data-cust-mode="member">会员</button>
+              <button type="button" class="cust-seg__btn on" data-cust-mode="guest">散客</button>
+            </div>
+            <div class="cust-panel" id="custPanelMember" hidden>
+              <button type="button" class="cust-pick-cta" id="btnPickMember">
+                <span id="custMemberCtaText">选择会员</span>
+                <img src="assets/icons/match-chevron.svg" alt="" width="16" height="16">
+              </button>
+              <div class="cust-summary" id="custMemberSummary" hidden>
+                <div class="cust-summary__main">
+                  <img class="cust-summary__avatar" id="custMemberAvatar" src="assets/icons/avatar-female.png" alt="" width="40" height="40">
+                  <div>
+                    <div class="cust-summary__name" id="custMemberName">—</div>
+                    <div class="cust-summary__sub" id="custMemberPhone">—</div>
+                  </div>
+                </div>
+                <button type="button" class="cust-reselect" id="btnReselectMember">重新选择</button>
+              </div>
+            </div>
+            <div class="cust-panel" id="custPanelGuest">
+              <div class="cust-sublabel">是否加入会员</div>
+              <div class="cust-seg cust-seg--sub" id="custJoinSeg" role="group" aria-label="是否加入会员">
+                <button type="button" class="cust-seg__btn" data-cust-join="yes">加入会员</button>
+                <button type="button" class="cust-seg__btn on" data-cust-join="no">不加入</button>
+              </div>
+              <div class="cust-guest-nojoin" id="custGuestNoJoin">
+                <div class="cust-sublabel cust-sublabel--center">性别</div>
+                <div class="gender-seg gender-seg--macaron gender-seg--center" id="custGuestGender" role="group" aria-label="散客性别">
+                  <button type="button" class="gender-seg__btn on is-male" data-guest-gender="male">男</button>
+                  <button type="button" class="gender-seg__btn is-female" data-guest-gender="female">女</button>
+                </div>
+              </div>
+              <div class="cust-guest-join" id="custGuestJoin" hidden>
+                <div class="kv-list">
+                  <div class="kv phone-card__row">
+                    <span class="k">手机号</span>
+                    <input class="phone-card__input" id="custJoinPhone" type="tel" maxlength="11" inputmode="numeric" placeholder="请输入手机号" autocomplete="tel">
+                  </div>
+                  <div class="kv phone-card__row">
+                    <span class="k">称呼</span>
+                    <input class="phone-card__input" id="custJoinNick" type="text" maxlength="20" placeholder="如：王 / 王芳" autocomplete="off">
+                  </div>
+                  <div class="kv phone-card__row phone-card__row--gender">
+                    <span class="k">性别</span>
+                    <div class="gender-seg gender-seg--macaron" id="custJoinGender" role="group" aria-label="新会员性别">
+                      <button type="button" class="gender-seg__btn on is-male" data-join-gender="male">男</button>
+                      <button type="button" class="gender-seg__btn is-female" data-join-gender="female">女</button>
+                    </div>
+                  </div>
+                </div>
+                <p class="cust-hint">填写手机号或称呼任一即可建档；仅选性别则按散客记单</p>
+              </div>
+            </div>
+          </div>
           <p class="confirm-tip confirm-tip--ico" id="confirmMtTimesTip" hidden>
             <img src="assets/icons/info-circle.svg" alt="" width="16" height="16">
             <span>美团次卡一次扣多次需顾客在订单页授权批量核销，请先确认顾客已授权。</span>
           </p>
-          <p class="confirm-tip" id="confirmUnmatchTip" hidden>未匹配价目时，将按券面额开单；业绩归属未选则该单不计业绩。</p>
+          <p class="confirm-tip confirm-tip--ico" id="confirmUnmatchTip" hidden>
+            <img src="assets/icons/info-circle.svg" alt="" width="16" height="16">
+            <span>未匹配价目时，将按券面额开单；业绩归属未选则该单不计业绩。</span>
+          </p>
         </div>
         <div class="footer-actions">
           <button type="button" class="btn-ghost" data-back>取消</button>
@@ -890,32 +952,30 @@
               <div class="kv"><span class="k">平台单号</span><span class="v copyable copy-row" id="successOidRow" data-copy="716829104455"><span class="copy-text" id="successOid">716829104455</span><img class="copy-ico" src="assets/icons/copy.svg" alt="" width="17" height="17"></span></div>
               <div class="kv"><span class="k">核销时间</span><span class="v">2026-09-03 15:42</span></div>
               <div class="kv"><span class="k">操作人</span><span class="v" id="successOp">顾清扬</span></div>
-            </div>
-          </div>
-          <div class="info-card phone-card" id="phoneCard">
-            <div class="phone-card__title">选填</div>
-            <div class="kv-list">
-              <div class="kv phone-card__row">
-                <span class="k">手机号</span>
-                <input class="phone-card__input" id="successPhone" type="tel" maxlength="11" inputmode="numeric" placeholder="请输入手机号" autocomplete="tel">
-              </div>
-              <div class="kv phone-card__row">
-                <span class="k">称呼</span>
-                <input class="phone-card__input" id="successNickname" type="text" maxlength="20" placeholder="如：王 / 王芳" autocomplete="off">
-              </div>
-              <div class="kv phone-card__row">
-                <span class="k">性别</span>
-                <div class="gender-seg" id="successGender" role="group" aria-label="选择性别">
-                  <button type="button" class="gender-seg__btn" data-gender="male">男</button>
-                  <button type="button" class="gender-seg__btn" data-gender="female">女</button>
-                </div>
-              </div>
+              <div class="kv"><span class="k">消费顾客</span><span class="v" id="successCustomer">男散客</span></div>
             </div>
           </div>
         </div>
         <div class="footer-actions">
           <button type="button" class="btn-ghost" data-go="scan">继续核销</button>
           <button type="button" class="btn-primary" id="btnSuccessDone">完成</button>
+        </div>
+      </div>
+
+      <!-- ========== PICK MEMBER（对齐 Figma 58:111 · 仅真实会员） ========== -->
+      <div class="screen" id="screen-pick-member" data-flow="pick-member">
+        <div class="pick-top">
+          <div class="pick-search-row">
+            <div class="pick-search__box">
+              <span class="pick-search__ph">输入顾客姓名/手机号/编号/备注</span>
+              <img class="pick-search__ico" src="assets/icons/search-gray.svg" alt="" width="16" height="16">
+            </div>
+            <button type="button" class="pick-cancel" id="btnPickMemberBack">取消</button>
+          </div>
+        </div>
+        <div class="page-body pick-member-body">
+          <div class="pick-member-list" id="pickMemberList"></div>
+          <nav class="pick-index" id="pickMemberIndex" aria-label="字母索引"></nav>
         </div>
       </div>
 
@@ -966,6 +1026,7 @@
               <div class="kv"><span class="k">平台单号</span><span class="v copyable copy-row" id="detailOid" data-copy=""><span class="copy-text">—</span><img class="copy-ico" src="assets/icons/copy.svg" alt="" width="17" height="17"></span></div>
               <div class="kv"><span class="k">核销时间</span><span class="v" id="detailTime">—</span></div>
               <div class="kv"><span class="k">操作人</span><span class="v" id="detailOp">顾清扬</span></div>
+              <div class="kv"><span class="k">消费顾客</span><span class="v" id="detailCustomer">男散客</span></div>
               <div class="kv"><span class="k">开单号</span><span class="v" id="detailBill">SO20260903018</span></div>
               <div class="kv"><span class="k">撤销时限</span><span class="v" id="detailRevokeHint">剩余 42 分钟可撤销</span></div>
             </div>
@@ -1031,7 +1092,7 @@
                   <div class="item"><div style="flex:1;min-width:0"><div class="iname" id="ao-account-title">已授权抖音账号</div><div class="idesc" id="ao-account-info">186****5286</div></div><button type="button" class="link gray" data-ao="cancel-auth">取消授权<img class="ao-chevron" src="assets/auth-open/chevron-right-gray.svg" alt=""></button></div>
                   <div class="item" id="ao-change-store-row"><div style="flex:1;min-width:0"><div class="iname">已绑定门店</div><div class="idesc" id="ao-manage-store">—</div></div><button type="button" class="link gray" data-ao="bind">管理门店<img class="ao-chevron" src="assets/auth-open/chevron-right-gray.svg" alt=""></button></div>
                 </div>
-                <div class="groupbuy-settings-wrap"><button type="button" class="groupbuy-settings-btn" id="ao-groupbuy-btn" data-ao="tg-set"><img class="ao-settings-ico" src="assets/auth-open/settings.svg" alt="">团购设置</button></div>
+                <div class="groupbuy-settings-wrap"><button type="button" class="groupbuy-settings-btn" id="ao-groupbuy-btn" data-ao="tg-set"><img class="ao-settings-ico" src="assets/auth-open/settings.svg" alt="">去设置团购券</button></div>
               </div>
             </div>
           </div>
@@ -1201,7 +1262,7 @@
 
       <div class="dialog-mask" id="unsupportedCouponMask">
         <div class="dialog dialog--alert">
-          <div class="dialog-ico"><img src="assets/icons/info-circle-fill.svg" alt="" width="40" height="40"></div>
+          <div class="dialog-ico"><img src="assets/icons/info-circle-fill-white.svg" alt="" width="40" height="40"></div>
           <div class="dt" id="unsupportedCouponTitle">暂不支持核销</div>
           <div class="ds" id="unsupportedCouponDesc">当前只能核销团购套餐券与次卡，请换一张团购券再试。</div>
           <div class="da">
@@ -1210,20 +1271,9 @@
         </div>
       </div>
 
-      <div class="dialog-mask" id="memberAbandonMask">
-        <div class="dialog">
-          <div class="dt">放弃填写顾客信息？</div>
-          <div class="ds">你已开始填写部分信息。放弃后将不保存本次填写，并继续刚才的操作。</div>
-          <div class="da">
-            <button type="button" class="cancel" id="btnMemberKeep">继续填写</button>
-            <button type="button" class="ok" id="btnMemberAbandon">放弃填写</button>
-          </div>
-        </div>
-      </div>
-
       <div class="dialog-mask" id="timesInsufficientMask">
         <div class="dialog dialog--alert">
-          <div class="dialog-ico"><img src="assets/icons/info-circle-fill.svg" alt="" width="40" height="40"></div>
+          <div class="dialog-ico"><img src="assets/icons/info-circle-fill-white.svg" alt="" width="40" height="40"></div>
           <div class="dt">次数不足</div>
           <div class="ds" id="timesInsufficientDesc">本次核销次数超过剩余次数，请减少后再试。</div>
           <div class="da">

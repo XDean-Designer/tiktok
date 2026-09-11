@@ -484,7 +484,12 @@
 
   function goGroupBuy() {
     closeAllAoMasks();
-    if (api && api.showScreen) api.showScreen('tg-set');
+    var plat = isMt() ? 'meituan' : 'douyin';
+    if (api && typeof api.openTgDealsFromAuth === 'function') {
+      api.openTgDealsFromAuth(plat);
+      return;
+    }
+    if (api && api.showScreen) api.showScreen('tg-deals');
   }
 
   function closeAllAoMasks() {
