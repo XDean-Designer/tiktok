@@ -50,7 +50,7 @@
 }
 /* Figma 273:52 — 悬浮毛玻璃胶囊 Tab（344×60，底距 Home Indicator 34） */
 .wb-tabbar {
-  position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%);
+  position: absolute; left: 50%; bottom: var(--safe-bottom, 0px); transform: translateX(-50%);
   z-index: 30; width: 344px; max-width: calc(100% - 46px); height: 60px;
   box-sizing: border-box; padding: 0 5px;
   display: flex; align-items: center; justify-content: space-between;

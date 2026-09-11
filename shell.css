@@ -133,15 +133,73 @@ html.view-mobile, html.view-mobile body {
   touch-action: manipulation; background: var(--bg-page, #F7F7F7);
   position: fixed; inset: 0;
 }
-html.view-mobile .site-nav { display: none !important; }
 html.view-mobile .prd-pane { display: none !important; }
 html.view-mobile .stage {
   margin-left: 0; padding: 0; width: var(--app-w, 100%); height: var(--app-h, 100%);
   display: block; position: fixed; top: var(--app-top, 0); left: var(--app-left, 0); overflow: hidden;
 }
 html.view-mobile #frame { box-shadow: none; border: none; width: 100%; height: 100%; max-width: none; }
-html.view-mobile { --safe-bottom: env(safe-area-inset-bottom, 0px); }
+/* 真机演示：去掉假 Home Indicator 预留，内容贴底 */
+html.view-mobile { --safe-bottom: 0px; }
 html.view-mobile .status-bar { display: none !important; }
+
+/* 真机：左滑抽屉唤出完整导航 / 演示条 */
+.nav-drawer-mask,
+.nav-edge-hit { display: none; }
+
+html.view-mobile .site-nav {
+  display: flex !important;
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  width: min(86vw, 300px);
+  max-width: 300px;
+  z-index: 400;
+  transform: translate3d(-105%, 0, 0);
+  transition: transform 0.28s cubic-bezier(0.22, 0.82, 0.24, 1);
+  box-shadow: none;
+  padding-top: env(safe-area-inset-top, 0px);
+  -webkit-overflow-scrolling: touch;
+}
+html.view-mobile .site-nav.is-dragging {
+  transition: none !important;
+}
+html.view-mobile.nav-drawer-open .site-nav {
+  transform: translate3d(0, 0, 0);
+  box-shadow: 8px 0 28px rgba(0, 0, 0, 0.35);
+}
+html.view-mobile .nav-drawer-mask {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 350;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+html.view-mobile.nav-drawer-open .nav-drawer-mask {
+  opacity: 1;
+  pointer-events: auto;
+}
+html.view-mobile .nav-edge-hit {
+  display: block;
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  width: 20px;
+  z-index: 300;
+  touch-action: pan-y;
+}
+html.view-mobile.nav-drawer-open .nav-edge-hit {
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.view-mobile .site-nav,
+  html.view-mobile .nav-drawer-mask {
+    transition: none !important;
+  }
+}
 
 /* run-to-figma：隐藏左侧导航与 PRD 面板，固定桌面 390 壳 */
 html.figma-capture .site-nav { display: none !important; }

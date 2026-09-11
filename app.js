@@ -145,7 +145,8 @@
     joinPhone: '',
     joinNick: '',
     selectedMember: null,
-    tgCustomerSeq: 1,
+    /* UI 形变阶段：root | guest | join | member */
+    custPhase: 'root',
     lastCustomerLabel: '男散客',
     registeredMembers: [] /* 演示：确认核销时新建的会员 */
   };
@@ -394,13 +395,9 @@
     return (plat === 'meituan') ? '美团团购' : '抖音团购';
   }
   function orderListTitle(o) {
-    /* 门店流水 / 核销明细列表：显示核销团购券名；详情仍用 o.name（匹配项或快捷开单） */
+    /* 门店流水 / 核销明细列表：显示核销团购券名；详情标题同券名，核销项目用 o.name */
     if (o && o.couponName) return o.couponName;
     return (o && o.name) || '团购核销';
-  }
-  function pad2(n) {
-    n = Number(n) || 0;
-    return n < 10 ? '0' + n : String(n);
   }
   function resolveMemberDisplayName(raw, gender) {
     var name = String(raw || '').trim();
@@ -409,6 +406,11 @@
       return name + (gender === 'female' ? '小姐' : '先生');
     }
     return name;
+  }
+  function phoneTailDisplayName(phone) {
+    var digits = String(phone || '').replace(/\D/g, '');
+    if (digits.length < 4) return '';
+    return '尾号' + digits.slice(-4);
   }
   function currentMatchItems() {
     var ids = session.selectedMatchIds && session.selectedMatchIds.length
@@ -441,48 +443,150 @@
     if (p) p.value = session.joinPhone || '';
     if (n) n.value = session.joinNick || '';
   }
-  function syncConfirmCustUI() {
-    var mode = session.customerMode === 'member' ? 'member' : 'guest';
-    $all('#custModeSeg [data-cust-mode]').forEach(function (b) {
-      b.classList.toggle('on', b.getAttribute('data-cust-mode') === mode);
-    });
-    var panelM = $('#custPanelMember');
-    var panelG = $('#custPanelGuest');
-    if (panelM) panelM.hidden = mode !== 'member';
-    if (panelG) panelG.hidden = mode !== 'guest';
+  function custReduceMotion() {
+    try {
+      return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    } catch (e) {
+      return false;
+    }
+  }
+  var custMorphTimer = null;
+  function morphCustPhase(nextPhase, opts) {
+    opts = opts || {};
+    var root = $('#custMorph');
+    if (!root) return;
+    var from = root.getAttribute('data-phase') || 'root';
+    var to = nextPhase || 'root';
 
-    var mem = session.selectedMember;
-    var cta = $('#btnPickMember');
-    var sum = $('#custMemberSummary');
-    if (mode === 'member') {
-      if (mem) {
-        if (cta) cta.hidden = true;
-        if (sum) sum.hidden = false;
-        var av = $('#custMemberAvatar');
-        var nm = $('#custMemberName');
-        var ph = $('#custMemberPhone');
-        if (av) {
-          av.src = mem.avatar || (mem.gender === 'male'
-            ? 'assets/icons/avatar-male.png'
-            : 'assets/icons/avatar-female.png');
-        }
-        if (nm) nm.textContent = mem.name || '—';
-        if (ph) ph.textContent = mem.phone || '—';
-      } else {
-        if (cta) cta.hidden = false;
-        if (sum) sum.hidden = true;
-      }
+    session.custPhase = to;
+    if (to === 'join') {
+      session.guestJoin = 'yes';
+      session.customerMode = 'guest';
+    } else if (to === 'guest') {
+      session.guestJoin = 'no';
+      session.customerMode = 'guest';
+    } else if (to === 'root') {
+      session.guestJoin = 'no';
+      session.customerMode = 'guest';
+    } else if (to === 'member') {
+      session.guestJoin = 'no';
+      session.customerMode = 'member';
     }
 
-    var join = session.guestJoin === 'yes' ? 'yes' : 'no';
-    $all('#custJoinSeg [data-cust-join]').forEach(function (b) {
-      b.classList.toggle('on', b.getAttribute('data-cust-join') === join);
+    if (from === to && !opts.force) {
+      syncConfirmCustUI(false);
+      return;
+    }
+
+    var stages = $all('#custMorph [data-stage]');
+    var fromEl = null;
+    var toEl = null;
+    stages.forEach(function (el) {
+      if (el.getAttribute('data-stage') === from) fromEl = el;
+      if (el.getAttribute('data-stage') === to) toEl = el;
     });
-    var noJoin = $('#custGuestNoJoin');
-    var yesJoin = $('#custGuestJoin');
-    if (noJoin) noJoin.hidden = join === 'yes';
-    if (yesJoin) yesJoin.hidden = join !== 'yes';
-    if (join === 'yes') restoreJoinDraftToDom();
+
+    if (custMorphTimer) {
+      clearTimeout(custMorphTimer);
+      custMorphTimer = null;
+    }
+
+    var animate = opts.animate !== false && from !== to;
+    if (!animate || custReduceMotion() || !fromEl || !toEl) {
+      stages.forEach(function (el) {
+        el.hidden = el.getAttribute('data-stage') !== to;
+        el.classList.remove('is-flip-out', 'is-flip-in');
+      });
+      root.setAttribute('data-phase', to);
+      root.classList.remove('is-animating');
+      root.style.minHeight = '';
+      syncConfirmCustUI(false);
+      if (opts.scroll !== false) scrollConfirmCustCard();
+      return;
+    }
+
+    /* 旧舞台缩放淡出，新舞台弹性淡入（偏 iOS spring） */
+    root.classList.add('is-animating');
+    root.style.minHeight = Math.max(fromEl.offsetHeight, 76) + 'px';
+    fromEl.classList.remove('is-flip-in');
+    fromEl.classList.add('is-flip-out');
+    toEl.hidden = false;
+    toEl.classList.remove('is-flip-out');
+    void toEl.offsetWidth;
+    toEl.classList.add('is-flip-in');
+    root.setAttribute('data-phase', to);
+
+    var tiles = toEl.querySelectorAll('.cust-tile');
+    tiles.forEach(function (tile, i) {
+      /* 加入会员大卡本体不做 is-pop，避免卡内点击体感成整卡弹性 */
+      if (tile.classList.contains('cust-tile--join')) return;
+      tile.classList.remove('is-pop');
+      void tile.offsetWidth;
+      tile.style.animationDelay = (i * 0.035) + 's';
+      tile.classList.add('is-pop');
+    });
+
+    syncConfirmCustUI(false);
+
+    custMorphTimer = setTimeout(function () {
+      custMorphTimer = null;
+      stages.forEach(function (el) {
+        var on = el.getAttribute('data-stage') === to;
+        el.hidden = !on;
+        el.classList.remove('is-flip-out', 'is-flip-in');
+      });
+      tiles.forEach(function (tile) {
+        tile.classList.remove('is-pop');
+        tile.style.animationDelay = '';
+      });
+      root.classList.remove('is-animating');
+      root.style.minHeight = '';
+      if (opts.scroll !== false) scrollConfirmCustCard();
+    }, 340);
+  }
+  function syncConfirmCustUI() {
+    var mem = session.selectedMember;
+    if (session.customerMode === 'member' && mem && mem.id) {
+      session.custPhase = 'member';
+      session.guestJoin = 'no';
+    } else if (session.guestJoin === 'yes') {
+      session.custPhase = 'join';
+      session.customerMode = 'guest';
+    } else if (session.custPhase === 'member' && !(mem && mem.id)) {
+      session.custPhase = 'root';
+      session.customerMode = 'guest';
+    }
+
+    var phase = session.custPhase || 'root';
+    if (phase !== 'guest' && phase !== 'join' && phase !== 'member') phase = 'root';
+
+    var root = $('#custMorph');
+    if (root && !root.classList.contains('is-animating')) {
+      root.setAttribute('data-phase', phase);
+      $all('#custMorph [data-stage]').forEach(function (el) {
+        el.hidden = el.getAttribute('data-stage') !== phase;
+        el.classList.remove('is-flip-out', 'is-flip-in');
+      });
+    }
+
+    if (phase === 'member' && mem) {
+      var av = $('#custMemberAvatar');
+      var nm = $('#custMemberName');
+      var ph = $('#custMemberPhone');
+      if (av) {
+        av.src = mem.avatar || (mem.gender === 'male'
+          ? 'assets/icons/avatar-male.png'
+          : 'assets/icons/avatar-female.png');
+      }
+      if (nm) nm.textContent = mem.name || '—';
+      if (ph) ph.textContent = mem.phone || '—';
+    }
+
+    if (phase === 'join') {
+      /* 先保存 DOM 草稿再回填，避免切性别等 UI 同步时清空已填手机号/称呼 */
+      saveJoinDraftFromDom();
+      restoreJoinDraftToDom();
+    }
 
     var gGuest = session.guestGender || 'male';
     $all('#custGuestGender [data-guest-gender]').forEach(function (b) {
@@ -501,7 +605,10 @@
 
     var btn = $('#btnConfirmVerify');
     if (btn) {
-      var ok = mode !== 'member' || !!(mem && mem.id);
+      var mode = session.customerMode === 'member' ? 'member' : 'guest';
+      var ok = true;
+      if (mode === 'member') ok = !!(mem && mem.id);
+      else if (phase === 'guest' && !session.guestGender) ok = false;
       btn.disabled = !ok;
     }
   }
@@ -595,9 +702,21 @@
       gender: m.gender || 'female',
       avatar: m.avatar || ''
     };
+    var morphRoot = $('#custMorph');
+    var visualFrom = morphRoot ? (morphRoot.getAttribute('data-phase') || 'root') : 'root';
     session.customerMode = 'member';
+    session.guestJoin = 'no';
+    session.custPhase = 'member';
     showScreen('confirm');
-    syncConfirmCustUI();
+    /* showScreen 会 sync 到 member；先还原视觉起点再形变，避免跳过动画 */
+    if (morphRoot && visualFrom !== 'member') {
+      morphRoot.setAttribute('data-phase', visualFrom);
+      $all('#custMorph [data-stage]').forEach(function (el) {
+        el.hidden = el.getAttribute('data-stage') !== visualFrom;
+        el.classList.remove('is-flip-out', 'is-flip-in');
+      });
+    }
+    morphCustPhase('member', { animate: true });
     toast('已选择：' + m.name);
   }
   function resetCustomerDraftForNewCoupon() {
@@ -608,6 +727,7 @@
     session.joinPhone = '';
     session.joinNick = '';
     session.selectedMember = null;
+    session.custPhase = 'root';
     session.lastCustomerLabel = '男散客';
     restoreJoinDraftToDom();
   }
@@ -634,8 +754,10 @@
       if (phone || nick) {
         var displayName = nick
           ? resolveMemberDisplayName(nick, gender)
-          : ('团购顾客' + pad2(session.tgCustomerSeq));
-        if (!nick) session.tgCustomerSeq += 1;
+          : phoneTailDisplayName(phone);
+        if (!displayName) {
+          return { error: '请输入手机号或称呼' };
+        }
         var mem = {
           id: 'm_tg_' + Date.now(),
           name: displayName,
@@ -2275,8 +2397,14 @@
     var o = ORDERS.filter(function (x) { return x.id === id; })[0];
     if (!o) return;
     currentOrder = o;
-    $('#detailName').textContent = o.name || '快捷开单';
+    $('#detailName').textContent = o.couponName || o.name || '团购核销';
     $('#detailPrice').textContent = o.price;
+    var matchLabel = $('#detailMatchLabel');
+    var matchEl = $('#detailMatch');
+    if (matchLabel) {
+      matchLabel.textContent = o.couponKind === 'times' ? '单次核销' : '核销项目';
+    }
+    if (matchEl) matchEl.textContent = o.name || '快捷开单';
     var statusHtml =
       o.status === 'revoked' ? '<span class="tag tag-rev">已撤销</span>'
         : o.status === 'refund' ? '<span class="tag tag-refund">已退款</span>'
@@ -2798,12 +2926,21 @@
       return;
     }
 
-    if (e.target.closest('#btnPickMember') || e.target.closest('#btnReselectMember')) {
+    if (e.target.closest('#btnPickMember') || e.target.closest('#btnReselectMember') ||
+        e.target.closest('[data-cust-action="open-member"]') ||
+        e.target.closest('[data-cust-action="reselect-member"]')) {
       openPickMember();
       return;
     }
     if (e.target.closest('#btnPickMemberBack')) {
+      /* 取消选会员：未选中则回到散客|会员双卡 */
+      if (!(session.selectedMember && session.selectedMember.id)) {
+        session.customerMode = 'guest';
+        session.custPhase = 'root';
+        session.guestJoin = 'no';
+      }
       goBack();
+      syncConfirmCustUI();
       return;
     }
     var memRow = e.target.closest('#pickMemberList [data-member-id]');
@@ -2811,21 +2948,39 @@
       pickMemberById(memRow.getAttribute('data-member-id'));
       return;
     }
-    var custModeBtn = e.target.closest('#custModeSeg [data-cust-mode]');
-    if (custModeBtn) {
-      saveJoinDraftFromDom();
-      session.customerMode = custModeBtn.getAttribute('data-cust-mode') === 'member' ? 'member' : 'guest';
-      syncConfirmCustUI();
-      scrollConfirmCustCard();
-      return;
-    }
-    var custJoinBtn = e.target.closest('#custJoinSeg [data-cust-join]');
-    if (custJoinBtn) {
-      saveJoinDraftFromDom();
-      session.guestJoin = custJoinBtn.getAttribute('data-cust-join') === 'yes' ? 'yes' : 'no';
-      syncConfirmCustUI();
-      scrollConfirmCustCard();
-      return;
+    var custActionBtn = e.target.closest('#confirmCustCard [data-cust-action]');
+    if (custActionBtn) {
+      var act = custActionBtn.getAttribute('data-cust-action');
+      if (act === 'open-guest') {
+        session.customerMode = 'guest';
+        session.guestJoin = 'no';
+        if (!session.guestGender) session.guestGender = 'male';
+        morphCustPhase('guest', { animate: true });
+        return;
+      }
+      if (act === 'back-root') {
+        saveJoinDraftFromDom();
+        morphCustPhase('root', { animate: true });
+        return;
+      }
+      if (act === 'clear-member-root') {
+        session.selectedMember = null;
+        session.customerMode = 'guest';
+        session.guestJoin = 'no';
+        morphCustPhase('root', { animate: true });
+        return;
+      }
+      if (act === 'open-join') {
+        /* 进入加入会员时，性别默认跟上一步散客性别 */
+        session.joinGender = session.guestGender || session.joinGender || 'male';
+        morphCustPhase('join', { animate: true });
+        return;
+      }
+      if (act === 'back-guest') {
+        saveJoinDraftFromDom();
+        morphCustPhase('guest', { animate: true });
+        return;
+      }
     }
     var guestGenderBtn = e.target.closest('#custGuestGender [data-guest-gender]');
     if (guestGenderBtn) {
@@ -2836,6 +2991,7 @@
     }
     var joinGenderBtn = e.target.closest('#custJoinGender [data-join-gender]');
     if (joinGenderBtn) {
+      saveJoinDraftFromDom();
       session.joinGender = joinGenderBtn.getAttribute('data-join-gender') === 'female' ? 'female' : 'male';
       syncConfirmCustUI();
       scrollConfirmCustCard();
@@ -2843,7 +2999,7 @@
     }
     if (e.target.closest('#confirmCustCard')) {
       /* 点卡片内其它控件（输入框等）也滚到完整可见 */
-      if (e.target.closest('input, button, .cust-seg, .gender-seg, .cust-pick-cta, .cust-reselect')) {
+      if (e.target.closest('input, button, .cust-tile, .gender-seg, .cust-reselect, .cust-join__close')) {
         scrollConfirmCustCard();
       }
     }

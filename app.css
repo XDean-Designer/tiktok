@@ -1483,53 +1483,219 @@
 }
 .confirm-tip--ico span { flex: 1; min-width: 0; }
 
-/* 确认页 · 消费顾客 */
-.cust-card { margin-top: 12px; }
+/* 确认页 · 消费顾客（卡片形变 · iOS 弹性） */
+.cust-card {
+  margin-top: 12px;
+  background: #fff;
+}
 .cust-card__title {
   font-size: 15px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px;
 }
-/* 一级：会员|散客 —— 更大描边胶囊 */
-.cust-seg--primary {
-  display: flex; background: #fff; border: 1.5px solid #e8e8e8;
-  border-radius: 22px; padding: 3px; gap: 2px;
+.cust-morph {
+  position: relative;
+  min-height: 60px;
 }
-.cust-seg--primary .cust-seg__btn {
-  flex: 1; height: 38px; border: 0; border-radius: 19px;
-  background: transparent; color: #666; font-size: 15px; font-weight: 500;
-  font-family: inherit; cursor: pointer;
+.cust-morph__stage {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  will-change: transform, opacity;
 }
-.cust-seg--primary .cust-seg__btn.on {
-  background: #1a1a1a; color: #fff; font-weight: 600;
-  box-shadow: 0 2px 6px rgba(0,0,0,.12);
+.cust-morph__stage[hidden] { display: none !important; }
+.cust-morph__stage--root { align-items: stretch; }
+.cust-morph__stage--guest {
+  align-items: stretch;
+  min-height: 84px;
 }
-/* 二级：加入会员|不加入 —— 更小灰底 */
-.cust-seg--sub {
-  display: flex; background: #f5f5f5; border-radius: 8px; padding: 2px; gap: 2px;
-  margin-top: 4px;
+.cust-morph__stage--join,
+.cust-morph__stage--member { display: block; }
+
+.cust-tile {
+  border: 1px solid #E8E8E8;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  font-family: inherit;
+  color: #1a1a1a;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.22s cubic-bezier(0.34, 1.45, 0.64, 1),
+    background-color 0.22s cubic-bezier(0.22, 0.82, 0.24, 1),
+    color 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
 }
-.cust-seg--sub .cust-seg__btn {
-  flex: 1; height: 30px; border: 0; border-radius: 6px;
-  background: transparent; color: #888; font-size: 13px; font-weight: 500;
-  font-family: inherit; cursor: pointer;
+.cust-tile:active:not(:disabled) {
+  transform: scale(0.96);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
-.cust-seg--sub .cust-seg__btn.on {
-  background: #fff; color: #1a1a1a; box-shadow: 0 1px 2px rgba(0,0,0,.06);
+.cust-tile__label {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
-.cust-sublabel {
-  font-size: 13px; color: #929292; margin: 14px 0 8px;
+.cust-tile__ico {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  pointer-events: none;
 }
-.cust-sublabel--center { text-align: center; }
-.cust-panel { margin-top: 12px; }
-.cust-pick-cta {
-  width: 100%; height: 44px; border: 1px dashed #d0d0d0; border-radius: 10px;
-  background: #fafafa; display: flex; align-items: center; justify-content: space-between;
-  padding: 0 14px; font-size: 14px; color: #666; font-family: inherit; cursor: pointer;
+
+/* 初始双卡 */
+.cust-tile--choice {
+  flex: 1;
+  height: 60px;
+  min-height: 60px;
+  padding: 0 14px;
+  text-align: left;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  position: relative;
 }
-.cust-summary {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 12px; background: #f7f7f7; border-radius: 10px;
+.cust-morph__stage--root .cust-tile--choice::after {
+  content: '';
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid #c8c8c8;
+  border-bottom: 1.5px solid #c8c8c8;
+  transform: translateY(-50%) rotate(-45deg);
+  opacity: 0.9;
+  pointer-events: none;
 }
-.cust-summary__main { display: flex; align-items: center; gap: 10px; min-width: 0; }
+
+/* 散客展开：左 ~62% 男|女，右扁卡纵向 */
+.cust-morph__guest-left {
+  flex: 0 0 calc(62% - 5px);
+  width: calc(62% - 5px);
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  align-self: stretch;
+}
+.cust-morph__guest-right {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cust-tile--gender {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 10px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: #fff;
+  color: #666;
+}
+.cust-tile--gender .cust-tile__label { font-size: 14px; }
+.cust-tile--gender.on.is-male {
+  background: #B8D4F0;
+  color: #3A6EA5;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(58, 110, 165, 0.18);
+}
+.cust-tile--gender.on.is-female {
+  background: #F5C6D0;
+  color: #C45A7A;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(196, 90, 122, 0.18);
+}
+.cust-tile--icon {
+  flex: 1 1 0;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555;
+  background: #fff;
+  padding: 0;
+}
+
+/* 加入会员大卡 */
+.cust-tile--join {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 18px 14px 14px;
+  text-align: left;
+  cursor: default;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  /* 卡内点击（性别/输入等）不触发整卡按压缩放 */
+  transform: none !important;
+}
+.cust-tile--join:active,
+.cust-tile--join:active:not(:disabled) {
+  transform: none !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.cust-tile--join.is-pop {
+  animation: none !important;
+}
+.cust-join__close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 16px;
+  background: #f2f2f2;
+  color: #666;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.2s cubic-bezier(0.34, 1.45, 0.64, 1), background 0.15s ease;
+}
+.cust-join__close:active { transform: scale(0.9); background: #e8e8e8; }
+.cust-join__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 36px 14px 0;
+}
+
+/* 会员摘要卡 */
+.cust-tile--member {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 72px;
+  padding: 12px 12px 12px 8px;
+  cursor: default;
+}
+.cust-tile--member:active { transform: none; }
+.cust-member__back {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #555;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+  transition: transform 0.2s cubic-bezier(0.34, 1.45, 0.64, 1), background 0.15s ease;
+}
+.cust-member__back:active { transform: scale(0.92); background: #f5f5f5; }
+.cust-summary__main { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
 .cust-summary__avatar {
   width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
   display: block; flex-shrink: 0; background: #f0ebe3;
@@ -1539,24 +1705,69 @@
 .cust-reselect {
   border: 0; background: transparent; color: #1983d8; font-size: 13px;
   font-family: inherit; cursor: pointer; flex-shrink: 0;
+  padding: 6px 4px;
 }
 .cust-hint { font-size: 12px; color: #929292; margin-top: 10px; line-height: 1.45; }
-.cust-guest-join { margin-top: 8px; }
-.cust-guest-nojoin { margin-top: 4px; }
 #btnConfirmVerify:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* 性别 · 马卡龙 */
-.gender-seg--center {
-  display: flex; justify-content: center; margin: 0 auto;
-  background: transparent; padding: 0; gap: 12px;
+/* FLIP 形变过程 */
+.cust-morph.is-animating .cust-tile {
+  pointer-events: none;
 }
+.cust-morph__stage.is-flip-out {
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  opacity: 0;
+  transform: scale(0.92);
+  pointer-events: none;
+  transition:
+    opacity 0.28s cubic-bezier(0.22, 0.82, 0.24, 1),
+    transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.cust-morph__stage.is-flip-in {
+  animation: custStageIn 0.34s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes custStageIn {
+  from { opacity: 0; transform: scale(0.88); }
+  to { opacity: 1; transform: scale(1); }
+}
+.cust-tile.is-pop {
+  animation: custTilePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes custTilePop {
+  from { transform: scale(0.86); opacity: 0.6; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cust-tile,
+  .cust-join__close,
+  .cust-member__back {
+    transition: background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease !important;
+  }
+  .cust-tile:active:not(:disabled) { transform: none; }
+  .cust-morph__stage.is-flip-out,
+  .cust-morph__stage.is-flip-in,
+  .cust-tile.is-pop {
+    animation: none !important;
+    transition: opacity 0.15s ease !important;
+    transform: none !important;
+  }
+  @keyframes custStageIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+/* 性别 · 马卡龙（加入会员表单内） */
 .gender-seg--macaron {
   background: transparent; padding: 0; gap: 10px;
+  display: flex;
 }
 .gender-seg--macaron .gender-seg__btn {
   min-width: 64px; height: 32px; border-radius: 16px;
   background: #F2F2F2; color: #999; font-weight: 500;
-  box-shadow: none;
+  box-shadow: none; border: 0; font-family: inherit; cursor: pointer;
 }
 .gender-seg--macaron .gender-seg__btn.on.is-male {
   background: #B8D4F0; color: #3A6EA5; font-weight: 600;

@@ -37,15 +37,164 @@
     root.style.setProperty('--app-top', top + 'px');
     root.style.setProperty('--app-left', left + 'px');
   }
+  function closeNavDrawer() {
+    root.classList.remove('nav-drawer-open');
+    var nav = document.querySelector('.site-nav');
+    if (nav) {
+      nav.classList.remove('is-dragging');
+      nav.style.transform = '';
+    }
+    var mask = document.getElementById('navDrawerMask');
+    if (mask) mask.setAttribute('aria-hidden', 'true');
+  }
+  function openNavDrawer() {
+    if (!root.classList.contains('view-mobile')) return;
+    root.classList.add('nav-drawer-open');
+    var nav = document.querySelector('.site-nav');
+    if (nav) {
+      nav.classList.remove('is-dragging');
+      nav.style.transform = '';
+    }
+    var mask = document.getElementById('navDrawerMask');
+    if (mask) mask.setAttribute('aria-hidden', 'false');
+  }
   function apply() {
     var mobile = preferMobile();
     root.classList.toggle('view-mobile', mobile);
     root.classList.toggle('view-desktop', !mobile);
+    if (!mobile) closeNavDrawer();
     syncAppHeight();
   }
+  function bindNavDrawer() {
+    var nav = document.querySelector('.site-nav');
+    var mask = document.getElementById('navDrawerMask');
+    var edge = document.getElementById('navEdgeHit');
+    if (!nav) return;
+
+    var drag = null;
+    function navWidth() {
+      return nav.getBoundingClientRect().width || Math.min(window.innerWidth * 0.86, 300);
+    }
+    function setDragX(x) {
+      var w = navWidth();
+      var tx = Math.max(-w, Math.min(0, x));
+      nav.classList.add('is-dragging');
+      nav.style.transform = 'translate3d(' + tx + 'px,0,0)';
+      if (mask && root.classList.contains('view-mobile')) {
+        var p = 1 + tx / w;
+        mask.style.opacity = String(Math.max(0, Math.min(1, p)));
+        mask.style.pointerEvents = p > 0.05 ? 'auto' : 'none';
+      }
+      return tx;
+    }
+    function endDrag(tx) {
+      var w = navWidth();
+      nav.classList.remove('is-dragging');
+      nav.style.transform = '';
+      if (mask) mask.style.opacity = '';
+      if (mask) mask.style.pointerEvents = '';
+      if (tx > -w * 0.55) openNavDrawer();
+      else closeNavDrawer();
+    }
+    function onStart(clientX, clientY, target) {
+      if (!root.classList.contains('view-mobile')) return false;
+      var open = root.classList.contains('nav-drawer-open');
+      var fromEdge = clientX <= 22 || (edge && edge.contains(target));
+      var fromNav = open && nav.contains(target);
+      var fromMask = open && mask && mask.contains(target);
+      if (!fromEdge && !fromNav && !fromMask) return false;
+      drag = {
+        x0: clientX,
+        y0: clientY,
+        open: open,
+        axis: null,
+        w: navWidth()
+      };
+      return true;
+    }
+    function onMove(clientX, clientY) {
+      if (!drag) return;
+      var dx = clientX - drag.x0;
+      var dy = clientY - drag.y0;
+      if (!drag.axis) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        drag.axis = Math.abs(dx) >= Math.abs(dy) ? 'x' : 'y';
+        if (drag.axis === 'y') {
+          drag = null;
+          return;
+        }
+      }
+      if (drag.axis !== 'x') return;
+      var base = drag.open ? 0 : -drag.w;
+      setDragX(base + dx);
+    }
+    function onEnd(clientX) {
+      if (!drag) return;
+      var dx = clientX - drag.x0;
+      var base = drag.open ? 0 : -drag.w;
+      var tx = Math.max(-drag.w, Math.min(0, base + dx));
+      var wasAxis = drag.axis;
+      drag = null;
+      if (wasAxis !== 'x') {
+        nav.classList.remove('is-dragging');
+        nav.style.transform = '';
+        return;
+      }
+      endDrag(tx);
+    }
+
+    document.addEventListener('touchstart', function (e) {
+      if (!e.touches || !e.touches[0]) return;
+      var t = e.touches[0];
+      onStart(t.clientX, t.clientY, e.target);
+    }, { passive: true });
+    document.addEventListener('touchmove', function (e) {
+      if (!drag || drag.axis === 'y') return;
+      if (!e.touches || !e.touches[0]) return;
+      var t = e.touches[0];
+      if (drag.axis === 'x') {
+        onMove(t.clientX, t.clientY);
+        if (e.cancelable) e.preventDefault();
+      } else {
+        onMove(t.clientX, t.clientY);
+      }
+    }, { passive: false });
+    document.addEventListener('touchend', function (e) {
+      var t = e.changedTouches && e.changedTouches[0];
+      onEnd(t ? t.clientX : 0);
+    }, { passive: true });
+    document.addEventListener('touchcancel', function () {
+      if (!drag) return;
+      drag = null;
+      nav.classList.remove('is-dragging');
+      nav.style.transform = '';
+      if (mask) {
+        mask.style.opacity = '';
+        mask.style.pointerEvents = '';
+      }
+    }, { passive: true });
+
+    if (mask) {
+      mask.addEventListener('click', function () { closeNavDrawer(); });
+    }
+    /* 点流程跳转后收起；演示条按钮保持打开便于连点 */
+    nav.addEventListener('click', function (e) {
+      if (!root.classList.contains('view-mobile')) return;
+      var flowBtn = e.target.closest('.nav-item[data-flow], a.nav-link');
+      if (flowBtn) closeNavDrawer();
+    });
+  }
+
   apply();
   window.__dyApplyViewShell = apply;
   window.__dySyncAppHeight = syncAppHeight;
+  window.__dyOpenNavDrawer = openNavDrawer;
+  window.__dyCloseNavDrawer = closeNavDrawer;
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindNavDrawer);
+  } else {
+    bindNavDrawer();
+  }
 })();
 </script>
   <link rel="stylesheet" href="auth-open.css">
@@ -181,6 +330,8 @@
     <div style="padding:6px 8px;font-size:11px;color:#9a9a9a;line-height:1.55;">APP 首页仅为演示占位。本期单店·团购核销（抖音/美团均经汇付天下 ISV；扫码自动识别券类型）。系统优惠券走线上 APP 既有核销；次卡可核销（独立选择本次次数、按次开单）；代金券提示不支持。</div>
   </div>
 </aside>
+<div class="nav-drawer-mask" id="navDrawerMask" aria-hidden="true"></div>
+<div class="nav-edge-hit" id="navEdgeHit" aria-hidden="true"></div>
 
 <div class="stage">
   <div id="frame">
@@ -827,58 +978,80 @@
           </div>
           <div class="info-card cust-card" id="confirmCustCard">
             <div class="cust-card__title">消费顾客</div>
-            <div class="cust-seg cust-seg--primary" id="custModeSeg" role="group" aria-label="顾客类型">
-              <button type="button" class="cust-seg__btn" data-cust-mode="member">会员</button>
-              <button type="button" class="cust-seg__btn on" data-cust-mode="guest">散客</button>
-            </div>
-            <div class="cust-panel" id="custPanelMember" hidden>
-              <button type="button" class="cust-pick-cta" id="btnPickMember">
-                <span id="custMemberCtaText">选择会员</span>
-                <img src="assets/icons/match-chevron.svg" alt="" width="16" height="16">
-              </button>
-              <div class="cust-summary" id="custMemberSummary" hidden>
-                <div class="cust-summary__main">
-                  <img class="cust-summary__avatar" id="custMemberAvatar" src="assets/icons/avatar-female.png" alt="" width="40" height="40">
-                  <div>
-                    <div class="cust-summary__name" id="custMemberName">—</div>
-                    <div class="cust-summary__sub" id="custMemberPhone">—</div>
-                  </div>
+            <div class="cust-morph" id="custMorph" data-phase="root">
+              <!-- 初始：散客 | 会员 -->
+              <div class="cust-morph__stage cust-morph__stage--root" data-stage="root">
+                <button type="button" class="cust-tile cust-tile--choice" data-cust-action="open-guest">
+                  <span class="cust-tile__label">散客</span>
+                </button>
+                <button type="button" class="cust-tile cust-tile--choice" data-cust-action="open-member" id="btnPickMember">
+                  <span class="cust-tile__label">会员</span>
+                </button>
+              </div>
+
+              <!-- 散客展开：男|女 ~62% + 返回/加入扁卡 -->
+              <div class="cust-morph__stage cust-morph__stage--guest" data-stage="guest" hidden>
+                <div class="cust-morph__guest-left" id="custGuestGender" role="group" aria-label="散客性别">
+                  <button type="button" class="cust-tile cust-tile--gender is-male on" data-guest-gender="male">
+                    <span class="cust-tile__label">男散客</span>
+                  </button>
+                  <button type="button" class="cust-tile cust-tile--gender is-female" data-guest-gender="female">
+                    <span class="cust-tile__label">女散客</span>
+                  </button>
                 </div>
-                <button type="button" class="cust-reselect" id="btnReselectMember">重新选择</button>
-              </div>
-            </div>
-            <div class="cust-panel" id="custPanelGuest">
-              <div class="cust-sublabel">是否加入会员</div>
-              <div class="cust-seg cust-seg--sub" id="custJoinSeg" role="group" aria-label="是否加入会员">
-                <button type="button" class="cust-seg__btn" data-cust-join="yes">加入会员</button>
-                <button type="button" class="cust-seg__btn on" data-cust-join="no">不加入</button>
-              </div>
-              <div class="cust-guest-nojoin" id="custGuestNoJoin">
-                <div class="cust-sublabel cust-sublabel--center">性别</div>
-                <div class="gender-seg gender-seg--macaron gender-seg--center" id="custGuestGender" role="group" aria-label="散客性别">
-                  <button type="button" class="gender-seg__btn on is-male" data-guest-gender="male">男</button>
-                  <button type="button" class="gender-seg__btn is-female" data-guest-gender="female">女</button>
+                <div class="cust-morph__guest-right">
+                  <button type="button" class="cust-tile cust-tile--icon" data-cust-action="back-root" aria-label="返回">
+                    <img class="cust-tile__ico" src="assets/icons/cust-back.svg" alt="" width="20" height="20">
+                  </button>
+                  <button type="button" class="cust-tile cust-tile--icon" data-cust-action="open-join" aria-label="加入会员">
+                    <img class="cust-tile__ico" src="assets/icons/cust-add-member.svg" alt="" width="20" height="20">
+                  </button>
                 </div>
               </div>
-              <div class="cust-guest-join" id="custGuestJoin" hidden>
-                <div class="kv-list">
-                  <div class="kv phone-card__row">
-                    <span class="k">手机号</span>
-                    <input class="phone-card__input" id="custJoinPhone" type="tel" maxlength="11" inputmode="numeric" placeholder="请输入手机号" autocomplete="tel">
-                  </div>
-                  <div class="kv phone-card__row">
-                    <span class="k">称呼</span>
-                    <input class="phone-card__input" id="custJoinNick" type="text" maxlength="20" placeholder="如：王 / 王芳" autocomplete="off">
-                  </div>
-                  <div class="kv phone-card__row phone-card__row--gender">
-                    <span class="k">性别</span>
-                    <div class="gender-seg gender-seg--macaron" id="custJoinGender" role="group" aria-label="新会员性别">
-                      <button type="button" class="gender-seg__btn on is-male" data-join-gender="male">男</button>
-                      <button type="button" class="gender-seg__btn is-female" data-join-gender="female">女</button>
+
+              <!-- 加入会员大卡 -->
+              <div class="cust-morph__stage cust-morph__stage--join" data-stage="join" hidden>
+                <div class="cust-tile cust-tile--join" id="custGuestJoin">
+                  <button type="button" class="cust-join__close" data-cust-action="back-guest" aria-label="取消返回">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                  </button>
+                  <div class="cust-join__title">加入会员</div>
+                  <div class="kv-list">
+                    <div class="kv phone-card__row">
+                      <span class="k">手机号</span>
+                      <input class="phone-card__input" id="custJoinPhone" type="tel" maxlength="11" inputmode="numeric" placeholder="请输入手机号" autocomplete="tel">
+                    </div>
+                    <div class="kv phone-card__row">
+                      <span class="k">称呼</span>
+                      <input class="phone-card__input" id="custJoinNick" type="text" maxlength="20" placeholder="如：王 / 王芳" autocomplete="off">
+                    </div>
+                    <div class="kv phone-card__row phone-card__row--gender">
+                      <span class="k">性别</span>
+                      <div class="gender-seg gender-seg--macaron" id="custJoinGender" role="group" aria-label="新会员性别">
+                        <button type="button" class="gender-seg__btn on is-male" data-join-gender="male">男</button>
+                        <button type="button" class="gender-seg__btn is-female" data-join-gender="female">女</button>
+                      </div>
                     </div>
                   </div>
+                  <p class="cust-hint">填写手机号或称呼任一即可建档；仅选性别则按散客记单</p>
                 </div>
-                <p class="cust-hint">填写手机号或称呼任一即可建档；仅选性别则按散客记单</p>
+              </div>
+
+              <!-- 已选会员摘要卡 -->
+              <div class="cust-morph__stage cust-morph__stage--member" data-stage="member" hidden>
+                <div class="cust-tile cust-tile--member" id="custMemberSummary">
+                  <button type="button" class="cust-member__back" data-cust-action="clear-member-root" aria-label="返回顾客类型">
+                    <img class="cust-tile__ico" src="assets/icons/cust-back.svg" alt="" width="20" height="20">
+                  </button>
+                  <div class="cust-summary__main">
+                    <img class="cust-summary__avatar" id="custMemberAvatar" src="assets/icons/avatar-female.png" alt="" width="40" height="40">
+                    <div>
+                      <div class="cust-summary__name" id="custMemberName">—</div>
+                      <div class="cust-summary__sub" id="custMemberPhone">—</div>
+                    </div>
+                  </div>
+                  <button type="button" class="cust-reselect" id="btnReselectMember">重新选择</button>
+                </div>
               </div>
             </div>
           </div>
@@ -1027,6 +1200,7 @@
               <div class="kv"><span class="k">核销时间</span><span class="v" id="detailTime">—</span></div>
               <div class="kv"><span class="k">操作人</span><span class="v" id="detailOp">顾清扬</span></div>
               <div class="kv"><span class="k">消费顾客</span><span class="v" id="detailCustomer">男散客</span></div>
+              <div class="kv"><span class="k" id="detailMatchLabel">核销项目</span><span class="v" id="detailMatch">深层补水护理</span></div>
               <div class="kv"><span class="k">开单号</span><span class="v" id="detailBill">SO20260903018</span></div>
               <div class="kv"><span class="k">撤销时限</span><span class="v" id="detailRevokeHint">剩余 42 分钟可撤销</span></div>
             </div>
