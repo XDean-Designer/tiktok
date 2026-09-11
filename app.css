@@ -34,11 +34,11 @@
 [hidden] { display: none !important; }
 
 .status-bar {
-  height: 53px; background: var(--card); flex-shrink: 0;
+  height: 53px; background: #fff; flex-shrink: 0;
   display: flex; align-items: flex-end; justify-content: space-between;
   box-sizing: border-box; padding: 0 24px 10px; color: #000; z-index: 5;
 }
-.status-bar--auth-warm { background: #FFF5F2; }
+.status-bar--auth-warm { background: #fff; }
 .status-bar__time { font-size: 16px; font-weight: 600; letter-spacing: -.3px; line-height: 1; min-width: 54px; }
 .status-bar__icons { display: flex; align-items: center; gap: 6px; height: 12px; }
 .status-bar__icons svg { display: block; }
@@ -356,6 +356,10 @@
 .kv-list .v.copy-row .copy-ico { display: block; flex-shrink: 0; }
 .fail-meta-card { display: none !important; }
 .phone-card .kv-list { margin-top: 0; }
+.phone-card__title {
+  font-size: 15px; font-weight: 700; color: #1a1a1a; line-height: 1.3;
+  margin: 0 0 4px;
+}
 .phone-card .kv { border-top: 0; padding: 10px 0; }
 .phone-card .phone-card__row {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -1479,6 +1483,23 @@
 }
 .confirm-tip--ico span { flex: 1; min-width: 0; }
 
+.times-use {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.times-use__btn {
+  width: 28px; height: 28px; padding: 0; border: 0; border-radius: 6px;
+  background: #F5F5F5; color: #1A1A1A; font-size: 16px; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.times-use__btn:active { background: #EBEBEB; }
+.times-use__n {
+  min-width: 24px; text-align: center; font-size: 15px; font-weight: 500; color: #1A1A1A;
+}
+.times-use__unit { font-size: 13px; color: #929292; }
+
 /* ===== 账号管理（Figma 414:166 像素级） ===== */
 #screen-account { background: #F7F7F7; }
 #screen-account .acct-title-bar {
@@ -1636,6 +1657,32 @@
   flex-shrink: 0; width: 24px; height: 24px; display: block;
 }
 .tg-deals-body { padding: 8px 16px 24px; }
+/* 门店 TAB：复用输码验券 .plat-tabs；全名 + 智能换行，三栏均分不横滑 */
+#tgStoreTabs.plat-tabs {
+  overflow: hidden;
+}
+#tgStoreTabs .plat-tab {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: auto;
+  min-height: 44px;
+  padding: 8px 4px 10px;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.25;
+  font-size: 14px;
+}
+#tgStoreTabs .plat-tab .tg-tab-line {
+  display: block;
+  max-width: 100%;
+  word-break: keep-all;
+}
+#tgStoreTabs .plat-tab.on::after {
+  left: 16%;
+  right: 16%;
+}
 .tg-deal-list { display: flex; flex-direction: column; gap: 10px; }
 .tg-deal-list--cards { gap: 14px; }
 .tg-deal-item {
@@ -1694,9 +1741,17 @@
   flex-shrink: 0; width: 24px; height: 24px; border-radius: 6px;
   display: block; object-fit: contain;
 }
+.tg-coupon-card__title {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px;
+}
 .tg-coupon-card__name {
-  flex: 1; min-width: 0; font-size: 17px; font-weight: 700; color: #1A1A1A;
+  flex: 0 1 auto; min-width: 0; font-size: 17px; font-weight: 700; color: #1A1A1A;
   line-height: 24px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.tg-coupon-card__kind {
+  flex-shrink: 0; display: inline-flex; align-items: center; height: 18px; padding: 0 6px;
+  border-radius: 4px; font-size: 11px; font-weight: 500; line-height: 1;
+  color: #3B82F6; background: #E8F1FF;
 }
 .tg-coupon-card__price {
   flex-shrink: 0; font-size: 16px; font-weight: 700; color: #FE2C55;
@@ -1734,6 +1789,12 @@
 .tg-config-deal-card__name {
   margin-top: 6px; font-size: 17px; font-weight: 700; color: #333; line-height: normal;
 }
+.tg-config-deal-card__name-row {
+  display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 6px;
+}
+.tg-config-deal-card__name-row .tg-config-deal-card__name {
+  margin-top: 0; flex: 0 1 auto; min-width: 0;
+}
 .tg-config-deal-card__divider {
   width: 100%; height: 0; margin: 8px 0 4px;
   border: 0; border-top: 1px solid #F0F0F0;
@@ -1749,3 +1810,65 @@
   font-size: 14px; font-weight: 500; color: #333;
 }
 
+
+/* ===== 门店流水 / 订单流水（示意） ===== */
+.of-tabs {
+  display: flex; align-items: stretch; gap: 0;
+  padding: 0 4px; background: #fff; border-bottom: 0.5px solid #eee;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.of-tab {
+  flex: 0 0 auto; min-width: 76px; height: 48px; padding: 13px 8px 4px;
+  border: 0; background: transparent; color: #666; font-size: 15px;
+  display: flex; flex-direction: column; align-items: center; gap: 9px;
+  position: relative; cursor: pointer;
+}
+.of-tab small { font-size: 11px; color: #999; font-weight: 400; margin-left: 2px; }
+.of-tab.on { color: #FF7A28; font-weight: 500; }
+.of-tab.on::after {
+  content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
+  width: 24px; height: 3px; border-radius: 2px; background: #FF7A28;
+}
+.of-body { background: #F7F7F7; padding: 11px 13px 24px; display: flex; flex-direction: column; gap: 13px; }
+.of-card {
+  background: #fff; border-radius: 11px; padding: 15px 13px 13px;
+  display: flex; flex-direction: column; gap: 13px;
+}
+.of-card__head { display: flex; align-items: center; }
+.of-card__user { display: flex; align-items: center; gap: 8px; }
+.of-card__avatar {
+  width: 38px; height: 38px; border-radius: 50%; background: #FFD6C9; color: #C45A3A;
+  display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600;
+}
+.of-card__avatar--mt { background: #FFE8A3; color: #8A6A00; }
+.of-card__uname { font-size: 16px; font-weight: 500; color: #111; }
+.of-card__status { margin-left: auto; font-size: 14px; color: #FF7A28; }
+.of-card__goods { display: flex; align-items: flex-start; }
+.of-card__logo {
+  width: 48px; height: 48px; border-radius: 8px; object-fit: contain; flex-shrink: 0;
+  background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.04);
+}
+.of-card__goods-main { flex: 1; min-width: 0; padding-left: 9px; display: flex; flex-direction: column; gap: 7px; }
+.of-card__goods-row { display: flex; align-items: center; gap: 4px; }
+.of-card__flash { font-size: 14px; line-height: 1; }
+.of-card__gname { font-size: 15px; color: #222; }
+.of-card__gprice { margin-left: auto; font-size: 15px; font-weight: 500; color: #111; }
+.of-card__staff {
+  align-self: flex-start; background: #FFEFE0; border-radius: 4px;
+  padding: 3px 9px; font-size: 10px; font-weight: 500; color: #1a1a1a;
+}
+.of-card__staff span { color: #929292; margin: 0 4px; }
+.of-card__pay { display: flex; align-items: center; padding: 4px 0; }
+.of-card__pay-plat {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 14px; color: #333;
+}
+.of-card__pay-plat img { width: 16px; height: 16px; object-fit: contain; }
+.of-card__pay-amt { margin-left: auto; font-size: 14px; font-weight: 500; color: #FF7A28; }
+.of-card__total { text-align: right; font-size: 16px; font-weight: 700; color: #111; padding: 9px 0 11px; }
+.of-card__dash { border-top: 1px dashed #ddd; height: 0; }
+.of-card__time {
+  display: flex; justify-content: space-between; font-size: 13px; color: #999;
+}
+.of-note {
+  margin: 4px 2px 0; font-size: 12px; color: #929292; line-height: 1.55;
+}

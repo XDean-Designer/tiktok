@@ -4,8 +4,11 @@
   var BACK_PARENT = {
     'tg-set': 'workbench',
     'tg-deals': 'tg-set',
-    'tg-config': 'tg-deals'
+    'tg-config': 'tg-deals',
+    'order-flow': 'workbench',
+    'auth-open': 'account'
   };
+  var pendingSuccessAction = null; /* 'done' | 'continue' */
   var currentOrder = null;
   var filterState = { status: 'all', time: 'all' };
   var filterDraft = { status: 'all', time: 'all' };
@@ -15,6 +18,7 @@
   var PRD_ANCHOR = {
     home: 'home',
     workbench: 'home',
+    'order-flow': 'home',
     account: 'account',
     scan: 'scan',
     input: 'input',
@@ -27,9 +31,10 @@
     orders: 'orders',
     detail: 'detail',
     'revoke-ok': 'revoke-ok',
-    'owner-auth': 'owner-auth',
-    'owner-auth-mt': 'owner-auth-mt',
-    'dy-auth-grant': 'owner-auth',
+    'owner-auth': 'auth-open',
+    'owner-auth-mt': 'auth-open',
+    'auth-open': 'auth-open',
+    'dy-auth-grant': 'auth-open',
     'tg-set': 'tg-set',
     'tg-deals': 'tg-deals',
     'tg-config': 'tg-config',
@@ -46,8 +51,8 @@
     revokeMask: 'detail',
     dupMask: 'scan',
     offlineMask: 'tpl-offline',
-    authNeedMask: 'owner-auth',
-    mapNeedMask: 'tg-set',
+    authNeedMask: 'auth-open',
+    mapNeedMask: 'auth-open',
     camDeniedMask: 'cam-denied',
     offlinePageMask: 'tpl-offline',
     timeoutMask: 'tpl-timeout',
@@ -74,9 +79,10 @@
     'tg-set': '6.13c 团购设置',
     'tg-deals': '6.13c 目录列表',
     'tg-config': '6.13c 默认配置',
-    'dy-auth-grant': '6.13a 抖音核销授权（汇付开通）',
-    'owner-auth': '6.13 抖音授权指引（汇付）',
-    'owner-auth-mt': '6.13b 美团授权（汇付）',
+    'auth-open': '6.13 平台开通（三步）',
+    'owner-auth': '6.13 平台开通（三步）',
+    'owner-auth-mt': '6.13 平台开通（三步）',
+    'dy-auth-grant': '6.13 平台开通（三步）',
     'cam-denied': '6.14 相机无权限',
     'tpl-offline': '6.15 断网模板',
     'tpl-timeout': '6.15 超时模板',
@@ -92,8 +98,9 @@
     authMeituan: 'ok',
     mapDouyin: true, // 平台门店是否已绑定 APP store
     mapMeituan: true,
-    bindCodeDy: 'JL-DY-5001',
-    bindCodeMt: 'JL-MT-5001',
+    bindCodeDy: '',
+    bindCodeMt: '',
+    shopCertStatus: 'approved',
     dyGrantScopes: ['store', 'verify', 'reconcile'],
     orderId: '716829104455',
     dealId: 'product_882910',
@@ -107,8 +114,13 @@
     selectedMatchIds: [],
     selectedMatchQty: {}, // { [matchId]: number }
     matchMemory: {},
-    dealDefaults: {}, // { [dealId]: { matches:[{id,qty}], matchIds } }
+    dealDefaults: {}, // { [storeId]: { [dealId]: { matches:[{id,qty}], matchIds } } }
     tgEditDealId: null,
+    tgStoreId: 'store_zs', /* 团购券列表当前门店 TAB */
+    loginStoreId: 'store_zs',
+    loginStoreName: '悦颜美肌 · 中山路店',
+    boundStoresDy: [],
+    boundStoresMt: [],
     matchPickFrom: 'confirm', // confirm | tg-config
     /* 内部开单字段（UI 文案按平台显示「抖音团购 / 美团团购」） */
     orderType: '快捷开单',
@@ -116,6 +128,12 @@
     couponName: '深层补水护理 · 单次体验',
     couponPrice: 268,
     couponCode: 'dy9182-ABCD-7781',
+    couponKind: 'groupbuy', /* groupbuy | times */
+    timesTotal: 0,
+    timesLeft: 0,
+    timesUse: 1, /* 本次核销次数（与核销项目数量解耦） */
+    timesUnitPrice: 0, /* 单次结算价 */
+    lastBillAmount: 0,
     mismatched: true,
     phone: '',
     nickname: '',
@@ -242,8 +260,8 @@
     perm: {
       title: '无核销权限',
       desc: '当前账号未开启「收银开单」权限，或门店授权已到期。请联系店长处理。',
-      action: '联系店长 / 查看授权指引',
-      primary: 'owner-auth'
+      action: '联系店长 / 去团购设置',
+      primary: 'tg-set'
     },
     network: {
       title: '网络超时',
@@ -287,8 +305,8 @@
   /* 账号管理 · 团购核销行状态（文案；颜色对齐授权页标签色） */
   var AUTH_ROW = {
     none: { label: '去开通', cls: 'is-go' },
-    pending: { label: '等待审核', cls: 'is-pending' },
-    ok: { label: '已授权', cls: 'is-ok' },
+    pending: { label: '审核中', cls: 'is-pending' },
+    ok: { label: '已开通', cls: 'is-ok' },
     expired: { label: '已到期', cls: 'is-expired' }
   };
 
@@ -330,7 +348,28 @@
   function storeAuthOk() { return currentAuth() === 'ok'; }
   function storeMapOk() { return !!session[platMapKey()]; }
   function currentBindCode() { return isMeituan() ? session.bindCodeMt : session.bindCodeDy; }
-  function authScreenForPlat() { return isMeituan() ? 'owner-auth-mt' : 'owner-auth'; }
+  function authScreenForPlat() { return 'auth-open'; }
+  function platformReady(plat) {
+    var p = plat || session.plat;
+    if (window.AuthOpen && typeof AuthOpen.isPlatformReady === 'function') {
+      return !!AuthOpen.isPlatformReady(p);
+    }
+    var key = (p === 'meituan' || p === 'mt') ? 'authMeituan' : 'authDouyin';
+    var map = (p === 'meituan' || p === 'mt') ? 'mapMeituan' : 'mapDouyin';
+    return normalizeAuthState(session[key]) === 'ok' && !!session[map];
+  }
+  function openAuthOpen(plat) {
+    session.plat = (plat === 'meituan' || plat === 'mt') ? 'meituan' : 'douyin';
+    syncPlatformChrome();
+    if (window.AuthOpen) AuthOpen.open(session.plat === 'meituan' ? 'mt' : 'dy');
+    showScreen('auth-open');
+  }
+  function refreshAuthDerivedUI() {
+    if (window.AuthOpen && AuthOpen.syncSessionGate) AuthOpen.syncSessionGate();
+    syncAcctAuthUI();
+    syncTgSetCards();
+    syncMapBars();
+  }
   function defaultDealId() { return isMeituan() ? 'deal_910288' : 'product_882910'; }
   function defaultOrderId() { return isMeituan() ? 'MT202609031102' : '716829104455'; }
   function couponDemoKey(kind) {
@@ -348,23 +387,138 @@
     };
   }
 
-  /* L1 团购券目录（原型 seed；正式走汇付能力【待联调确认】） */
-  var DEAL_CATALOG = {
-    douyin: [
-      { id: 'product_882910', name: '深层补水护理 · 单次体验', price: 268 },
-      { id: 'product_771204', name: '头皮护理套餐', price: 168 },
-      { id: 'product_660188', name: '时尚洗剪吹', price: 88 }
-    ],
-    meituan: [
-      { id: 'deal_910288', name: '美甲修护套餐 · 单次', price: 128 },
-      { id: 'deal_910301', name: '肩颈舒缓护理', price: 198 },
-      { id: 'deal_910455', name: '洗剪吹基础套餐', price: 68 }
-    ]
+  /* L1 团购券目录：主表 + 按门店差异（D2b：各店券种不完全相同） */
+  var DEAL_MASTER = {
+    product_882910: { id: 'product_882910', name: '深层补水护理 · 单次体验', price: 268 },
+    product_771204: { id: 'product_771204', name: '头皮护理套餐', price: 168 },
+    product_660188: { id: 'product_660188', name: '时尚洗剪吹', price: 88 },
+    product_tc_dy10: { id: 'product_tc_dy10', name: '深层补水护理 · 10次卡', price: 1980, couponKind: 'times', timesTotal: 10, timesUnitPrice: 198 },
+    deal_910288: { id: 'deal_910288', name: '美甲修护套餐 · 单次', price: 128 },
+    deal_910301: { id: 'deal_910301', name: '肩颈舒缓护理', price: 198 },
+    deal_910455: { id: 'deal_910455', name: '洗剪吹基础套餐', price: 68 },
+    deal_tc_mt5: { id: 'deal_tc_mt5', name: '肩颈舒缓护理 · 5次卡', price: 890, couponKind: 'times', timesTotal: 5, timesUnitPrice: 178 }
   };
+
+  /* 门店 → 本店上架的 L1 id 列表（演示：中山路全量，人民路少 1，高新少 2） */
+  var DEAL_IDS_BY_STORE = {
+    douyin: {
+      store_zs: ['product_882910', 'product_771204', 'product_660188', 'product_tc_dy10'],
+      store_rm: ['product_882910', 'product_771204', 'product_tc_dy10'],
+      store_gx: ['product_882910', 'product_tc_dy10']
+    },
+    meituan: {
+      store_zs: ['deal_910288', 'deal_910301', 'deal_910455', 'deal_tc_mt5'],
+      store_rm: ['deal_910288', 'deal_910301', 'deal_tc_mt5'],
+      store_gx: ['deal_910288', 'deal_tc_mt5']
+    }
+  };
+
+  function seedDemoDealDefaults() {
+    session.dealDefaults = {
+      store_zs: {
+        product_882910: {
+          matches: [{ id: 'p21', qty: 1 }, { id: 'p15', qty: 2 }],
+          matchIds: ['p21', 'p15']
+        },
+        deal_910288: {
+          matches: [{ id: 'p21', qty: 1 }],
+          matchIds: ['p21']
+        }
+      },
+      store_rm: {
+        product_771204: {
+          matches: [{ id: 'p15', qty: 1 }],
+          matchIds: ['p15']
+        },
+        deal_910301: {
+          matches: [{ id: 'p21', qty: 1 }, { id: 'p15', qty: 1 }],
+          matchIds: ['p21', 'p15']
+        }
+      },
+      store_gx: {}
+    };
+  }
+  seedDemoDealDefaults();
 
   var TG_CHEV_SVG = '<img class="tg-coupon-card__chev" src="assets/icons/chevron-right-16.svg" alt="" width="16" height="16" aria-hidden="true">';
   var ICO_DY = 'assets/icons/douyin-logo.svg';
   var ICO_MT = 'assets/icons/meituan-logo.svg';
+
+  function platKeyOf(plat) {
+    return plat === 'meituan' || plat === 'mt' ? 'meituan' : 'douyin';
+  }
+
+  function boundStoresOf(plat) {
+    var key = platKeyOf(plat);
+    var fromSession = key === 'meituan' ? session.boundStoresMt : session.boundStoresDy;
+    if (fromSession && fromSession.length) return fromSession.slice();
+    if (window.AuthOpen && AuthOpen.getState) {
+      var st = AuthOpen.getState();
+      var ids = (key === 'meituan' ? st.mt : st.dy).stores || [];
+      return ids.map(function (id) {
+        return (AuthOpen.storeById && AuthOpen.storeById(id)) || { id: id, name: id };
+      });
+    }
+    return [];
+  }
+
+  function ensureTgStoreId(plat) {
+    var stores = boundStoresOf(plat);
+    var ids = stores.map(function (s) { return s.id; });
+    if (!session.tgStoreId || ids.indexOf(session.tgStoreId) < 0) {
+      session.tgStoreId = ids[0] || session.loginStoreId || 'store_zs';
+    }
+    return session.tgStoreId;
+  }
+
+  function dealsOfStore(plat, storeId) {
+    var pk = platKeyOf(plat);
+    var ids = (DEAL_IDS_BY_STORE[pk] && DEAL_IDS_BY_STORE[pk][storeId]) || [];
+    return ids.map(function (id) { return DEAL_MASTER[id]; }).filter(Boolean);
+  }
+
+  function uniqueDealCount(plat) {
+    var pk = platKeyOf(plat);
+    var seen = {};
+    var n = 0;
+    boundStoresOf(pk).forEach(function (st) {
+      var ids = (DEAL_IDS_BY_STORE[pk] && DEAL_IDS_BY_STORE[pk][st.id]) || [];
+      ids.forEach(function (id) {
+        if (!seen[id]) { seen[id] = 1; n += 1; }
+      });
+    });
+    if (!n) {
+      Object.keys(DEAL_IDS_BY_STORE[pk] || {}).forEach(function (sid) {
+        (DEAL_IDS_BY_STORE[pk][sid] || []).forEach(function (id) {
+          if (!seen[id]) { seen[id] = 1; n += 1; }
+        });
+      });
+    }
+    return n;
+  }
+
+  function getDealDefault(storeId, dealId) {
+    if (!dealId) return null;
+    var bucket = session.dealDefaults && session.dealDefaults[storeId || session.tgStoreId || session.loginStoreId];
+    return bucket && bucket[dealId] ? bucket[dealId] : null;
+  }
+
+  function setDealDefault(storeId, dealId, value) {
+    session.dealDefaults = session.dealDefaults || {};
+    var sid = storeId || session.tgStoreId || session.loginStoreId;
+    if (!session.dealDefaults[sid]) session.dealDefaults[sid] = {};
+    session.dealDefaults[sid][dealId] = value;
+  }
+
+  function syncLoginStoreChrome() {
+    var name = session.loginStoreName || '悦颜美肌 · 中山路店';
+    var home = $('#homeStoreBtn');
+    if (home) {
+      home.innerHTML = name + ' <span class="chev">▾</span>';
+    }
+    var resultStore = $('#resultStoreName');
+    if (resultStore) resultStore.textContent = name;
+  }
 
   function matchQtyOf(id) {
     var q = session.selectedMatchQty && session.selectedMatchQty[id];
@@ -406,8 +560,33 @@
   }
 
   function dealById(id) {
-    var all = [].concat(DEAL_CATALOG.douyin || [], DEAL_CATALOG.meituan || []);
-    return all.filter(function (d) { return d.id === id; })[0];
+    return DEAL_MASTER[id] || null;
+  }
+
+  function isTimesDeal(deal) {
+    return !!(deal && deal.couponKind === 'times');
+  }
+
+  function timesDealOf(plat) {
+    var storeId = session.loginStoreId || session.tgStoreId || 'store_zs';
+    var rows = dealsOfStore(plat, storeId);
+    for (var i = 0; i < rows.length; i++) {
+      if (isTimesDeal(rows[i])) return rows[i];
+    }
+    var pk = platKeyOf(plat);
+    var allIds = [];
+    Object.keys(DEAL_IDS_BY_STORE[pk] || {}).forEach(function (sid) {
+      allIds = allIds.concat(DEAL_IDS_BY_STORE[pk][sid] || []);
+    });
+    for (var j = 0; j < allIds.length; j++) {
+      var d = DEAL_MASTER[allIds[j]];
+      if (isTimesDeal(d)) return d;
+    }
+    return null;
+  }
+
+  function isTimesScanKind(k) {
+    return k === 'times' || k === 'times-dy' || k === 'times-mt';
   }
 
   function dealDefaultSummary(def) {
@@ -427,7 +606,7 @@
 
   function tgCardCopy(state, plat) {
     if (state === 'ok') {
-      var n = ((DEAL_CATALOG[plat] || []).length);
+      var n = uniqueDealCount(plat);
       return { status: '共' + n + '项', cls: 'is-ok' };
     }
     if (state === 'pending') return { status: '等待审核', cls: 'is-pending' };
@@ -441,7 +620,9 @@
       { plat: 'meituan', card: '#tgCardMt', st: '#tgCardMtStatus', key: 'authMeituan' }
     ].forEach(function (item) {
       var state = normalizeAuthState(session[item.key]);
-      var copy = tgCardCopy(state, item.plat);
+      var copy = platformReady(item.plat)
+        ? tgCardCopy('ok', item.plat)
+        : tgCardCopy(state === 'expired' ? 'expired' : 'none', item.plat);
       var card = $(item.card);
       var st = $(item.st);
       if (st) st.textContent = copy.status;
@@ -455,36 +636,72 @@
   function openTgPlat(plat) {
     session.plat = plat === 'meituan' ? 'meituan' : 'douyin';
     syncPlatformChrome();
-    var authKey = session.plat === 'meituan' ? 'authMeituan' : 'authDouyin';
-    var st = normalizeAuthState(session[authKey]);
-    if (st !== 'ok') {
-      showScreen(session.plat === 'meituan' ? 'owner-auth-mt' : 'owner-auth');
+    if (!platformReady(session.plat)) {
+      openAuthOpen(session.plat);
       return;
     }
-    var mapped = session.plat === 'meituan' ? session.mapMeituan : session.mapDouyin;
-    if (!mapped) {
-      openMapNeedMask(session.plat);
-      return;
-    }
+    ensureTgStoreId(session.plat);
     showScreen('tg-deals');
+  }
+
+  function escapeTgHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  /** TAB 文案：含「 · 」时按分隔符换行（品牌 / 店名），字号不缩小 */
+  function storeTabLabelHtml(name) {
+    var raw = String(name || '');
+    var parts = raw.split(' · ');
+    if (parts.length >= 2) {
+      return '<span class="tg-tab-line">' + escapeTgHtml(parts[0]) + '</span>' +
+        '<span class="tg-tab-line">' + escapeTgHtml(parts.slice(1).join(' · ')) + '</span>';
+    }
+    return '<span class="tg-tab-line">' + escapeTgHtml(raw) + '</span>';
+  }
+
+  function renderTgStoreTabs() {
+    var wrap = $('#tgStoreTabs');
+    if (!wrap) return;
+    var plat = session.plat === 'meituan' ? 'meituan' : 'douyin';
+    var stores = boundStoresOf(plat);
+    var cur = ensureTgStoreId(plat);
+    /* C2：仅 1 家绑定时隐藏 TAB */
+    if (stores.length <= 1) {
+      wrap.hidden = true;
+      wrap.innerHTML = '';
+      return;
+    }
+    wrap.hidden = false;
+    wrap.innerHTML = stores.map(function (st) {
+      var on = st.id === cur ? ' on' : '';
+      return '<button type="button" class="plat-tab' + on + '" role="tab" aria-selected="' +
+        (st.id === cur ? 'true' : 'false') + '" data-tg-store="' + escapeTgHtml(st.id) + '">' +
+        storeTabLabelHtml(st.name) + '</button>';
+    }).join('');
   }
 
   function renderTgDealList() {
     var plat = session.plat === 'meituan' ? 'meituan' : 'douyin';
     var title = $('#tgDealsTitle');
     if (title) title.textContent = plat === 'meituan' ? '美团团购券' : '抖音团购券';
+    renderTgStoreTabs();
+    var storeId = ensureTgStoreId(plat);
     var list = $('#tgDealList');
     var empty = $('#tgDealEmpty');
     var emptyTitle = $('#tgDealEmptyTitle');
     var emptyDesc = $('#tgDealEmptyDesc');
-    var rows = DEAL_CATALOG[plat] || [];
+    var rows = dealsOfStore(plat, storeId);
     if (list) list.classList.add('tg-deal-list--cards');
     if (!rows.length) {
       if (list) { list.innerHTML = ''; list.hidden = true; }
       if (empty) empty.hidden = false;
       if (emptyTitle) emptyTitle.textContent = '暂无团购券';
       if (emptyDesc) {
-        emptyDesc.textContent = '团购券目录以汇付能力为准。验券仍可凭顾客券码完成。';
+        emptyDesc.textContent = '该门店暂无同步到的团购券。验券仍可凭顾客券码完成。';
       }
       return;
     }
@@ -492,16 +709,19 @@
     if (list) {
       list.hidden = false;
       list.innerHTML = rows.map(function (d) {
-        var def = session.dealDefaults && session.dealDefaults[d.id];
+        var def = getDealDefault(storeId, d.id);
         var configured = def && ((def.matches && def.matches.length) || (def.matchIds && def.matchIds.length));
         var tag = configured ? '已配置' : '未配置';
         var summary = dealDefaultSummary(def);
         var logo = '<img class="tg-coupon-card__logo" src="' + (plat === 'meituan' ? ICO_MT : ICO_DY) + '" alt="" width="24" height="24">';
+        var kindTag = isTimesDeal(d) ? '<span class="tg-coupon-card__kind">次卡</span>' : '';
         return '<button type="button" class="tg-coupon-card" data-tg-deal="' + d.id + '">' +
           '<span class="tg-coupon-card__body">' +
           '<span class="tg-coupon-card__row tg-coupon-card__row--main">' +
           logo +
-          '<span class="tg-coupon-card__name">' + d.name + '</span>' +
+          '<span class="tg-coupon-card__title">' +
+          '<span class="tg-coupon-card__name">' + d.name + '</span>' + kindTag +
+          '</span>' +
           '<span class="tg-coupon-card__price">¥' + d.price + '</span>' +
           '</span>' +
           '<span class="tg-coupon-card__divider" aria-hidden="true"></span>' +
@@ -521,11 +741,12 @@
     session.couponName = deal.name;
     session.couponPrice = deal.price;
     session.dealId = deal.id;
-    var def = session.dealDefaults && session.dealDefaults[deal.id];
+    var def = getDealDefault(session.tgStoreId || session.loginStoreId, deal.id);
     if (def && ((def.matches && def.matches.length) || (def.matchIds && def.matchIds.length))) {
-      applyMatchesToSession(def.matches && def.matches.length
+      var matches = def.matches && def.matches.length
         ? def.matches
-        : (def.matchIds || []).map(function (id) { return { id: id, qty: 1 }; }));
+        : (def.matchIds || []).map(function (id) { return { id: id, qty: 1 }; });
+      applyMatchesToSession(matches);
       session.mismatched = false;
     } else {
       applyMatchesToSession([]);
@@ -550,15 +771,37 @@
 
   function syncTgConfigUI() {
     var deal = dealById(session.tgEditDealId) || { name: session.couponName, price: session.couponPrice };
+    var times = isTimesDeal(deal);
     var nameEl = $('#tgConfigName');
     var face = $('#tgConfigFace');
+    var faceLabel = $('#tgConfigFaceLabel');
     var head = $('#tgConfigPlatHead');
+    var kindEl = $('#tgConfigKindTag');
+    var timesTotalRow = $('#tgConfigTimesTotalRow');
+    var timesUnitRow = $('#tgConfigTimesUnitRow');
+    var timesTotalEl = $('#tgConfigTimesTotal');
+    var timesUnitEl = $('#tgConfigTimesUnit');
+
     if (nameEl) nameEl.textContent = deal.name || '';
     if (face) face.textContent = '¥' + Number(deal.price || session.couponPrice || 0);
+    if (faceLabel) faceLabel.textContent = times ? '售价' : '面额';
+    var matchLabel = $('#tgConfigMatchLabel');
+    if (matchLabel) matchLabel.textContent = times ? '单次核销' : '核销项目';
+    if (kindEl) kindEl.hidden = !times;
     if (head) {
+      var label = times ? '次卡' : '团购券';
       head.innerHTML = isMeituan()
-        ? '<img src="' + ICO_MT + '" alt="" width="24" height="24"><span>团购券</span>'
-        : '<img src="' + ICO_DY + '" alt="" width="24" height="24"><span>团购券</span>';
+        ? '<img src="' + ICO_MT + '" alt="" width="24" height="24"><span>' + label + '</span>'
+        : '<img src="' + ICO_DY + '" alt="" width="24" height="24"><span>' + label + '</span>';
+    }
+    if (timesTotalRow) timesTotalRow.hidden = !times;
+    if (timesUnitRow) timesUnitRow.hidden = !times;
+    if (times && timesTotalEl) timesTotalEl.textContent = (deal.timesTotal || 0) + ' 次';
+    if (times && timesUnitEl) {
+      var unit = deal.timesUnitPrice != null
+        ? Number(deal.timesUnitPrice)
+        : (deal.timesTotal ? Math.round((Number(deal.price) / Number(deal.timesTotal)) * 100) / 100 : 0);
+      timesUnitEl.textContent = '¥' + unit;
     }
 
     var ids = session.selectedMatchIds && session.selectedMatchIds.length
@@ -592,11 +835,10 @@
     var id = session.tgEditDealId;
     if (!id) return;
     var matches = collectMatchesFromSession();
-    session.dealDefaults = session.dealDefaults || {};
-    session.dealDefaults[id] = {
+    setDealDefault(session.tgStoreId || session.loginStoreId, id, {
       matches: matches,
       matchIds: matches.map(function (m) { return m.id; })
-    };
+    });
     toast('已保存默认配置');
     showScreen('tg-deals');
   }
@@ -627,19 +869,22 @@
     }
     return false;
   }
-  /* 预填优先级：团购设置默认值（仅匹配项+数量）> 会话记忆 > 空；业绩归属不预填 */
+  /* 预填优先级：当前登录门店的团购设置默认值（匹配项+数量）> 会话记忆 > 空；业绩归属不预填 */
   function resolveCouponMatch(name, dealId) {
-    var def = dealId && session.dealDefaults && session.dealDefaults[dealId];
+    var storeId = session.loginStoreId || session.tgStoreId;
+    var def = getDealDefault(storeId, dealId);
     if (def && ((def.matches && def.matches.length) || (def.matchIds && def.matchIds.length))) {
-      applyMatchesToSession(def.matches && def.matches.length
+      var matches = def.matches && def.matches.length
         ? def.matches
-        : (def.matchIds || []).map(function (id) { return { id: id, qty: 1 }; }));
+        : (def.matchIds || []).map(function (id) { return { id: id, qty: 1 }; });
+      applyMatchesToSession(matches);
       session.mismatched = false;
-      return { mismatched: false };
+      return;
     }
-    if (applyMemoryForCoupon(name)) return { mismatched: false };
-    applyMatchesToSession([]);
-    return { mismatched: true };
+    if (!applyMemoryForCoupon(name)) {
+      applyMatchesToSession([]);
+      session.mismatched = true;
+    }
   }
   function isCouponMatched() {
     if (session.mismatched) return false;
@@ -655,15 +900,92 @@
     var desc = $('#unsupportedCouponDesc');
     if (kind === 'voucher') {
       if (title) title.textContent = '暂不支持核销代金券';
-      if (desc) desc.textContent = '当前只能核销团购套餐券，请换一张团购券再试。';
-    } else if (kind === 'times') {
-      if (title) title.textContent = '暂不支持核销计次卡';
-      if (desc) desc.textContent = '当前只能核销团购套餐券，请换一张团购券再试。';
+      if (desc) desc.textContent = '当前只能核销团购套餐券与次卡，请换一张团购券再试。';
     } else {
       if (title) title.textContent = '暂不支持核销';
-      if (desc) desc.textContent = '当前只能核销团购套餐券，请换一张团购券再试。';
+      if (desc) desc.textContent = '当前只能核销团购套餐券与次卡，请换一张团购券再试。';
     }
     openMask('unsupportedCouponMask');
+  }
+
+  function isTimesCoupon() {
+    return session.couponKind === 'times';
+  }
+
+  function timesUnitPrice() {
+    if (session.timesUnitPrice > 0) return Number(session.timesUnitPrice);
+    var total = Number(session.timesTotal || 0);
+    var face = Number(session.couponPrice || 0);
+    if (total > 0 && face > 0) return Math.round((face / total) * 100) / 100;
+    return face;
+  }
+
+  function timesBillAmount() {
+    var use = Math.max(1, Number(session.timesUse || 1));
+    return Math.round(timesUnitPrice() * use * 100) / 100;
+  }
+
+  function clampTimesUse() {
+    var left = Math.max(0, Number(session.timesLeft || 0));
+    var use = Math.max(1, Number(session.timesUse || 1));
+    if (left < 1) use = 1;
+    else if (use > left) use = left;
+    session.timesUse = use;
+    return use;
+  }
+
+  function syncTimesRows() {
+    var show = isTimesCoupon();
+    var left = Number(session.timesLeft || 0);
+    var total = Number(session.timesTotal || 0);
+    var leftText = left + ' 次';
+    var totalText = total + ' 次';
+    ['#resultTimesRow', '#confirmTimesRow', '#resultTimesTotalRow', '#confirmTimesTotalRow', '#confirmTimesUseRow'].forEach(function (sel) {
+      var row = $(sel);
+      if (row) row.hidden = !show;
+    });
+    var rt = $('#resultTimesTotal');
+    var ct = $('#confirmTimesTotal');
+    var rl = $('#resultTimesLeft');
+    var cl = $('#confirmTimesLeft');
+    if (rt) rt.textContent = totalText;
+    if (ct) ct.textContent = totalText;
+    if (rl) rl.textContent = leftText;
+    if (cl) cl.textContent = leftText;
+
+    if (show) clampTimesUse();
+    var useEl = $('#confirmTimesUse');
+    if (useEl) useEl.textContent = String(session.timesUse || 1);
+
+    var mtTip = $('#confirmMtTimesTip');
+    if (mtTip) {
+      mtTip.hidden = !(show && isMeituan() && Number(session.timesUse || 1) > 1);
+    }
+
+    var faceLabel = $('#confirmFaceLabel');
+    if (faceLabel) faceLabel.textContent = show ? '单次结算价' : '面额';
+  }
+
+  function applyTimesCouponDemo(plat) {
+    var p = plat === 'meituan' ? 'meituan' : 'douyin';
+    session.plat = p;
+    var deal = timesDealOf(p);
+    if (!deal) {
+      toast('当前平台暂无次卡目录');
+      return;
+    }
+    session.couponKind = 'times';
+    session.dealId = deal.id;
+    session.timesTotal = Number(deal.timesTotal || 0);
+    session.timesLeft = Number(deal.timesTotal || 0);
+    session.timesUse = 1;
+    session.timesUnitPrice = deal.timesUnitPrice != null
+      ? Number(deal.timesUnitPrice)
+      : (deal.timesTotal ? Math.round((Number(deal.price) / Number(deal.timesTotal)) * 100) / 100 : 0);
+    var code = (p === 'meituan' ? 'mt' : 'dy') + 'TC-' + String(deal.id).slice(-6).toUpperCase();
+    applyCouponToResult(deal.name, deal.price, code, null, true);
+    syncTimesRows();
+    syncConfirmUI();
   }
 
   function toast(msg) {
@@ -675,8 +997,12 @@
   }
 
   function setNav(flow) {
+    var highlight = flow;
+    if (flow === 'auth-open') {
+      highlight = session.plat === 'meituan' ? 'owner-auth-mt' : 'owner-auth';
+    }
     $all('.site-nav .nav-item').forEach(function (b) {
-      b.classList.toggle('on', b.getAttribute('data-flow') === flow);
+      b.classList.toggle('on', b.getAttribute('data-flow') === highlight);
     });
   }
 
@@ -794,12 +1120,14 @@
 
   function syncAcctAuthUI() {
     [
-      { key: 'authDouyin', st: '#acctAuthDySt' },
-      { key: 'authMeituan', st: '#acctAuthMtSt' }
+      { plat: 'douyin', key: 'authDouyin', st: '#acctAuthDySt' },
+      { plat: 'meituan', key: 'authMeituan', st: '#acctAuthMtSt' }
     ].forEach(function (item) {
       var state = normalizeAuthState(session[item.key]);
       session[item.key] = state;
-      var row = AUTH_ROW[state] || AUTH_ROW.none;
+      var row = platformReady(item.plat)
+        ? AUTH_ROW.ok
+        : (state === 'expired' ? AUTH_ROW.expired : AUTH_ROW.none);
       var el = $(item.st);
       if (!el) return;
       el.textContent = row.label;
@@ -846,13 +1174,9 @@
       if (title) title.textContent = name + '团购授权已到期';
       if (desc) desc.textContent = '当前门店' + name + '授权已到期，暂时无法验券核销。请先完成续期后再试。';
       if (go) go.textContent = '去续期';
-    } else if (st === 'pending') {
-      if (title) title.textContent = name + '团购开通审核中';
-      if (desc) desc.textContent = '当前门店' + name + '开通申请正在等待审核，暂时无法验券核销。审核通过后再试。';
-      if (go) go.textContent = '查看进度';
     } else {
       if (title) title.textContent = '尚未开通' + name + '团购核销';
-      if (desc) desc.textContent = '当前门店尚未完成' + name + '授权，暂时无法验券核销。请先完成开通后再试。';
+      if (desc) desc.textContent = '当前门店尚未完成' + name + '开通（认证+授权+门店绑定），暂时无法验券核销。请先完成开通后再试。';
       if (go) go.textContent = '去开通';
     }
     openMask('authNeedMask');
@@ -861,15 +1185,12 @@
   function openMapNeedMask(plat) {
     pendingAuthPlat = plat === 'meituan' ? 'meituan' : 'douyin';
     var name = pendingAuthPlat === 'meituan' ? '美团' : '抖音';
-    var code = pendingAuthPlat === 'meituan' ? session.bindCodeMt : session.bindCodeDy;
     var title = $('#mapNeedTitle');
     var desc = $('#mapNeedDesc');
-    var codeEl = $('#mapNeedBindCode');
     if (title) title.textContent = '请完善门店绑定';
     if (desc) {
-      desc.textContent = name + '已授权，但尚未关联本 APP 门店，暂时无法验券。请使用绑定码完成关联，或联系店长在后台补录。';
+      desc.textContent = name + '已授权，但尚未绑定门店，暂时无法验券。请完成门店绑定后再试。';
     }
-    if (codeEl) codeEl.textContent = code;
     openMask('mapNeedMask');
   }
 
@@ -903,12 +1224,19 @@
       openException('tpl-noperm');
       return false;
     }
-    if (!storeAuthOk()) {
+    if (!platformReady(session.plat)) {
+      if (window.AuthOpen && AuthOpen.getState) {
+        var st = AuthOpen.getState();
+        var p = session.plat === 'meituan' ? st.mt : st.dy;
+        if (st.merchantStatus === 'approved' && p.auth && !p.expired && !(p.bind && p.stores && p.stores.length)) {
+          openMapNeedMask(session.plat);
+          return false;
+        }
+      } else if (storeAuthOk() && !storeMapOk()) {
+        openMapNeedMask(session.plat);
+        return false;
+      }
       openAuthNeedMask(session.plat);
-      return false;
-    }
-    if (!storeMapOk()) {
-      openMapNeedMask(session.plat);
       return false;
     }
     return true;
@@ -1027,19 +1355,40 @@
     }
   }
 
-  /* 扫码自动识别：douyin/meituan → 团购主流程；coupon → 线上系统券示意；voucher/times → 不支持 */
+  /* 扫码自动识别：douyin/meituan → 团购主流程；times → 次卡主流程；coupon → 线上系统券示意；voucher → 不支持 */
   function scanCouponAuto(kind) {
     if (kind === 'coupon') {
       flashScanOk('识别成功', '系统优惠券');
       setTimeout(function () { showScreen('coupon-ph'); }, 750);
       return;
     }
-    if (kind === 'voucher' || kind === 'times') {
-      flashScanOk('识别成功', kind === 'voucher' ? '代金券' : '计次卡');
-      setTimeout(function () { showUnsupportedCoupon(kind); }, 750);
+    if (kind === 'voucher') {
+      flashScanOk('识别成功', '代金券');
+      setTimeout(function () { showUnsupportedCoupon('voucher'); }, 750);
+      return;
+    }
+    if (isTimesScanKind(kind)) {
+      var timesPlat = kind === 'times-mt' ? 'meituan' : 'douyin';
+      if (kind === 'times') {
+        timesPlat = session.plat === 'meituan' ? 'meituan' : 'douyin';
+      }
+      session.plat = timesPlat;
+      syncPlatformChrome();
+      flashScanOk('识别成功', timesPlat === 'meituan' ? '美团次卡' : '抖音次卡');
+      setTimeout(function () {
+        applyTimesCouponDemo(timesPlat);
+        withLoading('正在验券…', 700, function () {
+          showScreen('result');
+        });
+      }, 750);
       return;
     }
     session.plat = kind;
+    session.couponKind = 'groupbuy';
+    session.timesTotal = 0;
+    session.timesLeft = 0;
+    session.timesUse = 1;
+    session.timesUnitPrice = 0;
     syncPlatformChrome();
     runScanDemo('matched');
   }
@@ -1048,7 +1397,7 @@
     $all('#scanCouponBar [data-scan-coupon]').forEach(function (b) {
       b.classList.toggle('on', b.getAttribute('data-scan-coupon') === scanKind);
     });
-    var isGroupbuy = scanKind === 'douyin' || scanKind === 'meituan';
+    var isGroupbuy = scanKind === 'douyin' || scanKind === 'meituan' || isTimesScanKind(scanKind);
     $all('#scanScenarioBar [data-demo-scan]').forEach(function (b) {
       var k = b.getAttribute('data-demo-scan');
       var platOnly = k === 'matched' || k === 'mismatch' || k === 'multi';
@@ -1058,38 +1407,54 @@
 
   function runScanDemo(kind) {
     if (kind === 'ok' || kind === 'matched') {
-      if (scanKind === 'coupon' || scanKind === 'voucher' || scanKind === 'times') {
+      if (scanKind === 'coupon' || scanKind === 'voucher') {
+        scanCouponAuto(scanKind);
+        return;
+      }
+      if (isTimesScanKind(scanKind)) {
         scanCouponAuto(scanKind);
         return;
       }
       syncScanPlatForDemo();
+      session.couponKind = 'groupbuy';
+      session.timesLeft = 0;
       var demo = getCouponDemo('default');
       session.matchMemory[demo.name] = [
         { id: 'p21', kind: 'project', name: '深层补水护理', price: 268 }
       ];
       startVerify({ fromScan: true, name: demo.name, price: demo.price, code: demo.code });
     } else if (kind === 'dup') {
-      if (scanKind === 'voucher' || scanKind === 'times') {
+      if (scanKind === 'voucher') {
         scanCouponAuto(scanKind);
         return;
       }
       startVerify({ dup: true, fromScan: true });
     } else if (kind === 'mismatch') {
-      if (scanKind === 'coupon' || scanKind === 'voucher' || scanKind === 'times') {
+      if (scanKind === 'coupon' || scanKind === 'voucher') {
+        scanCouponAuto(scanKind);
+        return;
+      }
+      if (isTimesScanKind(scanKind)) {
         scanCouponAuto(scanKind);
         return;
       }
       syncScanPlatForDemo();
+      session.couponKind = 'groupbuy';
       startVerify({ mismatch: true, fromScan: true });
     } else if (kind === 'multi') {
-      if (scanKind === 'coupon' || scanKind === 'voucher' || scanKind === 'times') {
+      if (scanKind === 'coupon' || scanKind === 'voucher') {
+        scanCouponAuto(scanKind);
+        return;
+      }
+      if (isTimesScanKind(scanKind)) {
         scanCouponAuto(scanKind);
         return;
       }
       syncScanPlatForDemo();
+      session.couponKind = 'groupbuy';
       startVerify({ multi: true, fromScan: true });
     } else {
-      if (scanKind === 'voucher' || scanKind === 'times') {
+      if (scanKind === 'voucher') {
         scanCouponAuto(scanKind);
         return;
       }
@@ -1119,9 +1484,15 @@
     var face = $('#confirmFace');
     var codeEl = $('#confirmCode');
 
-    if (face) face.textContent = '¥' + Number(session.couponPrice);
+    if (face) {
+      if (isTimesCoupon()) face.textContent = '¥' + timesUnitPrice();
+      else face.textContent = '¥' + Number(session.couponPrice);
+    }
     if (codeEl) codeEl.textContent = maskCode(session.couponCode);
-    if (cpr) cpr.textContent = '¥' + Number(session.couponPrice).toFixed(2);
+    if (cpr) {
+      if (isTimesCoupon()) cpr.textContent = '¥' + timesBillAmount().toFixed(2);
+      else cpr.textContent = '¥' + Number(session.couponPrice).toFixed(2);
+    }
 
     if (!items.length) {
       if (pickCta) pickCta.hidden = false;
@@ -1142,12 +1513,15 @@
       matchRow.classList.toggle('is-multi', items.length > 1);
       matchRow.classList.toggle('is-single', items.length === 1);
     }
+    var matchLabel = $('#confirmMatchLabel');
+    if (matchLabel) matchLabel.textContent = isTimesCoupon() ? '单次核销' : '核销项目';
 
     var couponNameEl = $('#confirmCouponName');
     if (couponNameEl) couponNameEl.textContent = session.couponName || '';
     var pay = $('#confirmPayWay');
     if (pay) pay.textContent = platPayLabel();
     syncMatchStatusTags();
+    syncTimesRows();
 
     var so = $('#successOp');
     if (so) so.textContent = session.opName || '顾清扬';
@@ -1159,8 +1533,19 @@
     session.couponName = name;
     session.couponPrice = price;
     session.couponCode = code;
+    if (session.couponKind !== 'times') {
+      session.couponKind = 'groupbuy';
+      session.timesTotal = 0;
+      session.timesLeft = 0;
+      session.timesUse = 1;
+      session.timesUnitPrice = 0;
+    } else {
+      clampTimesUse();
+    }
     session.orderId = defaultOrderId();
-    session.dealId = defaultDealId();
+    if (!(session.couponKind === 'times' && session.dealId)) {
+      session.dealId = defaultDealId();
+    }
     session.orderType = '快捷开单';
     session.payType = '团购';
     if (mismatched) {
@@ -1213,6 +1598,7 @@
     var map = {
       home: 'screen-home',
       workbench: 'screen-workbench',
+      'order-flow': 'screen-order-flow',
       account: 'screen-account',
       'tg-set': 'screen-tg-set',
       'tg-deals': 'screen-tg-deals',
@@ -1227,9 +1613,10 @@
       orders: 'screen-orders',
       detail: 'screen-detail',
       'revoke-ok': 'screen-revoke-ok',
-      'owner-auth': 'screen-owner-auth',
-      'owner-auth-mt': 'screen-owner-auth-mt',
-      'dy-auth-grant': 'screen-dy-auth-grant',
+      'auth-open': 'screen-auth-open',
+      'owner-auth': 'screen-auth-open',
+      'owner-auth-mt': 'screen-auth-open',
+      'dy-auth-grant': 'screen-auth-open',
       'match-pick': 'screen-match-pick',
       'coupon-ph': 'screen-coupon-ph'
     };
@@ -1244,12 +1631,17 @@
     }
     if (flow === 'orders') renderOrders();
     if (flow === 'confirm') syncConfirmUI();
-    if (flow === 'owner-auth') applyAuthUI();
-    if (flow === 'owner-auth-mt') applyAuthMtUI();
-    if (flow === 'dy-auth-grant') syncDyAuthGrantUI();
+    if (flow === 'owner-auth' || flow === 'owner-auth-mt' || flow === 'auth-open' || flow === 'dy-auth-grant') {
+      if (window.AuthOpen) {
+        var openPlat = (flow === 'owner-auth-mt' || session.plat === 'meituan') ? 'mt' : 'dy';
+        if (flow === 'owner-auth') openPlat = 'dy';
+        if (flow === 'owner-auth-mt') openPlat = 'mt';
+        AuthOpen.open(openPlat);
+      }
+    }
     var statusBar = document.querySelector('#frame .status-bar');
     if (statusBar) {
-      statusBar.classList.toggle('status-bar--auth-warm', flow === 'owner-auth' || flow === 'dy-auth-grant');
+      statusBar.classList.remove('status-bar--auth-warm');
     }
     if (flow === 'account') {
       syncAcctAuthUI();
@@ -1258,6 +1650,7 @@
     if (flow === 'tg-set') syncTgSetCards();
     if (flow === 'tg-deals') renderTgDealList();
     if (flow === 'tg-config') syncTgConfigUI();
+    if (flow === 'result' || flow === 'confirm') syncTimesRows();
     if (flow === 'scan' || flow === 'result' || flow === 'confirm' || flow === 'input') syncPlatformChrome();
     if (flow === 'success') resetSuccessMemberForm();
     if (flow !== 'scan') {
@@ -1373,13 +1766,83 @@
     });
   }
 
+  function syncSuccessCard() {
+    var bill = isTimesCoupon() ? timesBillAmount() : Number(session.couponPrice || 0);
+    session.lastBillAmount = bill;
+    var nameEl = $('#successProdName');
+    var priceEl = $('#successPrice');
+    var codeEl = $('#successCode');
+    var codeRow = $('#successCodeRow');
+    if (nameEl) nameEl.textContent = session.couponName || '';
+    if (priceEl) priceEl.textContent = String(bill);
+    if (codeEl) codeEl.textContent = session.couponCode || '';
+    if (codeRow) codeRow.setAttribute('data-copy', session.couponCode || '');
+
+    var useRow = $('#successTimesUseRow');
+    var leftRow = $('#successTimesLeftRow');
+    var useEl = $('#successTimesUse');
+    var leftEl = $('#successTimesLeft');
+    var show = isTimesCoupon();
+    if (useRow) useRow.hidden = !show;
+    if (leftRow) leftRow.hidden = !show;
+    if (useEl) useEl.textContent = (session.timesUse || 1) + ' 次';
+    if (leftEl) leftEl.textContent = (session.timesLeft || 0) + ' 次';
+  }
+
+  function pushVerifyOrder(consumedTimes) {
+    var bill = isTimesCoupon() ? timesBillAmount() : Number(session.couponPrice || 0);
+    var now = new Date();
+    var pad = function (n) { return n < 10 ? '0' + n : String(n); };
+    var time = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) +
+      ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+    var order = {
+      id: 'o' + Date.now(),
+      plat: session.plat || 'douyin',
+      name: session.couponName || '团购核销',
+      price: bill,
+      code: session.couponCode || '',
+      oid: session.orderId || defaultOrderId(),
+      dealId: session.dealId || defaultDealId(),
+      time: time,
+      op: session.opName || '顾清扬',
+      bill: 'SO' + String(Date.now()).slice(-11),
+      status: 'ok',
+      canRevoke: true,
+      revokeHint: '剩余 59 分钟可撤销',
+      couponKind: session.couponKind || 'groupbuy',
+      timesConsumed: consumedTimes || 0,
+      timesRestored: false
+    };
+    ORDERS.unshift(order);
+    return order;
+  }
+
   function startConsume() {
     if (!gateOnAction()) return;
     if (session.offline) {
       openException('tpl-offline');
       return;
     }
+    if (isTimesCoupon()) {
+      var need = clampTimesUse();
+      if (need > Number(session.timesLeft || 0)) {
+        var desc = $('#timesInsufficientDesc');
+        if (desc) {
+          desc.textContent = '本次核销 ' + need + ' 次，剩余仅 ' + (session.timesLeft || 0) + ' 次。请减少本次核销次数后再试。';
+        }
+        openMask('timesInsufficientMask');
+        return;
+      }
+    }
     withLoading('正在核销…', 1000, function () {
+      var consumed = 0;
+      if (isTimesCoupon()) {
+        consumed = clampTimesUse();
+        session.timesLeft = Math.max(0, Number(session.timesLeft || 0) - consumed);
+        syncTimesRows();
+      }
+      pushVerifyOrder(consumed);
+      syncSuccessCard();
       showScreen('success');
     });
   }
@@ -1509,26 +1972,40 @@
     return name;
   }
 
-  function tryRegisterMemberOnDone() {
+  function readSuccessMemberDraft() {
     var phoneEl = $('#successPhone');
     var nickEl = $('#successNickname');
-    var phone = phoneEl ? String(phoneEl.value || '').trim() : '';
-    var nick = nickEl ? String(nickEl.value || '').trim() : '';
-    var gender = session.gender;
+    return {
+      phone: phoneEl ? String(phoneEl.value || '').trim() : '',
+      nick: nickEl ? String(nickEl.value || '').trim() : '',
+      gender: session.gender || null
+    };
+  }
 
-    if (phone && !/^1\d{10}$/.test(phone)) {
+  function successMemberFillState() {
+    var d = readSuccessMemberDraft();
+    var any = !!(d.phone || d.nick || d.gender);
+    var all = !!(d.phone && d.nick && d.gender);
+    var phoneOk = !d.phone || /^1\d{10}$/.test(d.phone);
+    return { any: any, all: all, phoneOk: phoneOk, draft: d };
+  }
+
+  function tryRegisterMemberOnDone() {
+    var st = successMemberFillState();
+    var d = st.draft;
+    if (d.phone && !st.phoneOk) {
       toast('请输入 11 位手机号');
       return false;
     }
-    session.phone = phone;
-    session.nickname = nick;
+    session.phone = d.phone;
+    session.nickname = d.nick;
 
-    if (nick && gender) {
-      var displayName = resolveMemberDisplayName(nick, gender);
+    if (d.nick && d.gender) {
+      var displayName = resolveMemberDisplayName(d.nick, d.gender);
       session.registeredMembers.push({
         name: displayName,
-        gender: gender,
-        phone: phone || '',
+        gender: d.gender,
+        phone: d.phone || '',
         from: 'verify-success',
         at: Date.now()
       });
@@ -1537,9 +2014,38 @@
     return true;
   }
 
-  function finishSuccess() {
-    if (!tryRegisterMemberOnDone()) return;
+  function proceedSuccessAction(action) {
+    if (action === 'continue') {
+      showScreen('scan');
+      return;
+    }
     showScreen('home');
+  }
+
+  function requestLeaveSuccess(action) {
+    var st = successMemberFillState();
+    /* 手机号有值但不合法：仅 toast，不弹放弃窗 */
+    if (st.draft.phone && !st.phoneOk) {
+      toast('请输入 11 位手机号');
+      return;
+    }
+    if (st.any && !st.all) {
+      pendingSuccessAction = action;
+      openMask('memberAbandonMask');
+      return;
+    }
+    if (st.any && st.all) {
+      if (!tryRegisterMemberOnDone()) return;
+    } else {
+      /* 三项全空：不拦截、不注册 */
+      session.phone = '';
+      session.nickname = '';
+    }
+    proceedSuccessAction(action);
+  }
+
+  function finishSuccess() {
+    requestLeaveSuccess('done');
   }
 
   function isFlowActive(flow) {
@@ -1580,7 +2086,7 @@
     if (primary) {
       primary.setAttribute('data-ex-go', f.primary);
       primary.textContent = f.primary === 'orders' ? '查看订单'
-        : f.primary === 'owner-auth' ? '查看授权指引'
+        : f.primary === 'tg-set' ? '去团购设置'
         : f.primary === 'confirm' ? '重试核销'
         : f.primary === 'input' ? '手动输码'
         : '重新扫码';
@@ -1662,6 +2168,14 @@
         openException(navFlow);
         return;
       }
+      if (navFlow === 'owner-auth' || navFlow === 'owner-auth-mt') {
+        session.plat = navFlow === 'owner-auth-mt' ? 'meituan' : 'douyin';
+        syncPlatformChrome();
+        if (window.AuthOpen) AuthOpen.open(session.plat === 'meituan' ? 'mt' : 'dy');
+        historyStack = ['account', 'auth-open'];
+        showScreen('auth-open', false);
+        return;
+      }
       seedHistoryFor(navFlow);
       showScreen(navFlow, false);
       return;
@@ -1671,6 +2185,11 @@
     if (go) {
       var target = go.getAttribute('data-go');
       if (target === 'scan') {
+        var successActive = $('#screen-success') && $('#screen-success').classList.contains('active');
+        if (successActive) {
+          requestLeaveSuccess('continue');
+          return;
+        }
         tryEnterScan();
         return;
       }
@@ -1730,13 +2249,40 @@
         showScreen('tg-set');
         return;
       }
+      if (wbKey === 'flow') {
+        showScreen('order-flow');
+        return;
+      }
       toast('演示未接入');
+      return;
+    }
+
+    var ofTab = e.target.closest('[data-of-tab]');
+    if (ofTab && ofTab.closest('#screen-order-flow')) {
+      $all('#screen-order-flow .of-tab').forEach(function (b) {
+        b.classList.toggle('on', b === ofTab);
+      });
+      if (ofTab.getAttribute('data-of-tab') === 'void') {
+        toast('示意：撤销后开单在此查看（作废）');
+      }
+      return;
+    }
+
+    if (e.target.closest('#btnOrderFlowFilter')) {
+      toast('示意：筛选');
       return;
     }
 
     var tgPlat = e.target.closest('[data-tg-plat]');
     if (tgPlat) {
       openTgPlat(tgPlat.getAttribute('data-tg-plat'));
+      return;
+    }
+
+    var tgStoreTab = e.target.closest('[data-tg-store]');
+    if (tgStoreTab) {
+      session.tgStoreId = tgStoreTab.getAttribute('data-tg-store');
+      renderTgDealList();
       return;
     }
 
@@ -1784,34 +2330,46 @@
 
     var authEntry = e.target.closest('[data-auth-entry]');
     if (authEntry) {
-      var ep = authEntry.getAttribute('data-auth-entry');
-      session.plat = ep === 'meituan' ? 'meituan' : 'douyin';
-      syncPlatformChrome();
-      showScreen(ep === 'meituan' ? 'owner-auth-mt' : 'owner-auth');
+      openAuthOpen(authEntry.getAttribute('data-auth-entry'));
       return;
     }
 
     if (e.target.closest('#btnAuthNeedGo')) {
       closeMasks();
-      if (pendingAuthPlat === 'meituan') {
-        showScreen('owner-auth-mt');
-      } else if (normalizeAuthState(session.authDouyin) === 'pending') {
-        showScreen('dy-auth-grant');
-      } else {
-        showScreen('owner-auth');
-      }
+      openAuthOpen(pendingAuthPlat || session.plat);
       return;
     }
 
     if (e.target.closest('#btnMapNeedGo')) {
       closeMasks();
-      showScreen(pendingAuthPlat === 'meituan' ? 'owner-auth-mt' : 'owner-auth');
+      openAuthOpen(pendingAuthPlat || session.plat);
       return;
     }
 
     if (e.target.closest('#btnNopermAuth')) {
       closeMasks();
-      showScreen(authScreenForPlat());
+      showScreen('tg-set');
+      return;
+    }
+
+    var aoDemo = e.target.closest('#aoStateBar [data-ao-demo]');
+    if (aoDemo) {
+      var demoType = aoDemo.getAttribute('data-ao-demo');
+      $all('#aoStateBar button').forEach(function (b) {
+        b.classList.toggle('on', b === aoDemo);
+      });
+      if (window.AuthOpen) {
+        AuthOpen.setDemoState(demoType);
+        refreshAuthDerivedUI();
+        if (demoType !== 'fallback') {
+          openAuthOpen(session.plat);
+        } else {
+          session.plat = session.plat === 'meituan' ? 'meituan' : 'douyin';
+          historyStack = ['account', 'auth-open'];
+          showScreen('auth-open', false);
+        }
+        toast('演示开通态：' + demoType);
+      }
       return;
     }
 
@@ -1942,8 +2500,40 @@
       return;
     }
 
+    if (e.target.closest('#btnTimesUsePlus')) {
+      if (!isTimesCoupon()) return;
+      session.timesUse = Math.min(Number(session.timesLeft || 0), Number(session.timesUse || 1) + 1);
+      if (session.timesUse < 1) session.timesUse = 1;
+      syncTimesRows();
+      syncConfirmUI();
+      return;
+    }
+
+    if (e.target.closest('#btnTimesUseMinus')) {
+      if (!isTimesCoupon()) return;
+      session.timesUse = Math.max(1, Number(session.timesUse || 1) - 1);
+      syncTimesRows();
+      syncConfirmUI();
+      return;
+    }
+
     if (e.target.closest('#btnSuccessDone')) {
       finishSuccess();
+      return;
+    }
+
+    if (e.target.closest('#btnMemberKeep')) {
+      closeMasks();
+      pendingSuccessAction = null;
+      return;
+    }
+
+    if (e.target.closest('#btnMemberAbandon')) {
+      var act = pendingSuccessAction || 'done';
+      pendingSuccessAction = null;
+      closeMasks();
+      resetSuccessMemberForm();
+      proceedSuccessAction(act);
       return;
     }
 
@@ -1984,7 +2574,7 @@
       session.mismatched = false;
       closeMasks();
       syncConfirmUI();
-      toast('已匹配项目');
+      toast('已选核销项目');
       return;
     }
 
@@ -2149,14 +2739,30 @@
 
     if (e.target.closest('#btnRevokeConfirm')) {
       // 14B：确认 → 成功，无撤销失败中间页
+      var restored = 0;
       if (currentOrder) {
         currentOrder.status = 'revoked';
         currentOrder.canRevoke = false;
         currentOrder.revokeHint = '已撤销';
+        if (currentOrder.couponKind === 'times' && currentOrder.timesConsumed > 0 && !currentOrder.timesRestored) {
+          restored = Number(currentOrder.timesConsumed) || 0;
+          currentOrder.timesRestored = true;
+          if (session.couponCode === currentOrder.code && session.couponKind === 'times') {
+            session.timesLeft = Number(session.timesLeft || 0) + restored;
+            syncTimesRows();
+          }
+        }
+      }
+      var revokeDesc = $('#revokeOkDesc');
+      if (revokeDesc) {
+        revokeDesc.textContent = restored > 0
+          ? ('对应开单已冲销，已恢复次卡 ' + restored + ' 次；员工业绩已回滚，撤销流水已保留。订单流水对应开单作废。')
+          : '对应开单已冲销，员工业绩已回滚，撤销流水已保留。订单流水对应开单作废。';
       }
       closeMasks();
       withLoading('正在撤销…', 700, function () {
         showScreen('revoke-ok');
+        if (restored > 0) toast('已恢复 ' + restored + ' 次');
       });
       return;
     }
@@ -2176,7 +2782,8 @@
     goBack: goBack,
     closeMasks: closeMasks,
     syncConfirmUI: syncConfirmUI,
-    staffName: staffName
+    staffName: staffName,
+    isTimesDealId: function (id) { return isTimesDeal(dealById(id)); }
   });
   matchStaff.bindEvents();
 
@@ -2235,14 +2842,119 @@
       account: function () { showScreen('account', false); historyStack = ['account']; },
       workbench: function () { showScreen('workbench', false); historyStack = ['workbench']; },
       'owner-auth': function () {
-        session.authDouyin = 'ok';
-        applyAuthUI();
-        showScreen('owner-auth', false); historyStack = ['owner-auth'];
+        if (window.AuthOpen) AuthOpen.setDemoState('complete');
+        openAuthOpen('douyin');
+        historyStack = ['account', 'auth-open'];
       },
       'owner-auth-mt': function () {
-        session.authMeituan = 'ok';
-        applyAuthMtUI();
-        showScreen('owner-auth-mt', false); historyStack = ['owner-auth-mt'];
+        if (window.AuthOpen) AuthOpen.setDemoState('complete');
+        openAuthOpen('meituan');
+        historyStack = ['account', 'auth-open'];
+      },
+      'auth-open': function () {
+        if (window.AuthOpen) AuthOpen.setDemoState('complete');
+        openAuthOpen(session.plat);
+        historyStack = ['account', 'auth-open'];
+      },
+      'ao-dy-progress': function () {
+        session.plat = 'douyin';
+        if (window.AuthOpen) { AuthOpen.open('dy'); AuthOpen.setDemoState('merchant'); }
+        historyStack = ['account', 'auth-open'];
+        showScreen('auth-open', false);
+      },
+      'ao-dy-done': function () {
+        session.plat = 'douyin';
+        if (window.AuthOpen) { AuthOpen.open('dy'); AuthOpen.setDemoState('complete'); }
+        historyStack = ['account', 'auth-open'];
+        showScreen('auth-open', false);
+      },
+      'ao-mt-progress': function () {
+        session.plat = 'meituan';
+        if (window.AuthOpen) { AuthOpen.open('mt'); AuthOpen.setDemoState('merchant'); }
+        historyStack = ['account', 'auth-open'];
+        showScreen('auth-open', false);
+      },
+      'ao-mt-done': function () {
+        session.plat = 'meituan';
+        if (window.AuthOpen) { AuthOpen.open('mt'); AuthOpen.setDemoState('complete'); }
+        historyStack = ['account', 'auth-open'];
+        showScreen('auth-open', false);
+      },
+      'ao-cert': function () {
+        /* Figma「AO-店铺认证」= 主态 0/3（去认证），非独立表单页 */
+        session.plat = 'douyin';
+        if (window.AuthOpen) {
+          AuthOpen.open('dy');
+          AuthOpen.setDemoState('initial');
+        }
+        historyStack = ['account', 'auth-open'];
+        showScreen('auth-open', false);
+      },
+      'ao-fallback': function () {
+        session.plat = 'douyin';
+        if (window.AuthOpen) { AuthOpen.open('dy'); AuthOpen.setDemoState('fallback'); }
+        historyStack = ['account', 'auth-open'];
+        showScreen('auth-open', false);
+      },
+      'ao-mt-login': function () {
+        session.plat = 'meituan';
+        if (window.AuthOpen) {
+          AuthOpen.open('mt');
+          AuthOpen.setDemoState('merchant');
+          AuthOpen.showAo('ao-mt-login');
+        }
+        historyStack = ['account', 'auth-open'];
+        showScreen('auth-open', false);
+      },
+      'ao-mt-grant': function () {
+        session.plat = 'meituan';
+        if (window.AuthOpen) {
+          AuthOpen.open('mt');
+          AuthOpen.setDemoState('merchant');
+          AuthOpen.showAo('ao-mt-grant');
+        }
+        historyStack = ['account', 'auth-open'];
+        showScreen('auth-open', false);
+      },
+      'ao-dy-login': function () {
+        session.plat = 'douyin';
+        if (window.AuthOpen) {
+          AuthOpen.open('dy');
+          AuthOpen.setDemoState('merchant');
+          AuthOpen.showAo('ao-dy-login');
+        }
+        historyStack = ['account', 'auth-open'];
+        showScreen('auth-open', false);
+      },
+      'ao-dy-grant': function () {
+        session.plat = 'douyin';
+        if (window.AuthOpen) {
+          AuthOpen.open('dy');
+          AuthOpen.setDemoState('merchant');
+          AuthOpen.showAo('ao-dy-permission');
+        }
+        historyStack = ['account', 'auth-open'];
+        showScreen('auth-open', false);
+      },
+      'ao-bind-sheet': function () {
+        session.plat = 'douyin';
+        if (window.AuthOpen) {
+          AuthOpen.open('dy');
+          AuthOpen.setDemoState('auth');
+          AuthOpen.openBind();
+        }
+        historyStack = ['account', 'auth-open'];
+        showScreen('auth-open', false);
+      },
+      'ao-cancel-dialog': function () {
+        session.plat = 'douyin';
+        if (window.AuthOpen) {
+          AuthOpen.open('dy');
+          AuthOpen.setDemoState('complete');
+          AuthOpen.cancelAuthorization();
+        }
+        historyStack = ['account', 'auth-open'];
+        showScreen('auth-open', false);
       },
       'tg-set': function () {
         session.authDouyin = 'ok';
@@ -2256,13 +2968,9 @@
         session.plat = 'douyin';
         session.authDouyin = 'ok';
         session.mapDouyin = true;
-        session.dealDefaults = session.dealDefaults || {};
-        session.dealDefaults.product_882910 = {
-          matches: [{ id: 'p21', qty: 1 }, { id: 'p15', qty: 2 }],
-          matchIds: ['p21', 'p15']
-        };
-        delete session.dealDefaults.product_771204;
-        delete session.dealDefaults.product_660188;
+        session.tgStoreId = 'store_zs';
+        seedDemoDealDefaults();
+        if (window.AuthOpen) AuthOpen.syncSessionGate();
         syncPlatformChrome();
         showScreen('tg-deals', false); seedHistoryFor('tg-deals');
       },
@@ -2270,13 +2978,9 @@
         session.plat = 'meituan';
         session.authMeituan = 'ok';
         session.mapMeituan = true;
-        session.dealDefaults = session.dealDefaults || {};
-        session.dealDefaults.deal_910288 = {
-          matches: [{ id: 'p21', qty: 1 }],
-          matchIds: ['p21']
-        };
-        delete session.dealDefaults.deal_910301;
-        delete session.dealDefaults.deal_910455;
+        session.tgStoreId = 'store_zs';
+        seedDemoDealDefaults();
+        if (window.AuthOpen) AuthOpen.syncSessionGate();
         syncPlatformChrome();
         showScreen('tg-deals', false); seedHistoryFor('tg-deals');
       },
@@ -2284,30 +2988,28 @@
         session.plat = 'douyin';
         session.authDouyin = 'ok';
         session.mapDouyin = true;
+        session.tgStoreId = 'store_zs';
+        seedDemoDealDefaults();
+        if (window.AuthOpen) AuthOpen.syncSessionGate();
         syncPlatformChrome();
         var deal = dealById('product_882910');
-        if (deal) {
-          session.dealDefaults = session.dealDefaults || {};
-          session.dealDefaults.product_882910 = {
-            matches: [{ id: 'p21', qty: 1 }, { id: 'p15', qty: 2 }],
-            matchIds: ['p21', 'p15']
-          };
-          loadTgConfigDraft(deal);
-        }
+        if (deal) loadTgConfigDraft(deal);
         showScreen('tg-config', false); seedHistoryFor('tg-config');
       },
       'tg-config-mt': function () {
         session.plat = 'meituan';
         session.authMeituan = 'ok';
         session.mapMeituan = true;
+        session.tgStoreId = 'store_zs';
+        seedDemoDealDefaults();
+        if (window.AuthOpen) AuthOpen.syncSessionGate();
         syncPlatformChrome();
         var deal = dealById('deal_910288');
         if (deal) {
-          session.dealDefaults = session.dealDefaults || {};
-          session.dealDefaults.deal_910288 = {
+          setDealDefault('store_zs', 'deal_910288', {
             matches: [{ id: 'p21', qty: 1 }, { id: 'p15', qty: 1 }],
             matchIds: ['p21', 'p15']
-          };
+          });
           loadTgConfigDraft(deal);
         }
         showScreen('tg-config', false); seedHistoryFor('tg-config');
@@ -2323,11 +3025,33 @@
     setTimeout(run, 80);
   }
 
+  if (window.AuthOpen) {
+    AuthOpen.init({
+      session: session,
+      showScreen: showScreen,
+      goBack: goBack,
+      toast: toast,
+      onAuthOpenChange: function () {
+        syncAcctAuthUI();
+        syncTgSetCards();
+        syncMapBars();
+        syncLoginStoreChrome();
+        if (document.querySelector('#screen-tg-deals.active')) renderTgDealList();
+      }
+    });
+    AuthOpen.syncSessionGate();
+  }
+  refreshAuthDerivedUI();
+  syncLoginStoreChrome();
+
   if (new URLSearchParams(location.search).get('capture')) {
     applyFigmaCapture();
   } else {
     var deepFlow = new URLSearchParams(location.search).get('flow');
-    if (deepFlow && deepFlow !== 'home') {
+    if (deepFlow === 'owner-auth' || deepFlow === 'owner-auth-mt' || deepFlow === 'dy-auth-grant') {
+      openAuthOpen(deepFlow === 'owner-auth-mt' ? 'meituan' : 'douyin');
+      historyStack = ['account', 'auth-open'];
+    } else if (deepFlow && deepFlow !== 'home') {
       seedHistoryFor(deepFlow);
       showScreen(deepFlow, false);
     } else {

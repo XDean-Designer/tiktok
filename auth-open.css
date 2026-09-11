@@ -1,0 +1,154 @@
+/* 平台开通三步流 · 对齐 Figma AO-平台开通（P3：主态/已开通/sheet/弹窗；登录/兜底暂保留） */
+#ao-root{
+  --ao-red:#f32f41;
+  --ao-red-soft:#fff0f2;
+  --ao-bg:#f6f7f8;
+  --ao-ok:#18865d;
+  --ao-ok-pill:#3ab883;
+  --ao-mute:#a9a9a9;
+  position:absolute;inset:0;background:var(--ao-bg);overflow:hidden;
+}
+#ao-root .ao-screen{position:absolute;inset:0;display:none;overflow:auto;background:var(--ao-bg);-webkit-overflow-scrolling:touch}
+#ao-root .ao-screen.active{display:block}
+#ao-root .nav{height:52px;background:#fff;display:flex;align-items:center;justify-content:center;position:sticky;top:0;z-index:8}
+#ao-root .nav-title{font-size:17px;font-weight:500;color:#000;line-height:normal}
+#ao-root .back{position:absolute;left:7px;top:4px;width:44px;height:44px;border:0;background:transparent;background-image:url("assets/auth-open/back.svg");background-repeat:no-repeat;background-position:center;background-size:22px 22px}
+#ao-root .back:after{display:none;content:none}
+#ao-root .body{padding:14px 16px 28px}
+#ao-root .card{background:#fff;padding:16px;margin-bottom:0;border-radius:12px}
+#ao-root .card.list{padding:0;overflow:hidden}
+#ao-root .platform{display:flex;align-items:center;gap:12px}
+#ao-root .logo{width:44px;height:44px;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;flex:none}
+#ao-root .logo .brand-svg{width:44px;height:44px;display:block}
+#ao-root .platform h2{margin:0;font-size:18px;font-weight:700;color:#000;line-height:normal}
+#ao-root .platform p{margin:4px 0 0;color:#8b8f97;font-size:12px;line-height:18px}
+#ao-root .statusrow{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid #f1f1f1}
+#ao-root .statusrow .label{font-size:13px;color:#666;line-height:normal}
+#ao-root .tag{
+  font-size:12px;font-weight:500;padding:4px 8px;border:0;border-radius:13px;
+  background:var(--ao-mute);color:#fff;line-height:normal
+}
+#ao-root .tag.ok{background:var(--ao-ok-pill);color:#fff;border-radius:25px}
+#ao-root .tag.expired{background:#fff5e8;color:#9a651b;border:1px solid #eed5aa;border-radius:4px;padding:3px 8px}
+#ao-root .section{font-size:13px;color:#92969d;padding:3px 2px 8px;line-height:normal}
+#ao-root .section.between{display:flex;justify-content:space-between;align-items:center}
+#ao-root .item{background:#fff;padding:15px 16px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;min-height:72px;box-sizing:border-box}
+#ao-root .item:last-child{border-bottom:0}
+#ao-root .iname{font-size:14px;font-weight:500;color:#000;line-height:normal}
+#ao-root .idesc{font-size:12px;color:#999;line-height:18.6px;margin-top:4px}
+#ao-root .right{display:flex;align-items:center;gap:0;flex:none;align-self:stretch}
+#ao-root .state{font-size:12px;color:#999;line-height:normal}
+#ao-root .state.ok{color:var(--ao-ok)}
+#ao-root .link{
+  border:0;background:transparent;color:var(--ao-red);font-size:13px;padding:4px 0;
+  white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:0;line-height:normal;font-weight:400;
+  /* 文字右缘与「待完成/已完成」对齐；＞ 不计入右对齐基准 */
+  margin-right:-14px
+}
+#ao-root .link.gray{color:#666}
+#ao-root .link .ao-chevron{width:14px;height:16px;display:block;flex:none;margin-left:0}
+#ao-root .link.action-arrow:after{display:none;content:none}
+#ao-root .secondary{width:100%;height:44px;background:#fff;color:#333;border:1px solid #ddd;margin-top:10px;cursor:pointer;border-radius:8px}
+#ao-root .steps{background:#fff;padding:17px 14px 15px;margin-bottom:0;display:flex;align-items:flex-start;border-radius:12px}
+#ao-root .step{flex:1;text-align:center;position:relative;min-width:0}
+#ao-root .step:not(:last-child):after{content:"";position:absolute;top:12px;left:calc(50% + 16px);right:calc(-50% + 16px);height:1px;background:#e5e6e8;z-index:0}
+#ao-root .step.done:not(:last-child):after{background:var(--ao-red)}
+#ao-root .step-dot{
+  width:24px;height:24px;border-radius:12px;background:#f1f2f4;color:#a6a9ae;
+  display:flex;align-items:center;justify-content:center;margin:0 auto 7px;font-size:12px;position:relative;z-index:1;box-sizing:border-box
+}
+#ao-root .step.active .step-dot{background:var(--ao-red-soft);color:var(--ao-red);border:1px solid var(--ao-red);font-weight:500}
+#ao-root .step.done .step-dot{background:var(--ao-red);color:#fff;border:0;padding:0}
+#ao-root .step.done .step-dot img{width:18px;height:18px;display:block}
+#ao-root .step-name{font-size:11px;color:#a0a3a8;line-height:16px;padding:0 2px}
+#ao-root .step.active .step-name{color:#333;font-weight:500}
+#ao-root .step.done .step-name{color:#666;font-weight:400}
+#ao-root .progress-block{padding-top:12px}
+#ao-root .progress-block .steps{margin-bottom:0}
+#ao-root .progress-block .card.list{margin-top:12px}
+#ao-root .manage-block{padding-top:12px}
+#ao-root .manage-block .section{margin-top:0}
+#ao-root .groupbuy-settings-wrap{padding:12px 0 4px}
+#ao-root .groupbuy-settings-btn{
+  width:100%;height:46px;border:0;background:var(--ao-red);color:#fff;font-weight:500;font-size:14px;
+  border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px
+}
+#ao-root .groupbuy-settings-btn .ao-settings-ico{width:18px;height:18px;display:block}
+#ao-root .merchant-status-line{display:flex;align-items:center;flex-wrap:wrap;gap:4px;font-size:12px}
+#ao-root .merchant-status-line.reviewing{color:#9a651b}
+#ao-root .merchant-status-line.failed{color:#d92d20}
+#ao-root .merchant-status-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+#ao-root .merchant-status-main{font-weight:600}
+#ao-root .merchant-status-sep{opacity:.6}
+#ao-root .merchant-status-reason{margin-top:6px;font-size:12px;color:#999;line-height:1.5}
+
+/* 登录/授权/兜底：暂不改交互页结构，仅主色对齐 */
+#ao-root .third{background:#fff}
+#ao-root .third-header{height:52px;display:flex;align-items:center;justify-content:center;position:relative;border-bottom:1px solid #eee;background:#fff;position:sticky;top:0;z-index:2}
+#ao-root .third-back{position:absolute;left:0;top:4px;width:48px;height:44px;border:0;background:transparent;background-image:url("assets/auth-open/back.svg");background-repeat:no-repeat;background-position:center;background-size:22px 22px;font-size:0;color:transparent;cursor:pointer}
+#ao-root .fallback-back{position:absolute;left:8px;width:44px;height:44px;border:0;background:transparent;background-image:url("assets/auth-open/back.svg");background-repeat:no-repeat;background-position:center;background-size:22px 22px;font-size:0;color:transparent;cursor:pointer}
+#ao-root .third-body{padding:26px 24px}
+#ao-root .brand{display:flex;justify-content:center;margin:8px 0 30px}
+#ao-root .brandbox{width:64px;height:64px;border-radius:14px;overflow:hidden}
+#ao-root .brandbox .brand-svg{width:64px;height:64px;display:block}
+#ao-root .third h1{font-size:22px;margin:0 0 8px;text-align:center}
+#ao-root .third-sub{text-align:center;color:#8a8f97;font-size:13px;line-height:1.6;margin-bottom:28px}
+#ao-root .field{height:48px;border-bottom:1px solid #ddd;display:flex;align-items:center;margin-bottom:10px}
+#ao-root .field input{border:0;outline:none;width:100%;font-size:15px;background:transparent}
+#ao-root .codebtn{border:0;background:transparent;color:#3478f6;font-size:13px;white-space:nowrap}
+#ao-root .third-primary{width:100%;height:46px;border:0;font-weight:600;margin-top:22px;cursor:pointer;border-radius:8px}
+#ao-root .mtbtn{background:#ffd943;color:#171717}
+#ao-root .dybtn{background:#111;color:#fff}
+#ao-root .switchlogin{text-align:center;margin-top:18px;color:#777;font-size:13px}
+#ao-root .perm-card{margin-top:20px;border-top:1px solid #eee}
+#ao-root .perm{padding:15px 0;border-bottom:1px solid #eee;display:flex;justify-content:space-between;gap:10px}
+#ao-root .pname{font-size:14px;font-weight:600}
+#ao-root .pdesc{font-size:12px;color:#999;margin-top:4px;line-height:1.5}
+#ao-root .check{width:20px;height:20px;border-radius:50%;background:#111;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex:none}
+
+#ao-root .fallback-nav{height:52px;background:#fff;display:flex;align-items:center;justify-content:center;position:relative;border-bottom:1px solid #eee;position:sticky;top:0}
+#ao-root .fallback-nav-title{font-size:17px;font-weight:600}
+#ao-root .fallback-content{padding:28px 20px}
+#ao-root .fallback-content h1{font-size:20px;margin:0 0 10px}
+#ao-root .fallback-desc{font-size:13px;color:#777;line-height:1.6;margin:0 0 18px}
+#ao-root .fallback-link-card{background:#f7f7f8;border-radius:10px;padding:14px;display:flex;gap:10px;align-items:flex-start}
+#ao-root .fallback-link-text{flex:1;font-size:12px;color:#333;word-break:break-all;line-height:1.5}
+#ao-root .fallback-copy-btn{border:0;background:transparent;color:#3478f6;font-size:13px;white-space:nowrap;cursor:pointer}
+#ao-root .fallback-finish{margin-top:22px}
+#ao-root .fallback-finish-title{font-size:14px;font-weight:600}
+#ao-root .fallback-finish-desc{font-size:12px;color:#888;margin-top:6px;line-height:1.55}
+#ao-root .fallback-confirm-btn{width:100%;height:46px;margin-top:20px;border:0;background:var(--ao-red);color:#fff;font-weight:600;border-radius:8px;cursor:pointer}
+
+#ao-root .ao-mask{position:absolute;inset:0;background:rgba(0,0,0,.38);z-index:30;display:none}
+#ao-root .ao-mask.show{display:block}
+#ao-root .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;padding:20px 20px 26px;max-height:78%;overflow:auto;border-radius:16px 16px 0 0}
+#ao-root .sheet h3{margin:0;font-size:17px;font-weight:700;color:#000}
+#ao-root .sheet p{margin:8px 0 0;font-size:13px;color:#777;line-height:1.65}
+#ao-root .sheet .close{display:none}
+#ao-root .choice.store{
+  width:100%;text-align:left;border:1px solid #e5e6e8;padding:12px 15px 12px 49px;margin-top:10px;
+  background:#fff;border-radius:10px;position:relative;cursor:pointer;box-sizing:border-box
+}
+#ao-root .choice.store.on{border-color:var(--ao-red)}
+#ao-root .choice.store::before{
+  content:"";position:absolute;left:15px;top:50%;transform:translateY(-50%);
+  width:22px;height:22px;border:1px solid #d0d0d0;border-radius:11px;box-sizing:border-box;background:#fff
+}
+#ao-root .choice.store.on::before{
+  background:var(--ao-red);border-color:var(--ao-red);
+  background-image:url("assets/auth-open/check-sheet.svg");background-size:12px;background-repeat:no-repeat;background-position:center
+}
+#ao-root .store-name{font-size:14px;font-weight:500;color:#000}
+#ao-root .sheet .primary{width:100%;height:46px;background:var(--ao-red);color:#fff;border:0;font-weight:500;font-size:14px;margin-top:14px;border-radius:8px;cursor:pointer}
+#ao-root .dialog{position:absolute;left:32px;right:32px;top:50%;transform:translateY(-50%);background:#fff;border-radius:14px;padding:22px 20px 16px;text-align:center}
+#ao-root .dialog h3{margin:0;font-size:17px;font-weight:700;color:#000}
+#ao-root .dialog p{margin:10px 0 0;font-size:13px;color:#777;line-height:1.6}
+#ao-root .dialog-actions{display:flex;gap:10px;margin-top:18px}
+#ao-root .dialog-btn{flex:1;height:40px;border-radius:8px;border:0;font-weight:500;font-size:14px;cursor:pointer}
+#ao-root .dialog-btn.ghost{background:#f3f4f6;color:#333}
+#ao-root .dialog-btn.danger{background:var(--ao-red);color:#fff}
+#ao-toast{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.82);color:#fff;font-size:12px;padding:9px 13px;border-radius:8px;opacity:0;transition:.2s;z-index:70;pointer-events:none;max-width:80%;text-align:center}
+#ao-toast.show{opacity:1}
+#ao-root .cert-actions{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+#ao-root .cert-actions .primary{width:100%;height:46px;background:var(--ao-red);color:#fff;border:0;font-weight:600;border-radius:8px;cursor:pointer}
+#ao-root .cert-note{font-size:12px;color:#999;line-height:1.55;margin-top:12px}

@@ -1,149 +1,113 @@
 {
-  "finishedAt": "2026-09-03T10:27:36.603Z",
+  "finishedAt": "2026-09-11T01:14:27.497Z",
   "results": [
     {
-      "capture": "scan",
-      "name": "S2-扫码核销",
-      "captureId": "b117eed4-32b4-47fb-9b54-fd2637c6977d",
-      "pageUrl": "http://127.0.0.1:8770/index.html?capture=scan&view=desktop",
-      "ok": false,
-      "status": "pending",
-      "error": "captureForDesign timeout"
+      "capture": "ao-dy-progress",
+      "name": "AO-抖音开通-未开通",
+      "captureId": "c9aed07e-9cdf-4a94-9bd6-5677c81b24cb",
+      "pageUrl": "http://127.0.0.1:8765/index.html?capture=ao-dy-progress&view=desktop",
+      "ok": true,
+      "status": "dryrun",
+      "dryRun": true
     },
     {
-      "capture": "input",
-      "name": "S3-输码验券",
-      "captureId": "5baadcbb-1880-4d29-8626-7083580b98e4",
-      "pageUrl": "http://127.0.0.1:8770/index.html?capture=input&view=desktop",
-      "ok": false,
-      "status": "pending",
-      "error": "captureForDesign timeout"
+      "capture": "ao-dy-done",
+      "name": "AO-抖音开通-已开通",
+      "captureId": "d1a5d192-b3dd-4839-a0c7-1069732e4c46",
+      "pageUrl": "http://127.0.0.1:8765/index.html?capture=ao-dy-done&view=desktop",
+      "ok": true,
+      "status": "dryrun",
+      "dryRun": true
     },
     {
-      "capture": "result",
-      "name": "S4-验券结果",
-      "captureId": "8e8d15b6-7331-4d86-b323-cdcf0c2c8b96",
-      "pageUrl": "http://127.0.0.1:8770/index.html?capture=result&view=desktop",
-      "ok": false,
-      "status": "pending",
-      "error": "captureForDesign timeout"
+      "capture": "ao-mt-progress",
+      "name": "AO-美团开通-未开通",
+      "captureId": "46deb9f9-3ba1-48c7-82d8-9f2ca9341331",
+      "pageUrl": "http://127.0.0.1:8765/index.html?capture=ao-mt-progress&view=desktop",
+      "ok": true,
+      "status": "dryrun",
+      "dryRun": true
     },
     {
-      "capture": "confirm",
-      "name": "S5-核销确认",
-      "captureId": "9cf08ac3-3d99-4fe3-9d25-a1757d87bc80",
-      "pageUrl": "http://127.0.0.1:8770/index.html?capture=confirm&view=desktop",
-      "ok": false,
-      "status": "pending",
-      "error": "captureForDesign timeout"
+      "capture": "ao-mt-done",
+      "name": "AO-美团开通-已开通",
+      "captureId": "05a76b52-3456-4b14-a681-2ca5b77b06a5",
+      "pageUrl": "http://127.0.0.1:8765/index.html?capture=ao-mt-done&view=desktop",
+      "ok": true,
+      "status": "dryrun",
+      "dryRun": true
     },
     {
-      "capture": "success",
-      "name": "S6-核销成功",
-      "captureId": "da9fd452-d082-4216-9d01-a6686e11a406",
-      "pageUrl": "http://127.0.0.1:8770/index.html?capture=success&view=desktop",
-      "ok": false,
-      "status": "pending",
-      "error": "captureForDesign timeout"
+      "capture": "ao-cert",
+      "name": "AO-店铺认证",
+      "captureId": "a71d3a93-5a67-4912-ad9e-149db1b6c9f2",
+      "pageUrl": "http://127.0.0.1:8765/index.html?capture=ao-cert&view=desktop",
+      "ok": true,
+      "status": "dryrun",
+      "dryRun": true
     },
     {
-      "capture": "orders",
-      "name": "S7-核销明细",
-      "captureId": "567799f9-9072-4715-a0d0-1021a6c6a906",
-      "pageUrl": "http://127.0.0.1:8770/index.html?capture=orders&view=desktop",
-      "ok": false,
-      "status": "pending",
-      "error": "captureForDesign timeout"
+      "capture": "ao-fallback",
+      "name": "AO-授权兜底",
+      "captureId": "a97eb0e5-85ef-4528-b664-5013d04c00a0",
+      "pageUrl": "http://127.0.0.1:8765/index.html?capture=ao-fallback&view=desktop",
+      "ok": true,
+      "status": "dryrun",
+      "dryRun": true
     },
     {
-      "capture": "detail-ok",
-      "name": "S8-订单详情-可撤销",
-      "captureId": "40aa5db2-f806-4f2f-8239-d05ac060c84c",
-      "pageUrl": "http://127.0.0.1:8770/index.html?capture=detail-ok&view=desktop",
-      "ok": false,
-      "status": "pending",
-      "error": "captureForDesign timeout"
+      "capture": "ao-mt-login",
+      "name": "AO-美团登录示意",
+      "captureId": "fddbcf65-a0d2-4636-8562-b2f68b91c907",
+      "pageUrl": "http://127.0.0.1:8765/index.html?capture=ao-mt-login&view=desktop",
+      "ok": true,
+      "status": "dryrun",
+      "dryRun": true
     },
     {
-      "capture": "detail-timeout",
-      "name": "S8b-订单详情-超时客服",
-      "captureId": "ed1305f7-048c-4afe-b695-d462cc70cf89",
-      "pageUrl": "http://127.0.0.1:8770/index.html?capture=detail-timeout&view=desktop",
-      "ok": false,
-      "status": "pending",
-      "error": "captureForDesign timeout"
+      "capture": "ao-mt-grant",
+      "name": "AO-美团授权确认",
+      "captureId": "8185750c-f76e-4a8b-9ae0-2d0efacd753c",
+      "pageUrl": "http://127.0.0.1:8765/index.html?capture=ao-mt-grant&view=desktop",
+      "ok": true,
+      "status": "dryrun",
+      "dryRun": true
     },
     {
-      "capture": "revoke-ok",
-      "name": "S9-撤销成功",
-      "captureId": "8b3a7f11-2883-4c30-a812-0f164f41cdad",
-      "pageUrl": "http://127.0.0.1:8770/index.html?capture=revoke-ok&view=desktop",
-      "ok": false,
-      "status": "pending",
-      "error": "captureForDesign timeout"
+      "capture": "ao-dy-login",
+      "name": "AO-抖音登录示意",
+      "captureId": "905e1a6f-474a-4d39-bfef-6060d8ac3298",
+      "pageUrl": "http://127.0.0.1:8765/index.html?capture=ao-dy-login&view=desktop",
+      "ok": true,
+      "status": "dryrun",
+      "dryRun": true
     },
     {
-      "capture": "cam-denied",
-      "name": "E1-相机无权限",
-      "captureId": "74cdbb26-37df-4804-98e3-50373b584c97",
-      "pageUrl": "http://127.0.0.1:8770/index.html?capture=cam-denied&view=desktop",
-      "ok": false,
-      "status": "pending",
-      "error": "captureForDesign timeout"
+      "capture": "ao-dy-grant",
+      "name": "AO-抖音授权确认",
+      "captureId": "21437455-077c-4e7b-a30f-d3f9997f196b",
+      "pageUrl": "http://127.0.0.1:8765/index.html?capture=ao-dy-grant&view=desktop",
+      "ok": true,
+      "status": "dryrun",
+      "dryRun": true
     },
     {
-      "capture": "tpl-offline",
-      "name": "E2-断网模板",
-      "captureId": "0fe46302-b947-41df-bbd1-78f7aaf0a5fa",
-      "pageUrl": "http://127.0.0.1:8770/index.html?capture=tpl-offline&view=desktop",
-      "ok": false,
-      "status": "pending",
-      "error": "captureForDesign timeout"
+      "capture": "ao-bind-sheet",
+      "name": "AO-绑定门店sheet",
+      "captureId": "bc248f3e-675f-44df-bb3a-7f9df44dbee0",
+      "pageUrl": "http://127.0.0.1:8765/index.html?capture=ao-bind-sheet&view=desktop",
+      "ok": true,
+      "status": "dryrun",
+      "dryRun": true
     },
     {
-      "capture": "tpl-timeout",
-      "name": "E3-超时模板",
-      "captureId": "04e07e7d-7c65-48ef-b3e9-4b6607c887bb",
-      "pageUrl": "http://127.0.0.1:8770/index.html?capture=tpl-timeout&view=desktop",
-      "ok": false,
-      "status": "pending",
-      "error": "captureForDesign timeout"
-    },
-    {
-      "capture": "tpl-noperm",
-      "name": "E4-无权限模板",
-      "captureId": "6e14f60c-ebb5-4f5a-ab6d-7ce46fd9410f",
-      "pageUrl": "http://127.0.0.1:8770/index.html?capture=tpl-noperm&view=desktop",
-      "ok": false,
-      "status": "pending",
-      "error": "captureForDesign timeout"
-    },
-    {
-      "capture": "verify-fail",
-      "name": "E5-验券失败",
-      "captureId": "faa3cae7-5c01-4966-a6ac-f1fd3b468f99",
-      "pageUrl": "http://127.0.0.1:8770/index.html?capture=verify-fail&view=desktop",
-      "ok": false,
-      "status": "pending",
-      "error": "captureForDesign timeout"
-    },
-    {
-      "capture": "fail",
-      "name": "E6-核销失败",
-      "captureId": "cf328f83-3159-417c-98e9-5c8eb519be6a",
-      "pageUrl": "http://127.0.0.1:8770/index.html?capture=fail&view=desktop",
-      "ok": false,
-      "status": "pending",
-      "error": "captureForDesign timeout"
-    },
-    {
-      "capture": "owner-auth",
-      "name": "A-授权指引",
-      "captureId": "a490c5e6-2dad-49ef-9f92-b2f8281c4bf8",
-      "pageUrl": "http://127.0.0.1:8770/index.html?capture=owner-auth&view=desktop",
-      "ok": false,
-      "status": "pending",
-      "error": "captureForDesign timeout"
+      "capture": "ao-cancel-dialog",
+      "name": "AO-取消授权弹窗",
+      "captureId": "86935c68-d194-43a0-9110-3ab92e555163",
+      "pageUrl": "http://127.0.0.1:8765/index.html?capture=ao-cancel-dialog&view=desktop",
+      "ok": true,
+      "status": "dryrun",
+      "dryRun": true
     }
   ]
 }
