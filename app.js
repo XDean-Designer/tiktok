@@ -1245,23 +1245,30 @@
       showScreen('tg-deals');
     };
     if (window.UiMotion && $('#screen-tg-set') && $('#screen-tg-set').classList.contains('active')) {
+      /* 推入前先按目标平台渲染，避免移入时仍显示上一个平台的列表 */
+      collapseTgExpand(true);
+      renderTgDealList();
       UiMotion.slideDealsIn(go);
     } else {
       go();
     }
   }
 
-  /* 开通页「去设置团购券」：直达对应平台团购券列表，返回回开通页 */
+  /* 开通页「去设置团购券」：直达对应平台团购券列表（右侧滑入）；返回回「团购设置」 */
   function openTgDealsFromAuth(plat) {
     session.plat = (plat === 'meituan' || plat === 'mt') ? 'meituan' : 'douyin';
     syncPlatformChrome();
     ensureTgStoreId(session.plat);
-    if (historyStack[historyStack.length - 1] !== 'auth-open') {
-      var i = historyStack.lastIndexOf('auth-open');
-      if (i >= 0) historyStack = historyStack.slice(0, i + 1);
-      else historyStack = ['home', 'account', 'auth-open'];
+    collapseTgExpand(true);
+    renderTgDealList();
+    /* 返回链：tg-deals → tg-set → 账户页（开通页不再留在栈中） */
+    historyStack = ['home', 'account', 'tg-set'];
+    if (window.UiMotion && $('#screen-tg-set')) {
+      showScreen('tg-set', false);
+      UiMotion.slideDealsIn(function () { showScreen('tg-deals', true); });
+    } else {
+      showScreen('tg-deals', true);
     }
-    showScreen('tg-deals');
   }
 
   function escapeTgHtml(s) {
@@ -1458,8 +1465,19 @@
       matchIds: matches.map(function (m) { return m.id; })
     });
     toast('已保存默认配置');
-    collapseTgExpand(false);
-    renderTgDealList();
+    var card = document.querySelector('.tg-coupon-card[data-tg-deal="' + id + '"]');
+    var finish = function () {
+      /* 反馈期间若已切到别的卡，则不再收起/重渲染，避免误收用户刚展开的卡 */
+      if (session.tgExpandDealId && session.tgExpandDealId !== id) return;
+      collapseTgExpand(false);
+      renderTgDealList();
+    };
+    /* 保存成功反馈（按钮勾选 + 卡片回弹 + 已配置标签弹入）后再收起 */
+    if (card && window.UiMotion && UiMotion.saveSuccessFeedback) {
+      UiMotion.saveSuccessFeedback(card, finish, { configured: matches.length > 0 });
+    } else {
+      finish();
+    }
   }
 
   function $(sel, root) { return (root || document).querySelector(sel); }

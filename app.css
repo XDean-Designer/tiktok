@@ -2143,9 +2143,19 @@
   flex-shrink: 0; display: inline-flex; align-items: center; height: 20px; padding: 0 8px;
   border-radius: 10px; font-size: 11px; font-weight: 500; color: #929292;
   background: #F2F2F2;
+  transition: color 0.22s ease, background-color 0.22s ease;
 }
 .tg-coupon-card__tag.is-on {
   color: #1F8A5B; background: rgba(58, 184, 131, 0.14);
+}
+/* 保存成功：标签弹入（灰 → 绿 + 徽标式缩放） */
+.tg-coupon-card__tag.is-save-pop {
+  animation: uxTagPop 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes uxTagPop {
+  0% { transform: scale(0.6); }
+  55% { transform: scale(1.08); }
+  100% { transform: scale(1); }
 }
 .tg-coupon-card__summary {
   flex: 1; min-width: 0; font-size: 12px; font-weight: 400; color: #929292; line-height: 18px;
@@ -2285,15 +2295,15 @@
   background: var(--bg-page, #F7F7F7);
 }
 
-/* 输码：整页自顶部移入移出 */
+/* 输码：整页自下方移入移出 */
 #screen-input.ux-cover-y {
   z-index: 40;
-  transform: translateY(-100%);
+  transform: translateY(100%);
   transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.1);
 }
 #screen-input.ux-cover-y.ux-cover-y--in { transform: translateY(0); }
-#screen-input.ux-cover-y.ux-cover-y--out { transform: translateY(-100%); }
+#screen-input.ux-cover-y.ux-cover-y--out { transform: translateY(100%); }
 
 /* 选择消费项：整页自下方移入移出 */
 #screen-match-pick.ux-cover-up {
@@ -2413,6 +2423,15 @@
   display: block;
   animation: uxExpandIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+/* 收起：内容先淡出上移（高度收拢由 JS 过渡） */
+.tg-coupon-card.is-closing .tg-coupon-card__expand {
+  display: block;
+  animation: uxExpandOut 0.16s ease both;
+}
+@keyframes uxExpandOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-6px); }
+}
 @keyframes uxExpandIn {
   from { opacity: 0.4; transform: translateY(-6px); }
   to { opacity: 1; transform: translateY(0); }
@@ -2427,6 +2446,54 @@
   flex: 1;
   margin: 0;
   height: 44px;
+}
+
+/* 保存成功：按钮勾选形变（iOS 完成态）+ 卡片轻回弹 */
+.btn-save {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.22s ease;
+}
+.btn-save__label {
+  transition: opacity 0.14s ease, transform 0.14s ease;
+}
+.btn-save__check {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  opacity: 0;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 26;
+  stroke-dashoffset: 26;
+}
+.btn-save.is-saved {
+  background: var(--success, #2BA471);
+}
+.btn-save.is-saved .btn-save__label {
+  opacity: 0;
+  transform: scale(0.92);
+}
+.btn-save.is-saved .btn-save__check {
+  opacity: 1;
+  animation: uxCheckDraw 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes uxCheckDraw {
+  from { stroke-dashoffset: 26; }
+  to { stroke-dashoffset: 0; }
+}
+.tg-coupon-card.is-save-pulse {
+  animation: uxSavePulse 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes uxSavePulse {
+  0% { transform: scale(1); }
+  38% { transform: scale(0.985); }
+  100% { transform: scale(1); }
 }
 .tg-coupon-card.is-open .tg-coupon-card__chev {
   transform: rotate(90deg);
@@ -2539,8 +2606,14 @@
   .ux-stagger--in,
   .tg-coupon-card.is-open .tg-coupon-card__expand,
   .order-card.is-open .order-card__expand,
-  .cust-tile.is-shake {
+  .tg-coupon-card.is-closing .tg-coupon-card__expand,
+  .cust-tile.is-shake,
+  .tg-coupon-card.is-save-pulse,
+  .tg-coupon-card__tag.is-save-pop,
+  .btn-save.is-saved .btn-save__check {
     transition: none !important;
     animation: none !important;
   }
+  /* 降级：勾选即时呈现（不做描画） */
+  .btn-save__check { stroke-dashoffset: 0 !important; }
 }

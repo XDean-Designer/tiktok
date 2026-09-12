@@ -35,7 +35,7 @@
     );
   }
 
-  /** scan → input: full page from top (no bounce) */
+  /** scan → input: full page from bottom */
   function openInputSheet(done) {
     var scan = $('#screen-scan');
     var input = $('#screen-input');
@@ -263,6 +263,65 @@
     });
   }
 
+  /** 收起展开区：内容淡出上移 + 高度收拢（约 160ms），再执行真正的收起 */
+  function collapseExpandAnimated(card, done) {
+    var expand = card && card.querySelector('.tg-coupon-card__expand');
+    var h = expand ? expand.getBoundingClientRect().height : 0;
+    if (!expand || h <= 0 || reduceMotion() || !card.classList.contains('is-open')) {
+      if (done) done();
+      return;
+    }
+    expand.style.overflow = 'hidden';
+    expand.style.height = h + 'px';
+    expand.style.transition = 'height 0.16s ease, padding-bottom 0.16s ease';
+    card.classList.add('is-closing');
+    void expand.offsetWidth;
+    nextFrame().then(function () {
+      expand.style.height = '0px';
+      expand.style.paddingBottom = '0px';
+      return wait(170);
+    }).then(function () {
+      card.classList.remove('is-closing');
+      expand.style.transition = '';
+      expand.style.height = '';
+      expand.style.paddingBottom = '';
+      expand.style.overflow = '';
+      if (done) done();
+    });
+  }
+
+  /**
+   * 保存成功反馈：按钮勾选形变 + 卡片轻回弹 + 「已配置」标签弹入，
+   * 停留约 320ms（reduced-motion 降为 150ms 即时呈现）后收起展开区并回调。
+   * opts.configured === false 时不动标签（清空匹配后仍为「未配置」）。
+   */
+  function saveSuccessFeedback(card, done, opts) {
+    if (!card) {
+      if (done) done();
+      return;
+    }
+    var reduced = reduceMotion();
+    var btn = card.querySelector('.btn-save');
+    var tag = (opts && opts.configured === false) ? null : card.querySelector('.tg-coupon-card__tag');
+    if (btn) btn.classList.add('is-saved');
+    if (tag) {
+      tag.textContent = '已配置';
+      tag.classList.add('is-on', 'is-save-pop');
+    }
+    if (!reduced) card.classList.add('is-save-pulse');
+    wait(reduced ? 150 : 320).then(function () {
+      card.classList.remove('is-save-pulse');
+      if (btn) btn.classList.remove('is-saved');
+      if (tag) tag.classList.remove('is-save-pop');
+      /* 反馈期间卡片已被收起/切换：不再播收起动画，交由回调自行判断 */
+      if (!card.classList.contains('is-open')) {
+        if (done) done();
+        return;
+      }
+      return collapseExpandAnimated(card, done);
+    });
+  }
+
   global.UiMotion = {
     reduceMotion: reduceMotion,
     openInputSheet: openInputSheet,
@@ -275,6 +334,8 @@
     morphDealsToSet: morphDealsToSet,
     staggerListIn: staggerListIn,
     scrollCardToCenter: scrollCardToCenter,
-    shakeElements: shakeElements
+    shakeElements: shakeElements,
+    saveSuccessFeedback: saveSuccessFeedback,
+    collapseExpandAnimated: collapseExpandAnimated
   };
 })(window);
