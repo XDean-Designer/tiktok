@@ -7,7 +7,8 @@
     'tg-config': 'tg-deals',
     'order-flow': 'workbench',
     'auth-open': 'account',
-    'pick-member': 'confirm'
+    'pick-member': 'confirm',
+    'orders': 'scan' /* 核销明细的上一级为扫码页（撤销结果返回明细后，再返回即回扫码） */
   };
   var currentOrder = null;
   var filterState = { status: 'all', time: 'all' };
@@ -32,6 +33,7 @@
     orders: 'orders',
     detail: 'detail',
     'revoke-ok': 'revoke-ok',
+    'revoke-fail': 'revoke-ok',
     'owner-auth': 'auth-open',
     'owner-auth-mt': 'auth-open',
     'auth-open': 'auth-open',
@@ -77,7 +79,7 @@
     fail: '6.9 核销失败',
     orders: '6.10 核销明细',
     detail: '6.11 订单详情与撤销',
-    'revoke-ok': '6.12 撤销成功',
+    'revoke-ok': '6.12 撤销结果',
     'tg-set': '6.13c 团购设置',
     'tg-deals': '6.13c 目录列表',
     'tg-config': '6.13c 默认配置',
@@ -128,6 +130,8 @@
     orderExpandId: null,
     tgTabDir: 1,
     orderTabDir: 1,
+    revokeRestored: 0, /* 最近一次撤销恢复的次卡次数 */
+    revokeFailKind: null, /* 演示：撤销失败态 network | timeout | revoked（单入口循环） */
     /* 内部开单字段（UI 文案按平台显示「抖音团购 / 美团团购」） */
     orderType: '快捷开单',
     payType: '团购',
@@ -1483,6 +1487,117 @@
   function $(sel, root) { return (root || document).querySelector(sel); }
   function $all(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
 
+  /* ===== 撤销结果（成功 / 失败共页） ===== */
+  var REVOKE_FAIL_KINDS = ['network', 'timeout', 'revoked'];
+  var REVOKE_FAIL_LABEL = { network: '网络异常', timeout: '已超时不可撤销', revoked: '已在其它设备撤销' };
+
+  function setRevokePrimary(text, isRetry) {
+    var b = $('#btnRevokeResultPrimary');
+    if (!b) return;
+    b.textContent = text;
+    if (isRetry) {
+      b.setAttribute('data-retry', '1');
+      b.removeAttribute('data-revoke-back');
+    } else {
+      b.removeAttribute('data-retry');
+      b.setAttribute('data-revoke-back', '');
+    }
+  }
+
+  /** 渲染撤销结果：ok | network | timeout | revoked */
+  function renderRevokeResult(kind) {
+    if (kind !== 'ok' && kind !== 'timeout' && kind !== 'revoked') kind = 'network';
+    var ico = $('#revokeResultIco');
+    var icon = $('#revokeResultIcon');
+    var title = $('#revokeResultTitle');
+    var desc = $('#revokeOkDesc');
+    var secondary = $('#btnRevokeResultSecondary');
+    var restored = Number(session.revokeRestored) || 0;
+
+    if (ico) {
+      ico.classList.toggle('ok', kind === 'ok');
+      ico.classList.toggle('bad', kind !== 'ok');
+    }
+    if (icon) icon.src = kind === 'ok' ? 'assets/icons/revoke-check.svg' : 'assets/icons/x-circle.svg';
+    if (secondary) secondary.hidden = kind !== 'network';
+
+    if (kind === 'ok') {
+      if (title) title.textContent = '撤销成功';
+      if (desc) {
+        desc.textContent = restored > 0
+          ? ('对应开单已冲销，已恢复次卡 ' + restored + ' 次；员工业绩已回滚，撤销流水已保留。订单流水对应开单作废。')
+          : '对应开单已冲销，员工业绩已回滚，撤销流水已保留。订单流水对应开单作废。';
+      }
+      setRevokePrimary('返回核销明细', false);
+      return;
+    }
+    if (kind === 'timeout') {
+      if (title) title.textContent = '已超时不可撤销';
+      if (desc) desc.textContent = '已超过平台 1 小时撤销时限，系统不再受理撤销。';
+      setRevokePrimary('返回核销明细', false);
+      return;
+    }
+    if (kind === 'revoked') {
+      if (title) title.textContent = '该核销已撤销';
+      if (desc) desc.textContent = '该核销已在其它设备撤销（或订单已退款），无需重复操作；开单已冲销，不会重复回滚业绩。';
+      setRevokePrimary('返回核销明细', false);
+      return;
+    }
+    if (title) title.textContent = '撤销失败';
+    if (desc) desc.textContent = '撤销提交未成功，订单状态未变更（不会重复冲销）。请检查网络后重试。';
+    setRevokePrimary('重试撤销', true);
+  }
+
+  /** 撤销成功：冲销开单、回滚业绩；次卡恢复次数。返回恢复的次卡次数 */
+  function applyRevokeSuccess() {
+    var restored = 0;
+    if (!currentOrder || currentOrder.status !== 'ok') return 0;
+    currentOrder.status = 'revoked';
+    currentOrder.canRevoke = false;
+    currentOrder.revokeHint = '已撤销';
+    if (currentOrder.couponKind === 'times' && currentOrder.timesConsumed > 0 && !currentOrder.timesRestored) {
+      restored = Number(currentOrder.timesConsumed) || 0;
+      currentOrder.timesRestored = true;
+      currentOrder.timesLeft = Number(currentOrder.timesLeft || 0) + restored;
+      if (session.couponCode === currentOrder.code && session.couponKind === 'times') {
+        session.timesLeft = Number(session.timesLeft || 0) + restored;
+        syncTimesRows();
+      }
+    }
+    return restored;
+  }
+
+  /** 撤销结果页 → 核销明细（移除撤销页与整页详情，保证明细再返回为扫码页） */
+  function revokeResultBackToOrders() {
+    var i = historyStack.lastIndexOf('revoke-ok');
+    if (i < 0) i = historyStack.lastIndexOf('revoke-fail');
+    if (i >= 0) historyStack = historyStack.slice(0, i);
+    while (historyStack.length && historyStack[historyStack.length - 1] === 'detail') historyStack.pop();
+    var si = historyStack.lastIndexOf('scan');
+    historyStack = si >= 0 ? historyStack.slice(0, si + 1) : ['scan'];
+    if (historyStack[historyStack.length - 1] !== 'orders') historyStack.push('orders');
+    showScreen('orders', false);
+  }
+
+  function runRevokeConfirm() {
+    withLoading('正在撤销…', 700, function () {
+      session.revokeRestored = applyRevokeSuccess();
+      showScreen('revoke-ok');
+      if (session.revokeRestored > 0) toast('已恢复 ' + session.revokeRestored + ' 次');
+    });
+  }
+
+  function retryRevoke() {
+    withLoading('正在撤销…', 700, function () {
+      session.revokeRestored = applyRevokeSuccess();
+      var top = historyStack[historyStack.length - 1];
+      if (top === 'revoke-fail') historyStack[historyStack.length - 1] = 'revoke-ok';
+      else if (top !== 'revoke-ok') historyStack.push('revoke-ok');
+      showScreen('revoke-ok', false);
+      if (session.revokeRestored > 0) toast('已恢复 ' + session.revokeRestored + ' 次');
+    });
+  }
+
   function staffById(id) {
     if (id == null) return undefined;
     return seed.staff.filter(function (s) { return s.id === id; })[0];
@@ -2263,6 +2378,7 @@
       orders: 'screen-orders',
       detail: 'screen-detail',
       'revoke-ok': 'screen-revoke-ok',
+      'revoke-fail': 'screen-revoke-ok',
       'auth-open': 'screen-auth-open',
       'owner-auth': 'screen-auth-open',
       'owner-auth-mt': 'screen-auth-open',
@@ -2296,6 +2412,8 @@
       if (historyStack[historyStack.length - 1] !== flow) historyStack.push(flow);
     }
     if (flow === 'orders') renderOrders();
+    if (flow === 'revoke-ok') renderRevokeResult('ok');
+    if (flow === 'revoke-fail') renderRevokeResult(session.revokeFailKind || 'network');
     if (flow === 'confirm') {
       syncConfirmUI();
       syncConfirmCustUI();
@@ -2367,6 +2485,10 @@
       var finish = function () { showScreen('tg-set', false); };
       if (window.UiMotion) UiMotion.slideDealsOut(finish);
       else finish();
+      return;
+    }
+    if (cur === 'revoke-ok' || cur === 'revoke-fail') {
+      revokeResultBackToOrders();
       return;
     }
     if (historyStack.length > 1) {
@@ -2914,6 +3036,13 @@
         showScreen('auth-open', false);
         return;
       }
+      if (navFlow === 'revoke-fail') {
+        /* 单一演示入口循环三种失败态：网络异常 → 已超时 → 已撤销 */
+        var ki = REVOKE_FAIL_KINDS.indexOf(session.revokeFailKind);
+        session.revokeFailKind = REVOKE_FAIL_KINDS[(ki + 1) % REVOKE_FAIL_KINDS.length];
+        toast('撤销失败态：' + REVOKE_FAIL_LABEL[session.revokeFailKind]);
+      }
+      if (navFlow === 'revoke-ok') session.revokeRestored = 0; /* 演示入口：回到通用成功文案 */
       seedHistoryFor(navFlow);
       showScreen(navFlow, false);
       if (t.getAttribute('data-demo-expand') && navFlow === 'tg-deals') {
@@ -3560,6 +3689,16 @@
       return;
     }
 
+    if (e.target.closest('[data-revoke-back]')) {
+      revokeResultBackToOrders();
+      return;
+    }
+
+    if (e.target.closest('[data-retry]')) {
+      retryRevoke();
+      return;
+    }
+
     var orderHit = e.target.closest('[data-order-hit]');
     if (orderHit) {
       expandOrderCard(orderHit.getAttribute('data-order-hit'));
@@ -3582,33 +3721,9 @@
     }
 
     if (e.target.closest('#btnRevokeConfirm')) {
-      // 14B：确认 → 成功，无撤销失败中间页
-      var restored = 0;
-      if (currentOrder) {
-        currentOrder.status = 'revoked';
-        currentOrder.canRevoke = false;
-        currentOrder.revokeHint = '已撤销';
-        if (currentOrder.couponKind === 'times' && currentOrder.timesConsumed > 0 && !currentOrder.timesRestored) {
-          restored = Number(currentOrder.timesConsumed) || 0;
-          currentOrder.timesRestored = true;
-          currentOrder.timesLeft = Number(currentOrder.timesLeft || 0) + restored;
-          if (session.couponCode === currentOrder.code && session.couponKind === 'times') {
-            session.timesLeft = Number(session.timesLeft || 0) + restored;
-            syncTimesRows();
-          }
-        }
-      }
-      var revokeDesc = $('#revokeOkDesc');
-      if (revokeDesc) {
-        revokeDesc.textContent = restored > 0
-          ? ('对应开单已冲销，已恢复次卡 ' + restored + ' 次；员工业绩已回滚，撤销流水已保留。订单流水对应开单作废。')
-          : '对应开单已冲销，员工业绩已回滚，撤销流水已保留。订单流水对应开单作废。';
-      }
+      /* 确认 → loading → 撤销成功页（成功后置状态；失败态见 revoke-fail 演示入口） */
       closeMasks();
-      withLoading('正在撤销…', 700, function () {
-        showScreen('revoke-ok');
-        if (restored > 0) toast('已恢复 ' + restored + ' 次');
-      });
+      runRevokeConfirm();
       return;
     }
 
@@ -3703,6 +3818,11 @@
       'detail-ok': function () { openDetail('o1'); historyStack = ['orders', 'detail']; },
       'detail-timeout': function () { openDetail('o2'); historyStack = ['orders', 'detail']; },
       'revoke-ok': function () { showScreen('revoke-ok', false); historyStack = ['revoke-ok']; },
+      'revoke-fail': function () {
+        session.revokeFailKind = 'network';
+        showScreen('revoke-fail', false);
+        historyStack = ['revoke-fail'];
+      },
       'cam-denied': function () { showScreen('home', false); historyStack = ['home']; openException('cam-denied'); },
       'tpl-offline': function () { showScreen('home', false); historyStack = ['home']; openException('tpl-offline'); },
       'tpl-timeout': function () { showScreen('home', false); historyStack = ['home']; openException('tpl-timeout'); },

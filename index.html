@@ -272,6 +272,7 @@
     <div class="nav-arrow">↓</div>
     <button type="button" class="nav-item" data-flow="detail"><span class="idx">8</span>订单详情</button>
     <button type="button" class="nav-item" data-flow="revoke-ok"><span class="idx">9</span>撤销成功</button>
+    <button type="button" class="nav-item" data-flow="revoke-fail"><span class="idx">!</span>撤销失败</button>
   </div>
   <div class="nav-group">
     <div class="g-t">异常 / 横切</div>
@@ -1204,25 +1205,26 @@
         </div>
       </div>
 
-      <!-- ========== REVOKE OK ========== -->
+      <!-- ========== REVOKE RESULT（成功 / 失败共页，标题统一「撤销结果」） ========== -->
       <div class="screen" id="screen-revoke-ok" data-flow="revoke-ok">
         <div class="page-title-bar">
-          <button type="button" class="btn-back" data-go="orders" aria-label="返回">
+          <button type="button" class="btn-back" data-revoke-back aria-label="返回">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
           <span class="title">撤销结果</span>
         </div>
         <div class="page-body">
           <div class="result-hero">
-            <div class="ico ok">
-              <img src="assets/icons/revoke-check.svg" alt="" width="40" height="40">
+            <div class="ico ok" id="revokeResultIco">
+              <img src="assets/icons/revoke-check.svg" alt="" width="40" height="40" id="revokeResultIcon">
             </div>
-            <div class="t">撤销成功</div>
+            <div class="t" id="revokeResultTitle">撤销成功</div>
             <div class="s" id="revokeOkDesc">对应开单已冲销，员工业绩已回滚，撤销流水已保留</div>
           </div>
         </div>
         <div class="footer-actions">
-          <button type="button" class="btn-primary" data-go="orders">返回核销明细</button>
+          <button type="button" class="btn-ghost" id="btnRevokeResultSecondary" data-revoke-back hidden>返回核销明细</button>
+          <button type="button" class="btn-primary" id="btnRevokeResultPrimary" data-revoke-back>返回核销明细</button>
         </div>
       </div>
 
