@@ -335,7 +335,11 @@
     this.pickType = 'project';
     this.pickGroup = 'g_proj_all';
     this.renderMatchPick();
-    this.api.showScreen('match-pick');
+    if (typeof this.api.openMatchPickMotion === 'function') {
+      this.api.openMatchPickMotion();
+    } else {
+      this.api.showScreen('match-pick');
+    }
   };
 
   DyMatchStaff.prototype.renderMatchPick = function () {
@@ -561,13 +565,20 @@
         if (self.commitMatchPick()) {
           self.api.toast(self.api.session.selectedMatchIds.length > 1 ? '已匹配多项' : '已匹配');
           var from = self.api.session.matchPickFrom;
-          if (from === 'tg-config' || from === 'tg-inline') {
-            self.api.showScreen('tg-deals');
-            if (typeof self.api.syncTgConfigUI === 'function') self.api.syncTgConfigUI();
-            if (typeof self.api.ensureTgExpandMounted === 'function') self.api.ensureTgExpandMounted();
+          var target = (from === 'tg-config' || from === 'tg-inline') ? 'tg-deals' : 'confirm';
+          var after = function () {
+            if (target === 'tg-deals') {
+              if (typeof self.api.syncTgConfigUI === 'function') self.api.syncTgConfigUI();
+              if (typeof self.api.ensureTgExpandMounted === 'function') self.api.ensureTgExpandMounted();
+            } else {
+              self.api.syncConfirmUI();
+            }
+          };
+          if (typeof self.api.closeMatchPickMotion === 'function') {
+            self.api.closeMatchPickMotion(target, after);
           } else {
-            self.api.showScreen('confirm');
-            self.api.syncConfirmUI();
+            self.api.showScreen(target);
+            after();
           }
         }
         return;

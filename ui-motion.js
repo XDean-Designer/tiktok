@@ -1,6 +1,5 @@
 /**
- * UI motion — iOS-leaning transitions for scan sheet, platform morph,
- * list stagger, and expand helpers. Used by app.js.
+ * UI motion — page transitions, list stagger, expand helpers.
  */
 (function (global) {
   'use strict';
@@ -27,7 +26,16 @@
     });
   }
 
-  /** Sheet: scan → input (mild rebound, no strong squash) */
+  function clearCoverClasses(el) {
+    if (!el) return;
+    el.classList.remove(
+      'ux-cover-y', 'ux-cover-y--in', 'ux-cover-y--out',
+      'ux-cover-up', 'ux-cover-up--in', 'ux-cover-up--out',
+      'ux-push', 'ux-push--in', 'ux-push--out'
+    );
+  }
+
+  /** scan → input: full page from top (no bounce) */
   function openInputSheet(done) {
     var scan = $('#screen-scan');
     var input = $('#screen-input');
@@ -39,22 +47,18 @@
       if (s !== scan && s !== input) s.classList.remove('active');
     });
     scan.classList.add('active');
-    input.classList.add('active', 'ux-sheet');
-    input.classList.remove('ux-sheet--in', 'ux-sheet--settle', 'ux-sheet--out');
+    clearCoverClasses(input);
+    input.classList.add('active', 'ux-cover-y');
     void input.offsetWidth;
     if (reduceMotion()) {
-      input.classList.add('ux-sheet--in');
+      input.classList.add('ux-cover-y--in');
       if (done) done();
       return;
     }
     nextFrame().then(function () {
-      input.classList.add('ux-sheet--in');
-      return wait(320);
+      input.classList.add('ux-cover-y--in');
+      return wait(300);
     }).then(function () {
-      input.classList.add('ux-sheet--settle');
-      return wait(280);
-    }).then(function () {
-      input.classList.remove('ux-sheet--settle');
       if (done) done();
     });
   }
@@ -62,21 +66,72 @@
   function closeInputSheet(done) {
     var input = $('#screen-input');
     var scan = $('#screen-scan');
-    if (!input || !input.classList.contains('ux-sheet')) {
+    if (!input || !input.classList.contains('ux-cover-y')) {
       if (done) done();
       return;
     }
     if (reduceMotion()) {
-      input.classList.remove('active', 'ux-sheet', 'ux-sheet--in', 'ux-sheet--settle', 'ux-sheet--out');
+      input.classList.remove('active');
+      clearCoverClasses(input);
       if (scan) scan.classList.add('active');
       if (done) done();
       return;
     }
-    input.classList.remove('ux-sheet--settle');
-    input.classList.add('ux-sheet--out');
+    input.classList.remove('ux-cover-y--in');
+    input.classList.add('ux-cover-y--out');
     wait(280).then(function () {
-      input.classList.remove('active', 'ux-sheet', 'ux-sheet--in', 'ux-sheet--out');
+      input.classList.remove('active');
+      clearCoverClasses(input);
       if (scan) scan.classList.add('active');
+      if (done) done();
+    });
+  }
+
+  /** match-pick: full page from bottom */
+  function openMatchPickSheet(fromScreen, done) {
+    var pick = $('#screen-match-pick');
+    var from = fromScreen || document.querySelector('.screen.active');
+    if (!pick) {
+      if (done) done();
+      return;
+    }
+    document.querySelectorAll('.screen').forEach(function (s) {
+      if (s !== from && s !== pick) s.classList.remove('active');
+    });
+    if (from) from.classList.add('active');
+    clearCoverClasses(pick);
+    pick.classList.add('active', 'ux-cover-up');
+    void pick.offsetWidth;
+    if (reduceMotion()) {
+      pick.classList.add('ux-cover-up--in');
+      if (done) done();
+      return;
+    }
+    nextFrame().then(function () {
+      pick.classList.add('ux-cover-up--in');
+      return wait(320);
+    }).then(function () {
+      if (done) done();
+    });
+  }
+
+  function closeMatchPickSheet(done) {
+    var pick = $('#screen-match-pick');
+    if (!pick || !pick.classList.contains('ux-cover-up')) {
+      if (done) done();
+      return;
+    }
+    if (reduceMotion()) {
+      pick.classList.remove('active');
+      clearCoverClasses(pick);
+      if (done) done();
+      return;
+    }
+    pick.classList.remove('ux-cover-up--in');
+    pick.classList.add('ux-cover-up--out');
+    wait(280).then(function () {
+      pick.classList.remove('active');
+      clearCoverClasses(pick);
       if (done) done();
     });
   }
@@ -97,14 +152,14 @@
       if (s !== set && s !== deals) s.classList.remove('active');
     });
     set.classList.add('active');
+    clearCoverClasses(deals);
     deals.classList.add('active', 'ux-push');
-    deals.classList.remove('ux-push--in', 'ux-push--out');
     void deals.offsetWidth;
     nextFrame().then(function () {
       deals.classList.add('ux-push--in');
       return wait(320);
     }).then(function () {
-      deals.classList.remove('ux-push', 'ux-push--in', 'ux-push--out');
+      clearCoverClasses(deals);
       if (done) done();
     });
   }
@@ -122,6 +177,7 @@
       return;
     }
     if (set) set.classList.add('active');
+    clearCoverClasses(deals);
     deals.classList.add('active', 'ux-push', 'ux-push--in');
     void deals.offsetWidth;
     nextFrame().then(function () {
@@ -129,12 +185,12 @@
       deals.classList.add('ux-push--out');
       return wait(280);
     }).then(function () {
-      deals.classList.remove('active', 'ux-push', 'ux-push--in', 'ux-push--out');
+      deals.classList.remove('active');
+      clearCoverClasses(deals);
       if (done) done();
     });
   }
 
-  /* legacy aliases */
   function morphPlatToDeals(_card, done) { slideDealsIn(done); }
   function morphDealsToSet(done) { slideDealsOut(done); }
 
@@ -195,15 +251,30 @@
     requestAnimationFrame(tick);
   }
 
+  function shakeElements(els) {
+    var list = Array.prototype.slice.call(els || []);
+    list.forEach(function (el) {
+      el.classList.remove('is-shake');
+      void el.offsetWidth;
+      el.classList.add('is-shake');
+    });
+    wait(450).then(function () {
+      list.forEach(function (el) { el.classList.remove('is-shake'); });
+    });
+  }
+
   global.UiMotion = {
     reduceMotion: reduceMotion,
     openInputSheet: openInputSheet,
     closeInputSheet: closeInputSheet,
+    openMatchPickSheet: openMatchPickSheet,
+    closeMatchPickSheet: closeMatchPickSheet,
     slideDealsIn: slideDealsIn,
     slideDealsOut: slideDealsOut,
     morphPlatToDeals: morphPlatToDeals,
     morphDealsToSet: morphDealsToSet,
     staggerListIn: staggerListIn,
-    scrollCardToCenter: scrollCardToCenter
+    scrollCardToCenter: scrollCardToCenter,
+    shakeElements: shakeElements
   };
 })(window);

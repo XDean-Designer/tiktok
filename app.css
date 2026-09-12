@@ -2266,55 +2266,56 @@
   margin: 4px 2px 0; font-size: 12px; color: #929292; line-height: 1.55;
 }
 
-/* ===== UX motion · iOS lean ===== */
-#phone-inner, .phone-inner { position: relative; }
+/* ===== UX motion · page transitions ===== */
+#phone-inner, .phone-inner {
+  position: relative;
+  --status-bar-h: 53px;
+}
 
-#screen-input.ux-sheet {
+#screen-input.ux-cover-y,
+#screen-match-pick.ux-cover-up,
+#screen-tg-deals.ux-push {
   position: absolute !important;
-  top: 53px;
+  top: var(--status-bar-h);
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 40;
   display: flex !important;
-  transform: translateY(100%);
-  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
   background: var(--bg-page, #F7F7F7);
-  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.12);
 }
-#screen-input.ux-sheet.ux-sheet--in {
-  transform: translateY(0);
+
+/* 输码：整页自顶部移入移出 */
+#screen-input.ux-cover-y {
+  z-index: 40;
+  transform: translateY(-100%);
+  transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
-#screen-input.ux-sheet.ux-sheet--out {
+#screen-input.ux-cover-y.ux-cover-y--in { transform: translateY(0); }
+#screen-input.ux-cover-y.ux-cover-y--out { transform: translateY(-100%); }
+
+/* 选择消费项：整页自下方移入移出 */
+#screen-match-pick.ux-cover-up {
+  z-index: 42;
   transform: translateY(100%);
+  transition: transform 0.32s cubic-bezier(0.25, 0.1, 0.25, 1);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.1);
 }
-#screen-input.ux-sheet.ux-sheet--settle {
-  animation: uxSheetSettle 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-@keyframes uxSheetSettle {
-  0% { transform: translateY(0); opacity: 1; }
-  45% { transform: translateY(-5px); opacity: 1; }
-  100% { transform: translateY(0); opacity: 1; }
-}
+#screen-match-pick.ux-cover-up.ux-cover-up--in { transform: translateY(0); }
+#screen-match-pick.ux-cover-up.ux-cover-up--out { transform: translateY(100%); }
 
 .ux-plat-fade {
   opacity: 0 !important;
   transition: opacity 0.12s ease !important;
   pointer-events: none;
 }
-/* tg-set ↔ tg-deals · iOS push */
+/* tg-set ↔ tg-deals · 水平整页推入 */
 #screen-tg-deals.ux-push {
-  position: absolute !important;
-  top: 53px;
-  left: 0;
-  right: 0;
-  bottom: 0;
   z-index: 35;
-  display: flex !important;
   transform: translateX(100%);
   transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
   box-shadow: -6px 0 24px rgba(0, 0, 0, 0.08);
-  background: var(--bg-page, #F7F7F7);
 }
 #screen-tg-deals.ux-push.ux-push--in {
   transform: translateX(0);
@@ -2325,6 +2326,20 @@
 .ux-fade-out {
   opacity: 0;
   transition: opacity 0.2s ease;
+}
+
+/* 消费顾客根态 · iOS 抖动 */
+@keyframes uxShake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-7px); }
+  30% { transform: translateX(7px); }
+  45% { transform: translateX(-5px); }
+  60% { transform: translateX(5px); }
+  75% { transform: translateX(-2px); }
+  90% { transform: translateX(2px); }
+}
+.cust-tile.is-shake {
+  animation: uxShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
 .ux-stagger {
@@ -2518,11 +2533,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #screen-input.ux-sheet,
+  #screen-input.ux-cover-y,
+  #screen-match-pick.ux-cover-up,
   #screen-tg-deals.ux-push,
   .ux-stagger--in,
   .tg-coupon-card.is-open .tg-coupon-card__expand,
-  .order-card.is-open .order-card__expand {
+  .order-card.is-open .order-card__expand,
+  .cust-tile.is-shake {
     transition: none !important;
     animation: none !important;
   }

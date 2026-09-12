@@ -151,7 +151,9 @@
     selectedMember: null,
     /* UI 形变阶段：root | guest | join | member */
     custPhase: 'root',
-    lastCustomerLabel: '男散客',
+    /* 根态未点选时不可核销；点散客/选会员后为 true */
+    customerChosen: false,
+    lastCustomerLabel: '',
     registeredMembers: [] /* 演示：确认核销时新建的会员 */
   };
 
@@ -508,15 +510,19 @@
     if (to === 'join') {
       session.guestJoin = 'yes';
       session.customerMode = 'guest';
+      session.customerChosen = true;
     } else if (to === 'guest') {
       session.guestJoin = 'no';
       session.customerMode = 'guest';
+      session.customerChosen = true;
     } else if (to === 'root') {
       session.guestJoin = 'no';
       session.customerMode = 'guest';
+      session.customerChosen = false;
     } else if (to === 'member') {
       session.guestJoin = 'no';
       session.customerMode = 'member';
+      session.customerChosen = !!(session.selectedMember && session.selectedMember.id);
     }
 
     if (from === to && !opts.force) {
@@ -651,10 +657,11 @@
 
     var btn = $('#btnConfirmVerify');
     if (btn) {
-      var mode = session.customerMode === 'member' ? 'member' : 'guest';
+      /* 未选消费顾客时按钮可点，由 startConsume 拦截并抖动提示 */
       var ok = true;
-      if (mode === 'member') ok = !!(mem && mem.id);
-      else if (phase === 'guest' && !session.guestGender) ok = false;
+      if (session.customerMode === 'member') {
+        ok = !!(mem && mem.id);
+      }
       btn.disabled = !ok;
     }
   }
@@ -753,6 +760,7 @@
     session.customerMode = 'member';
     session.guestJoin = 'no';
     session.custPhase = 'member';
+    session.customerChosen = true;
     showScreen('confirm');
     /* showScreen 会 sync 到 member；先还原视觉起点再形变，避免跳过动画 */
     if (morphRoot && visualFrom !== 'member') {
@@ -774,13 +782,38 @@
     session.joinNick = '';
     session.selectedMember = null;
     session.custPhase = 'root';
-    session.lastCustomerLabel = '男散客';
+    session.customerChosen = false;
+    session.lastCustomerLabel = '';
     restoreJoinDraftToDom();
   }
+  function shakeCustRootChoice() {
+    var tiles = document.querySelectorAll('#custMorph [data-stage="root"] .cust-tile');
+    if (window.UiMotion) UiMotion.shakeElements(tiles);
+    else {
+      tiles.forEach(function (el) {
+        el.classList.remove('is-shake');
+        void el.offsetWidth;
+        el.classList.add('is-shake');
+      });
+    }
+    scrollConfirmCustCard();
+  }
+  function customerSelectionReady() {
+    if (!session.customerChosen) return false;
+    if (session.customerMode === 'member') {
+      return !!(session.selectedMember && session.selectedMember.id);
+    }
+    /* 散客路径：guest / join 均视为已选择 */
+    return session.custPhase === 'guest' || session.custPhase === 'join' ||
+      (session.custPhase === 'root' && session.customerChosen);
+  }
   function resolveCustomerSnapshot() {
+    if (!customerSelectionReady()) {
+      return { error: '请选择消费顾客', needCustShake: true };
+    }
     if (session.customerMode === 'member') {
       if (!session.selectedMember || !session.selectedMember.id) {
-        return { error: '请选择会员' };
+        return { error: '请选择会员', needCustShake: true };
       }
       return {
         kind: 'member',
@@ -2222,10 +2255,19 @@
     };
     var id = map[flow];
     if (!id) return;
-    /* 离开 sheet 态时清理 input overlay class */
+    /* 离开过渡态时清理 overlay class */
     var inputEl = $('#screen-input');
     if (flow !== 'input' && inputEl) {
-      inputEl.classList.remove('ux-sheet', 'ux-sheet--in', 'ux-sheet--settle', 'ux-sheet--out');
+      inputEl.classList.remove('ux-cover-y', 'ux-cover-y--in', 'ux-cover-y--out',
+        'ux-sheet', 'ux-sheet--in', 'ux-sheet--settle', 'ux-sheet--out');
+    }
+    var pickEl = $('#screen-match-pick');
+    if (flow !== 'match-pick' && pickEl) {
+      pickEl.classList.remove('ux-cover-up', 'ux-cover-up--in', 'ux-cover-up--out');
+    }
+    var dealsEl = $('#screen-tg-deals');
+    if (flow !== 'tg-deals' && dealsEl) {
+      dealsEl.classList.remove('ux-push', 'ux-push--in', 'ux-push--out');
     }
     if (flow !== 'tg-deals') parkTgConfigSlot();
     $all('.screen').forEach(function (s) { s.classList.remove('active'); });
@@ -2272,7 +2314,7 @@
   function goBack() {
     var cur = historyStack[historyStack.length - 1];
     var inputScreen = $('#screen-input');
-    if (cur === 'input' && inputScreen && inputScreen.classList.contains('ux-sheet')) {
+    if (cur === 'input' && inputScreen && inputScreen.classList.contains('ux-cover-y')) {
       historyStack.pop();
       if (window.UiMotion) {
         UiMotion.closeInputSheet(function () {
@@ -2281,6 +2323,23 @@
         });
       } else {
         showScreen('scan', false);
+      }
+      return;
+    }
+    var pickScreen = $('#screen-match-pick');
+    if (cur === 'match-pick' && pickScreen && pickScreen.classList.contains('ux-cover-up')) {
+      historyStack.pop();
+      var backFlow = historyStack[historyStack.length - 1] || 'confirm';
+      if (window.UiMotion) {
+        UiMotion.closeMatchPickSheet(function () {
+          showScreen(backFlow, false);
+          if (backFlow === 'tg-deals' || session.matchPickFrom === 'tg-inline' || session.matchPickFrom === 'tg-config') {
+            if (typeof ensureTgExpandMounted === 'function') ensureTgExpandMounted();
+            if (typeof syncTgConfigUI === 'function') syncTgConfigUI();
+          }
+        });
+      } else {
+        showScreen(backFlow, false);
       }
       return;
     }
@@ -2418,7 +2477,7 @@
     if (leftEl) leftEl.textContent = (session.timesLeft || 0) + ' 次';
 
     var custEl = $('#successCustomer');
-    if (custEl) custEl.textContent = session.lastCustomerLabel || '男散客';
+    if (custEl) custEl.textContent = session.lastCustomerLabel || '—';
     var so = $('#successOp');
     if (so) so.textContent = session.opName || '顾清扬';
   }
@@ -2435,7 +2494,7 @@
       plat: plat,
       couponName: session.couponName || '团购核销',
       name: orderDetailNameFromSession(),
-      customer: (customerSnap && customerSnap.label) || session.lastCustomerLabel || '男散客',
+      customer: (customerSnap && customerSnap.label) || session.lastCustomerLabel || '—',
       price: bill,
       code: session.couponCode || '',
       oid: session.orderId || defaultOrderId(),
@@ -2464,14 +2523,26 @@
       openException('tpl-offline');
       return;
     }
+    if (!customerSelectionReady()) {
+      /* 未选时回到根态双卡再抖动，提示必选 */
+      if (session.custPhase !== 'root') {
+        morphCustPhase('root', { animate: true });
+      }
+      toast('请选择消费顾客');
+      shakeCustRootChoice();
+      syncConfirmCustUI();
+      return;
+    }
     if (session.customerMode === 'member' && !(session.selectedMember && session.selectedMember.id)) {
       toast('请选择会员');
+      shakeCustRootChoice();
       syncConfirmCustUI();
       return;
     }
     var snap = resolveCustomerSnapshot();
     if (snap.error) {
       toast(snap.error);
+      if (snap.needCustShake) shakeCustRootChoice();
       return;
     }
     session.lastCustomerLabel = snap.label;
@@ -3188,6 +3259,7 @@
         session.customerMode = 'guest';
         session.custPhase = 'root';
         session.guestJoin = 'no';
+        session.customerChosen = false;
       }
       goBack();
       syncConfirmCustUI();
@@ -3527,6 +3599,35 @@
     }
   });
 
+  function openMatchPickMotion() {
+    var fromScreen = document.querySelector('.screen.active');
+    if (historyStack[historyStack.length - 1] !== 'match-pick') {
+      historyStack.push('match-pick');
+    }
+    setNav('match-pick');
+    syncPrdPanel(PRD_ANCHOR['match-pick'] || 'match-pick');
+    if (window.UiMotion && UiMotion.openMatchPickSheet) {
+      UiMotion.openMatchPickSheet(fromScreen);
+    } else {
+      showScreen('match-pick', false);
+    }
+  }
+
+  function closeMatchPickMotion(target, after) {
+    var finish = function () {
+      /* 弹出 match-pick 栈帧 */
+      if (historyStack[historyStack.length - 1] === 'match-pick') historyStack.pop();
+      showScreen(target || 'confirm', false);
+      if (typeof after === 'function') after();
+    };
+    var pick = $('#screen-match-pick');
+    if (window.UiMotion && pick && pick.classList.contains('ux-cover-up')) {
+      UiMotion.closeMatchPickSheet(finish);
+    } else {
+      finish();
+    }
+  }
+
   // boot
   matchStaff = new window.DyMatchStaff({
     seed: seed,
@@ -3539,6 +3640,8 @@
     syncConfirmUI: syncConfirmUI,
     syncTgConfigUI: syncTgConfigUI,
     ensureTgExpandMounted: ensureTgExpandMounted,
+    openMatchPickMotion: openMatchPickMotion,
+    closeMatchPickMotion: closeMatchPickMotion,
     staffName: staffName,
     isTimesDealId: function (id) { return isTimesDeal(dealById(id)); }
   });

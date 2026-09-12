@@ -145,6 +145,10 @@ html.view-mobile {
   --safe-bottom: max(34px, env(safe-area-inset-bottom, 0px));
 }
 html.view-mobile .status-bar { display: none !important; }
+html.view-mobile #phone-inner,
+html.view-mobile .phone-inner {
+  --status-bar-h: 0px;
+}
 
 /* 真机：左滑抽屉唤出完整导航 / 演示条 */
 .nav-drawer-mask,
