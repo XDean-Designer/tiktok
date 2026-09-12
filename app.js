@@ -123,7 +123,11 @@
     loginStoreName: '悦颜美肌 · 中山路店',
     boundStoresDy: [],
     boundStoresMt: [],
-    matchPickFrom: 'confirm', // confirm | tg-config
+    matchPickFrom: 'confirm', // confirm | tg-config | tg-inline
+    tgExpandDealId: null,
+    orderExpandId: null,
+    tgTabDir: 1,
+    orderTabDir: 1,
     /* 内部开单字段（UI 文案按平台显示「抖音团购 / 美团团购」） */
     orderType: '快捷开单',
     payType: '团购',
@@ -286,6 +290,48 @@
       status: 'ok',
       canRevoke: false,
       revokeHint: '已超过 1 小时，不可撤销'
+    },
+    {
+      id: 'o7',
+      plat: 'douyin',
+      couponName: '深层补水护理 · 10次卡',
+      name: '深层补水护理',
+      customer: '陈女士',
+      price: 198,
+      code: 'dy8821-TC10-5501',
+      oid: '716829220118',
+      dealId: 'product_tc_dy10',
+      time: '2026-09-03 16:05',
+      op: '顾清扬',
+      bill: 'SO20260903031',
+      status: 'ok',
+      canRevoke: true,
+      revokeHint: '剩余 38 分钟可撤销',
+      couponKind: 'times',
+      timesTotal: 10,
+      timesConsumed: 1,
+      timesLeft: 9
+    },
+    {
+      id: 'o8',
+      plat: 'meituan',
+      couponName: '肩颈舒缓护理 · 5次卡',
+      name: '肩颈舒缓',
+      customer: '女散客',
+      price: 356,
+      code: 'mt5520-TC05-7712',
+      oid: 'MT202609031520',
+      dealId: 'deal_tc_mt5',
+      time: '2026-09-03 13:22',
+      op: '林屿森',
+      bill: 'SO20260903019',
+      status: 'ok',
+      canRevoke: true,
+      revokeHint: '剩余 55 分钟可撤销',
+      couponKind: 'times',
+      timesTotal: 5,
+      timesConsumed: 2,
+      timesLeft: 3
     }
   ];
 
@@ -1090,6 +1136,69 @@
     });
   }
 
+  function parkTgConfigSlot() {
+    var slot = $('#tgConfigInlineSlot');
+    var host = $('#screen-tg-config');
+    if (slot && host && slot.parentElement !== host) host.appendChild(slot);
+  }
+
+  function mountTgConfigSlot(card) {
+    var slot = $('#tgConfigInlineSlot');
+    var mount = card && card.querySelector('[data-tg-expand-mount]');
+    if (!slot || !mount) return;
+    mount.appendChild(slot);
+    syncTgConfigUI();
+  }
+
+  function collapseTgExpand(saveDiscard) {
+    parkTgConfigSlot();
+    session.tgExpandDealId = null;
+    if (saveDiscard) {
+      /* 丢弃未保存草稿：重新从已存默认加载空态由下次展开处理 */
+    }
+    var open = document.querySelector('.tg-coupon-card.is-open');
+    if (open) open.classList.remove('is-open');
+  }
+
+  function ensureTgExpandMounted() {
+    if (!session.tgExpandDealId) return;
+    var card = document.querySelector('.tg-coupon-card[data-tg-deal="' + session.tgExpandDealId + '"]');
+    if (!card) return;
+    card.classList.add('is-open');
+    mountTgConfigSlot(card);
+    var body = card.closest('.page-body') || $('#screen-tg-deals .page-body');
+    if (window.UiMotion) UiMotion.scrollCardToCenter(card, body);
+  }
+
+  function expandTgDeal(dealId) {
+    var deal = dealById(dealId);
+    if (!deal) return;
+    if (session.tgExpandDealId && session.tgExpandDealId !== dealId) {
+      collapseTgExpand(true);
+    }
+    if (session.tgExpandDealId === dealId) {
+      collapseTgExpand(true);
+      return;
+    }
+    loadTgConfigDraft(deal);
+    session.tgExpandDealId = dealId;
+    var card = document.querySelector('.tg-coupon-card[data-tg-deal="' + dealId + '"]');
+    if (!card) {
+      renderTgDealList();
+      card = document.querySelector('.tg-coupon-card[data-tg-deal="' + dealId + '"]');
+    }
+    if (!card) return;
+    $all('.tg-coupon-card.is-open').forEach(function (c) { c.classList.remove('is-open'); });
+    card.classList.add('is-open');
+    mountTgConfigSlot(card);
+    var body = $('#screen-tg-deals .tg-deals-body') || $('#screen-tg-deals .page-body');
+    if (window.UiMotion) {
+      requestAnimationFrame(function () {
+        UiMotion.scrollCardToCenter(card, body);
+      });
+    }
+  }
+
   function openTgPlat(plat) {
     session.plat = plat === 'meituan' ? 'meituan' : 'douyin';
     syncPlatformChrome();
@@ -1098,7 +1207,15 @@
       return;
     }
     ensureTgStoreId(session.plat);
-    showScreen('tg-deals');
+    var go = function () {
+      collapseTgExpand(true);
+      showScreen('tg-deals');
+    };
+    if (window.UiMotion && $('#screen-tg-set') && $('#screen-tg-set').classList.contains('active')) {
+      UiMotion.slideDealsIn(go);
+    } else {
+      go();
+    }
   }
 
   /* 开通页「去设置团购券」：直达对应平台团购券列表，返回回开通页 */
@@ -1154,7 +1271,8 @@
     }).join('');
   }
 
-  function renderTgDealList() {
+  function renderTgDealList(opts) {
+    opts = opts || {};
     var plat = session.plat === 'meituan' ? 'meituan' : 'douyin';
     var title = $('#tgDealsTitle');
     if (title) title.textContent = plat === 'meituan' ? '美团团购券' : '抖音团购券';
@@ -1165,6 +1283,7 @@
     var emptyTitle = $('#tgDealEmptyTitle');
     var emptyDesc = $('#tgDealEmptyDesc');
     var rows = dealsOfStore(plat, storeId);
+    parkTgConfigSlot();
     if (list) list.classList.add('tg-deal-list--cards');
     if (!rows.length) {
       if (list) { list.innerHTML = ''; list.hidden = true; }
@@ -1173,6 +1292,7 @@
       if (emptyDesc) {
         emptyDesc.textContent = '该门店暂无同步到的团购券。验券仍可凭顾客券码完成。';
       }
+      session.tgExpandDealId = null;
       return;
     }
     if (empty) empty.hidden = true;
@@ -1185,7 +1305,9 @@
         var summary = dealDefaultSummary(def);
         var logo = '<img class="tg-coupon-card__logo" src="' + (plat === 'meituan' ? ICO_MT : ICO_DY) + '" alt="" width="24" height="24">';
         var kindTag = isTimesDeal(d) ? '<span class="tg-coupon-card__kind">次卡</span>' : '';
-        return '<button type="button" class="tg-coupon-card" data-tg-deal="' + d.id + '">' +
+        var openCls = session.tgExpandDealId === d.id ? ' is-open' : '';
+        return '<div class="tg-coupon-card is-expandable' + openCls + '" data-tg-deal="' + d.id + '">' +
+          '<button type="button" class="tg-coupon-card__hit" data-tg-deal-hit="' + d.id + '">' +
           '<span class="tg-coupon-card__body">' +
           '<span class="tg-coupon-card__row tg-coupon-card__row--main">' +
           logo +
@@ -1201,8 +1323,14 @@
           '</span>' +
           '</span>' +
           TG_CHEV_SVG +
-          '</button>';
+          '</button>' +
+          '<div class="tg-coupon-card__expand"><div data-tg-expand-mount></div></div>' +
+          '</div>';
       }).join('');
+    }
+    if (session.tgExpandDealId) ensureTgExpandMounted();
+    if (opts.stagger && window.UiMotion && list && !list.hidden) {
+      UiMotion.staggerListIn(list, session.tgTabDir || 1);
     }
   }
 
@@ -1242,28 +1370,15 @@
   function syncTgConfigUI() {
     var deal = dealById(session.tgEditDealId) || { name: session.couponName, price: session.couponPrice };
     var times = isTimesDeal(deal);
-    var nameEl = $('#tgConfigName');
-    var face = $('#tgConfigFace');
-    var faceLabel = $('#tgConfigFaceLabel');
-    var head = $('#tgConfigPlatHead');
-    var kindEl = $('#tgConfigKindTag');
+    var timesBlock = $('#tgConfigTimesBlock');
     var timesTotalRow = $('#tgConfigTimesTotalRow');
     var timesUnitRow = $('#tgConfigTimesUnitRow');
     var timesTotalEl = $('#tgConfigTimesTotal');
     var timesUnitEl = $('#tgConfigTimesUnit');
 
-    if (nameEl) nameEl.textContent = deal.name || '';
-    if (face) face.textContent = '¥' + Number(deal.price || session.couponPrice || 0);
-    if (faceLabel) faceLabel.textContent = times ? '售价' : '面额';
     var matchLabel = $('#tgConfigMatchLabel');
     if (matchLabel) matchLabel.textContent = times ? '单次核销' : '核销项目';
-    if (kindEl) kindEl.hidden = !times;
-    if (head) {
-      var label = times ? '次卡' : '团购券';
-      head.innerHTML = isMeituan()
-        ? '<img src="' + ICO_MT + '" alt="" width="24" height="24"><span>' + label + '</span>'
-        : '<img src="' + ICO_DY + '" alt="" width="24" height="24"><span>' + label + '</span>';
-    }
+    if (timesBlock) timesBlock.hidden = !times;
     if (timesTotalRow) timesTotalRow.hidden = !times;
     if (timesUnitRow) timesUnitRow.hidden = !times;
     if (times && timesTotalEl) timesTotalEl.textContent = (deal.timesTotal || 0) + ' 次';
@@ -1310,7 +1425,8 @@
       matchIds: matches.map(function (m) { return m.id; })
     });
     toast('已保存默认配置');
-    showScreen('tg-deals');
+    collapseTgExpand(false);
+    renderTgDealList();
   }
 
   function $(sel, root) { return (root || document).querySelector(sel); }
@@ -2067,6 +2183,18 @@
       openException(flow);
       return;
     }
+    /* 默认配置整页已废弃：落到列表并内联展开 */
+    if (flow === 'tg-config') {
+      var expandId = session.tgEditDealId || session.tgExpandDealId;
+      if (historyStack[historyStack.length - 1] === 'tg-config') {
+        historyStack[historyStack.length - 1] = 'tg-deals';
+      }
+      showScreen('tg-deals', push === false ? false : (historyStack[historyStack.length - 1] !== 'tg-deals'));
+      if (expandId) {
+        requestAnimationFrame(function () { expandTgDeal(expandId); });
+      }
+      return;
+    }
     var map = {
       home: 'screen-home',
       workbench: 'screen-workbench',
@@ -2074,7 +2202,6 @@
       account: 'screen-account',
       'tg-set': 'screen-tg-set',
       'tg-deals': 'screen-tg-deals',
-      'tg-config': 'screen-tg-config',
       scan: 'screen-scan',
       input: 'screen-input',
       result: 'screen-result',
@@ -2095,6 +2222,12 @@
     };
     var id = map[flow];
     if (!id) return;
+    /* 离开 sheet 态时清理 input overlay class */
+    var inputEl = $('#screen-input');
+    if (flow !== 'input' && inputEl) {
+      inputEl.classList.remove('ux-sheet', 'ux-sheet--in', 'ux-sheet--settle', 'ux-sheet--out');
+    }
+    if (flow !== 'tg-deals') parkTgConfigSlot();
     $all('.screen').forEach(function (s) { s.classList.remove('active'); });
     var screen = document.getElementById(id);
     if (screen) screen.classList.add('active');
@@ -2126,7 +2259,6 @@
     }
     if (flow === 'tg-set') syncTgSetCards();
     if (flow === 'tg-deals') renderTgDealList();
-    if (flow === 'tg-config') syncTgConfigUI();
     if (flow === 'result' || flow === 'confirm') syncTimesRows();
     if (flow === 'scan' || flow === 'result' || flow === 'confirm' || flow === 'input') syncPlatformChrome();
     if (flow !== 'scan') {
@@ -2138,12 +2270,33 @@
   }
 
   function goBack() {
+    var cur = historyStack[historyStack.length - 1];
+    var inputScreen = $('#screen-input');
+    if (cur === 'input' && inputScreen && inputScreen.classList.contains('ux-sheet')) {
+      historyStack.pop();
+      if (window.UiMotion) {
+        UiMotion.closeInputSheet(function () {
+          setNav('scan');
+          syncPrdPanel(PRD_ANCHOR.scan);
+        });
+      } else {
+        showScreen('scan', false);
+      }
+      return;
+    }
+    if (cur === 'tg-deals' && historyStack.length > 1 && historyStack[historyStack.length - 2] === 'tg-set') {
+      collapseTgExpand(true);
+      historyStack.pop();
+      var finish = function () { showScreen('tg-set', false); };
+      if (window.UiMotion) UiMotion.slideDealsOut(finish);
+      else finish();
+      return;
+    }
     if (historyStack.length > 1) {
       historyStack.pop();
       showScreen(historyStack[historyStack.length - 1] || 'home', false);
       return;
     }
-    var cur = historyStack[historyStack.length - 1];
     var parent = BACK_PARENT[cur];
     if (parent) {
       historyStack = initialStackFor(parent);
@@ -2295,6 +2448,8 @@
       revokeHint: '剩余 59 分钟可撤销',
       couponKind: session.couponKind || 'groupbuy',
       timesConsumed: consumedTimes || 0,
+      timesTotal: isTimesCoupon() ? Number(session.timesTotal || 0) : 0,
+      timesLeft: isTimesCoupon() ? Number(session.timesLeft || 0) : 0,
       timesRestored: false,
       orderType: session.orderType || '快捷开单',
       payType: session.payType || '团购'
@@ -2344,7 +2499,8 @@
     });
   }
 
-  function renderOrders() {
+  function renderOrders(opts) {
+    opts = opts || {};
     var list = $('#orderListDouyin');
     var empty = $('#orderListEmpty');
     var onTab = $('.plat-tab.on', $('#orderTabs'));
@@ -2353,12 +2509,12 @@
     if (plat === 'coupon') {
       list.hidden = true;
       empty.hidden = false;
+      session.orderExpandId = null;
       return;
     }
 
     var rows = ORDERS.filter(function (o) {
       if ((o.plat || 'douyin') !== plat) return false;
-      /* 核销明细不展示已退款（status=refund）；造数可保留供详情深链 */
       if (o.status === 'refund') return false;
       if (filterState.status === 'ok' && o.status !== 'ok') return false;
       if (filterState.status === 'revoked' && o.status !== 'revoked') return false;
@@ -2369,6 +2525,7 @@
     if (!rows.length) {
       list.hidden = true;
       empty.hidden = false;
+      session.orderExpandId = null;
       return;
     }
     empty.hidden = true;
@@ -2382,15 +2539,62 @@
       var platTag = (o.plat === 'meituan')
         ? mtBadgeHtml()
         : '<span class="tag tag-plat-dy">抖音</span>';
+      var openCls = session.orderExpandId === o.id ? ' is-open' : '';
+      var matchLabel = o.couponKind === 'times' ? '单次核销' : '核销项目';
+      var canRevoke = o.status === 'ok' && o.canRevoke;
+      var revokeDisabled = o.status === 'revoked' || o.status === 'refund' || !o.canRevoke;
+      var revokeLabel = o.status === 'refund' ? '已退款' : (o.status === 'revoked' ? '已撤销' : (o.canRevoke ? '撤销核销' : '已超时不可撤销'));
+      var timesRows = '';
+      if (o.couponKind === 'times') {
+        timesRows =
+          '<div class="order-expand-kv"><span class="k">总次数</span><span class="v">' + (o.timesTotal != null ? o.timesTotal : '—') + ' 次</span></div>' +
+          '<div class="order-expand-kv"><span class="k">核销次数</span><span class="v">' + (o.timesConsumed != null ? o.timesConsumed : '—') + ' 次</span></div>' +
+          '<div class="order-expand-kv"><span class="k">剩余次数</span><span class="v">' + (o.timesLeft != null ? o.timesLeft : '—') + ' 次</span></div>';
+      }
       return (
-        '<button type="button" class="order-card" data-order-id="' + o.id + '">' +
+        '<div class="order-card is-expandable' + openCls + '" data-order-id="' + o.id + '">' +
+          '<button type="button" class="order-card__hit" data-order-hit="' + o.id + '">' +
           '<div class="row1"><div class="name">' + orderListTitle(o) + '</div><div class="amt">¥' + o.price + '</div></div>' +
           '<div class="meta">' + o.time + ' · ' + o.op +
             (o.customer ? (' · ' + o.customer) : '') + '</div>' +
           '<div class="tags">' + platTag + st + '</div>' +
-        '</button>'
+          '</button>' +
+          '<div class="order-card__expand">' +
+            '<div class="order-expand-kv"><span class="k">' + matchLabel + '</span><span class="v">' + (o.name || '快捷开单') + '</span></div>' +
+            timesRows +
+            '<div class="order-expand-kv"><span class="k">券码</span><span class="v">' + (o.code || '—') + '</span></div>' +
+            '<div class="order-expand-kv"><span class="k">平台单号</span><span class="v">' + (o.oid || '—') + '</span></div>' +
+            '<div class="order-expand-kv"><span class="k">消费顾客</span><span class="v">' + (o.customer || '—') + '</span></div>' +
+            '<div class="order-expand-kv"><span class="k">开单号</span><span class="v">' + (o.bill || '—') + '</span></div>' +
+            '<div class="order-expand-kv"><span class="k">撤销时限</span><span class="v">' + (o.revokeHint || '—') + '</span></div>' +
+            '<div class="order-expand-actions">' +
+              '<button type="button" class="btn-ghost" data-order-collapse="' + o.id + '">收起</button>' +
+              '<button type="button" class="btn-danger" data-order-revoke="' + o.id + '"' +
+                (revokeDisabled ? ' disabled' : '') + '>' + revokeLabel + '</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>'
       );
     }).join('');
+    if (opts.stagger && window.UiMotion && list && !list.hidden) {
+      UiMotion.staggerListIn(list, session.orderTabDir || 1);
+    }
+    if (session.orderExpandId) {
+      var card = list.querySelector('.order-card[data-order-id="' + session.orderExpandId + '"]');
+      var body = $('#screen-orders .page-body');
+      if (card && window.UiMotion) UiMotion.scrollCardToCenter(card, body);
+    }
+  }
+
+  function expandOrderCard(id) {
+    if (session.orderExpandId === id) {
+      session.orderExpandId = null;
+      renderOrders();
+      return;
+    }
+    session.orderExpandId = id;
+    currentOrder = ORDERS.filter(function (x) { return x.id === id; })[0] || null;
+    renderOrders();
   }
 
   function openDetail(id) {
@@ -2405,6 +2609,21 @@
       matchLabel.textContent = o.couponKind === 'times' ? '单次核销' : '核销项目';
     }
     if (matchEl) matchEl.textContent = o.name || '快捷开单';
+    var isTimes = o.couponKind === 'times';
+    var tTotalRow = $('#detailTimesTotalRow');
+    var tConsRow = $('#detailTimesConsumedRow');
+    var tLeftRow = $('#detailTimesLeftRow');
+    if (tTotalRow) tTotalRow.hidden = !isTimes;
+    if (tConsRow) tConsRow.hidden = !isTimes;
+    if (tLeftRow) tLeftRow.hidden = !isTimes;
+    if (isTimes) {
+      var tTotal = $('#detailTimesTotal');
+      var tCons = $('#detailTimesConsumed');
+      var tLeft = $('#detailTimesLeft');
+      if (tTotal) tTotal.textContent = (o.timesTotal != null ? o.timesTotal : '—') + ' 次';
+      if (tCons) tCons.textContent = (o.timesConsumed != null ? o.timesConsumed : '—') + ' 次';
+      if (tLeft) tLeft.textContent = (o.timesLeft != null ? o.timesLeft : '—') + ' 次';
+    }
     var statusHtml =
       o.status === 'revoked' ? '<span class="tag tag-rev">已撤销</span>'
         : o.status === 'refund' ? '<span class="tag tag-refund">已退款</span>'
@@ -2548,6 +2767,11 @@
   }
 
   function setOrderPlat(plat) {
+    var onTab = $('.plat-tab.on', $('#orderTabs'));
+    var prev = onTab ? onTab.getAttribute('data-order-plat') : 'douyin';
+    var order = ['coupon', 'douyin', 'meituan'];
+    session.orderTabDir = order.indexOf(plat) >= order.indexOf(prev) ? 1 : -1;
+    session.orderExpandId = null;
     $all('#orderTabs .plat-tab').forEach(function (t) {
       t.classList.toggle('on', t.getAttribute('data-order-plat') === plat);
     });
@@ -2555,14 +2779,14 @@
       session.plat = plat;
       syncPlatformChrome();
     }
-    renderOrders();
+    renderOrders({ stagger: true });
   }
 
   function openEmpPicker(from) {
     if (!matchStaff) return;
     var title = $('#empMaskTitle');
     if (title) {
-      title.textContent = from === 'tg-config' ? '选择归属员工' : '选择服务员工';
+      title.textContent = (from === 'tg-config' || from === 'tg-inline') ? '选择归属员工' : '选择服务员工';
     }
     matchStaff.syncStaffFromSession();
     var root = $('#empPickRoot');
@@ -2603,6 +2827,13 @@
       }
       seedHistoryFor(navFlow);
       showScreen(navFlow, false);
+      if (t.getAttribute('data-demo-expand') && navFlow === 'tg-deals') {
+        var demoDeal = dealById(session.plat === 'meituan' ? 'deal_910288' : 'product_882910');
+        if (demoDeal) {
+          loadTgConfigDraft(demoDeal);
+          requestAnimationFrame(function () { expandTgDeal(demoDeal.id); });
+        }
+      }
       return;
     }
 
@@ -2620,6 +2851,17 @@
       }
       if (target === 'confirm' && !gateOnAction()) return;
       if (target === 'input' && !gateConsumeEntry()) return;
+      if (target === 'input') {
+        var scanOn = $('#screen-scan') && $('#screen-scan').classList.contains('active');
+        if (scanOn && window.UiMotion) {
+          if (historyStack[historyStack.length - 1] !== 'input') historyStack.push('input');
+          setNav('input');
+          syncPlatformChrome();
+          syncPrdPanel(PRD_ANCHOR.input);
+          UiMotion.openInputSheet();
+          return;
+        }
+      }
       showScreen(target);
       return;
     }
@@ -2706,23 +2948,31 @@
 
     var tgStoreTab = e.target.closest('[data-tg-store]');
     if (tgStoreTab) {
-      session.tgStoreId = tgStoreTab.getAttribute('data-tg-store');
-      renderTgDealList();
+      var nextStore = tgStoreTab.getAttribute('data-tg-store');
+      if (nextStore === session.tgStoreId) return;
+      collapseTgExpand(true);
+      var stores = boundStoresOf(session.plat === 'meituan' ? 'meituan' : 'douyin');
+      var prevIdx = -1;
+      var nextIdx = -1;
+      stores.forEach(function (st, i) {
+        if (st.id === session.tgStoreId) prevIdx = i;
+        if (st.id === nextStore) nextIdx = i;
+      });
+      session.tgTabDir = nextIdx >= prevIdx ? 1 : -1;
+      session.tgStoreId = nextStore;
+      renderTgDealList({ stagger: true });
       return;
     }
 
-    var tgDeal = e.target.closest('[data-tg-deal]');
-    if (tgDeal) {
-      var deal = dealById(tgDeal.getAttribute('data-tg-deal'));
-      if (!deal) return;
-      loadTgConfigDraft(deal);
-      showScreen('tg-config');
+    var tgDealHit = e.target.closest('[data-tg-deal-hit]');
+    if (tgDealHit) {
+      expandTgDeal(tgDealHit.getAttribute('data-tg-deal-hit'));
       return;
     }
 
     if (e.target.closest('#btnTgPickMatch') || e.target.closest('#tgConfigMatchEdit')) {
       if (!matchStaff) return;
-      matchStaff.openMatchPick('tg-config');
+      matchStaff.openMatchPick('tg-inline');
       return;
     }
 
@@ -2732,7 +2982,7 @@
     }
 
     if (e.target.closest('#btnTgConfigCancel')) {
-      goBack();
+      collapseTgExpand(true);
       return;
     }
 
@@ -3200,9 +3450,29 @@
       return;
     }
 
-    var orderCard = e.target.closest('[data-order-id]');
-    if (orderCard) {
-      openDetail(orderCard.getAttribute('data-order-id'));
+    var orderRevoke = e.target.closest('[data-order-revoke]');
+    if (orderRevoke) {
+      var revId = orderRevoke.getAttribute('data-order-revoke');
+      currentOrder = ORDERS.filter(function (x) { return x.id === revId; })[0] || null;
+      if (!currentOrder) return;
+      if (currentOrder.canRevoke && currentOrder.status === 'ok') {
+        openMask('revokeMask');
+      } else if (currentOrder.status === 'ok') {
+        toast('已超时，请联系客服');
+      }
+      return;
+    }
+
+    var orderCollapse = e.target.closest('[data-order-collapse]');
+    if (orderCollapse) {
+      session.orderExpandId = null;
+      renderOrders();
+      return;
+    }
+
+    var orderHit = e.target.closest('[data-order-hit]');
+    if (orderHit) {
+      expandOrderCard(orderHit.getAttribute('data-order-hit'));
       return;
     }
 
@@ -3231,6 +3501,7 @@
         if (currentOrder.couponKind === 'times' && currentOrder.timesConsumed > 0 && !currentOrder.timesRestored) {
           restored = Number(currentOrder.timesConsumed) || 0;
           currentOrder.timesRestored = true;
+          currentOrder.timesLeft = Number(currentOrder.timesLeft || 0) + restored;
           if (session.couponCode === currentOrder.code && session.couponKind === 'times') {
             session.timesLeft = Number(session.timesLeft || 0) + restored;
             syncTimesRows();
@@ -3266,6 +3537,8 @@
     goBack: goBack,
     closeMasks: closeMasks,
     syncConfirmUI: syncConfirmUI,
+    syncTgConfigUI: syncTgConfigUI,
+    ensureTgExpandMounted: ensureTgExpandMounted,
     staffName: staffName,
     isTimesDealId: function (id) { return isTimesDeal(dealById(id)); }
   });
@@ -3476,9 +3749,12 @@
         seedDemoDealDefaults();
         if (window.AuthOpen) AuthOpen.syncSessionGate();
         syncPlatformChrome();
+        showScreen('tg-deals', false); seedHistoryFor('tg-deals');
         var deal = dealById('product_882910');
-        if (deal) loadTgConfigDraft(deal);
-        showScreen('tg-config', false); seedHistoryFor('tg-config');
+        if (deal) {
+          loadTgConfigDraft(deal);
+          requestAnimationFrame(function () { expandTgDeal(deal.id); });
+        }
       },
       'tg-config-mt': function () {
         session.plat = 'meituan';
@@ -3496,7 +3772,8 @@
           });
           loadTgConfigDraft(deal);
         }
-        showScreen('tg-config', false); seedHistoryFor('tg-config');
+        showScreen('tg-deals', false); seedHistoryFor('tg-deals');
+        if (deal) requestAnimationFrame(function () { expandTgDeal(deal.id); });
       }
     };
     var run = routes[key];

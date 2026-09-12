@@ -321,7 +321,7 @@
 
   DyMatchStaff.prototype.openMatchPick = function (from) {
     var s = this.api.session;
-    s.matchPickFrom = from === 'tg-config' ? 'tg-config' : 'confirm';
+    s.matchPickFrom = (from === 'tg-config' || from === 'tg-inline') ? from : 'confirm';
     this.pickQty = {};
     var ids = (s.selectedMatchIds && s.selectedMatchIds.length)
       ? s.selectedMatchIds
@@ -560,9 +560,15 @@
       if (e.target.closest('#btnMatchPickOk')) {
         if (self.commitMatchPick()) {
           self.api.toast(self.api.session.selectedMatchIds.length > 1 ? '已匹配多项' : '已匹配');
-          var from = self.api.session.matchPickFrom === 'tg-config' ? 'tg-config' : 'confirm';
-          self.api.showScreen(from);
-          self.api.syncConfirmUI();
+          var from = self.api.session.matchPickFrom;
+          if (from === 'tg-config' || from === 'tg-inline') {
+            self.api.showScreen('tg-deals');
+            if (typeof self.api.syncTgConfigUI === 'function') self.api.syncTgConfigUI();
+            if (typeof self.api.ensureTgExpandMounted === 'function') self.api.ensureTgExpandMounted();
+          } else {
+            self.api.showScreen('confirm');
+            self.api.syncConfirmUI();
+          }
         }
         return;
       }

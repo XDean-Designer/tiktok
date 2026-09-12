@@ -1,5 +1,5 @@
-<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="information-circle-contained">
-<path id="Icon" d="M8 8L8 11M8 5.77637V5.75M2 8C2 4.68629 4.68629 2 8 2C11.3137 2 14 4.68629 14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8Z" stroke="#666666" stroke-linecap="round" stroke-linejoin="round"/>
-</g>
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+  <circle cx="8" cy="8" r="6" stroke="#666666" stroke-width="1.25"/>
+  <path d="M8 7.25V11" stroke="#666666" stroke-width="1.25" stroke-linecap="round"/>
+  <circle cx="8" cy="5.25" r="0.85" fill="#666666"/>
 </svg>

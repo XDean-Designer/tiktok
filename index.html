@@ -216,7 +216,7 @@
     <div class="nav-arrow">↓</div>
     <button type="button" class="nav-item" data-flow="tg-deals"><span class="idx">1d</span>目录列表</button>
     <div class="nav-arrow">↓</div>
-    <button type="button" class="nav-item" data-flow="tg-config"><span class="idx">1e</span>默认配置</button>
+    <button type="button" class="nav-item" data-flow="tg-deals" data-demo-expand="1"><span class="idx">1e</span>默认配置（展开）</button>
     <div class="nav-arrow">↓</div>
     <button type="button" class="nav-item" data-flow="account"><span class="idx">1b</span>账号管理</button>
     <div class="nav-arrow">↓</div>
@@ -600,33 +600,16 @@
         </div>
       </div>
 
-      <!-- ========== 团购券默认配置 ========== -->
-      <div class="screen" id="screen-tg-config" data-flow="tg-config">
-        <div class="page-title-bar">
-          <button type="button" class="btn-back" data-back aria-label="返回">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-          </button>
-          <span class="title">默认配置</span>
-        </div>
-        <div class="page-body">
-          <div class="info-card tg-config-deal-card">
-            <div class="tg-config-deal-card__head" id="tgConfigPlatHead">
-              <img src="assets/icons/douyin-logo.svg" alt="" width="24" height="24"><span>团购券</span>
-            </div>
-            <div class="tg-config-deal-card__name-row">
-              <div class="tg-config-deal-card__name" id="tgConfigName">深层补水护理 · 单次体验</div>
-              <span class="tg-coupon-card__kind" id="tgConfigKindTag" hidden>次卡</span>
-            </div>
-            <div class="tg-config-deal-card__divider" aria-hidden="true"></div>
-            <div class="tg-config-deal-card__face">
-              <span class="k" id="tgConfigFaceLabel">面额</span>
-              <span class="v" id="tgConfigFace">¥268</span>
-            </div>
-            <div class="tg-config-deal-card__face" id="tgConfigTimesTotalRow" hidden>
+      <!-- ========== 团购券默认配置（内联宿主 · 列表展开时挂载；整页入口已废弃） ========== -->
+      <div class="screen" id="screen-tg-config" data-flow="tg-config" hidden aria-hidden="true">
+        <div id="tgConfigInlineSlot">
+          <!-- 次卡专属字段（列表头无此项）；团购券不展示 -->
+          <div class="tg-config-times-kv" id="tgConfigTimesBlock" hidden>
+            <div class="face" id="tgConfigTimesTotalRow">
               <span class="k">总次数</span>
               <span class="v" id="tgConfigTimesTotal">10 次</span>
             </div>
-            <div class="tg-config-deal-card__face" id="tgConfigTimesUnitRow" hidden>
+            <div class="face" id="tgConfigTimesUnitRow">
               <span class="k">单次结算价</span>
               <span class="v" id="tgConfigTimesUnit">¥198</span>
             </div>
@@ -652,10 +635,10 @@
               </div>
             </div>
           </div>
-        </div>
-        <div class="footer-actions">
-          <button type="button" class="btn-ghost" id="btnTgConfigCancel">取消</button>
-          <button type="button" class="btn-primary" id="btnTgConfigSave">保存</button>
+          <div class="footer-actions tg-coupon-expand-actions">
+            <button type="button" class="btn-ghost" id="btnTgConfigCancel">取消</button>
+            <button type="button" class="btn-primary" id="btnTgConfigSave">保存</button>
+          </div>
         </div>
       </div>
 
@@ -1201,6 +1184,9 @@
               <div class="kv"><span class="k">操作人</span><span class="v" id="detailOp">顾清扬</span></div>
               <div class="kv"><span class="k">消费顾客</span><span class="v" id="detailCustomer">男散客</span></div>
               <div class="kv"><span class="k" id="detailMatchLabel">核销项目</span><span class="v" id="detailMatch">深层补水护理</span></div>
+              <div class="kv" id="detailTimesTotalRow" hidden><span class="k">总次数</span><span class="v" id="detailTimesTotal">—</span></div>
+              <div class="kv" id="detailTimesConsumedRow" hidden><span class="k">核销次数</span><span class="v" id="detailTimesConsumed">—</span></div>
+              <div class="kv" id="detailTimesLeftRow" hidden><span class="k">剩余次数</span><span class="v" id="detailTimesLeft">—</span></div>
               <div class="kv"><span class="k">开单号</span><span class="v" id="detailBill">SO20260903018</span></div>
               <div class="kv"><span class="k">撤销时限</span><span class="v" id="detailRevokeHint">剩余 42 分钟可撤销</span></div>
             </div>
@@ -1601,6 +1587,7 @@
 <script src="seed-demo.js"></script>
 <script src="staff-match.js"></script>
 <script src="auth-open.js"></script>
-  <script src="app.js"></script>
+<script src="ui-motion.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

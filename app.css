@@ -36,7 +36,8 @@
 .status-bar {
   height: 53px; background: #fff; flex-shrink: 0;
   display: flex; align-items: flex-end; justify-content: space-between;
-  box-sizing: border-box; padding: 0 24px 10px; color: #000; z-index: 5;
+  box-sizing: border-box; padding: 0 24px 10px; color: #000; z-index: 60;
+  position: relative;
 }
 .status-bar--auth-warm { background: #fff; }
 .status-bar__time { font-size: 16px; font-weight: 600; letter-spacing: -.3px; line-height: 1; min-width: 54px; }
@@ -2263,4 +2264,266 @@
 }
 .of-note {
   margin: 4px 2px 0; font-size: 12px; color: #929292; line-height: 1.55;
+}
+
+/* ===== UX motion · iOS lean ===== */
+#phone-inner, .phone-inner { position: relative; }
+
+#screen-input.ux-sheet {
+  position: absolute !important;
+  top: 53px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex !important;
+  transform: translateY(100%);
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  background: var(--bg-page, #F7F7F7);
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.12);
+}
+#screen-input.ux-sheet.ux-sheet--in {
+  transform: translateY(0);
+}
+#screen-input.ux-sheet.ux-sheet--out {
+  transform: translateY(100%);
+}
+#screen-input.ux-sheet.ux-sheet--settle {
+  animation: uxSheetSettle 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes uxSheetSettle {
+  0% { transform: translateY(0); opacity: 1; }
+  45% { transform: translateY(-5px); opacity: 1; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.ux-plat-fade {
+  opacity: 0 !important;
+  transition: opacity 0.12s ease !important;
+  pointer-events: none;
+}
+/* tg-set ↔ tg-deals · iOS push */
+#screen-tg-deals.ux-push {
+  position: absolute !important;
+  top: 53px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 35;
+  display: flex !important;
+  transform: translateX(100%);
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: -6px 0 24px rgba(0, 0, 0, 0.08);
+  background: var(--bg-page, #F7F7F7);
+}
+#screen-tg-deals.ux-push.ux-push--in {
+  transform: translateX(0);
+}
+#screen-tg-deals.ux-push.ux-push--out {
+  transform: translateX(100%);
+}
+.ux-fade-out {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.ux-stagger {
+  opacity: 0;
+  transform: translateX(var(--ux-dx, 28px));
+}
+.ux-stagger--in {
+  animation: uxStaggerIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--ux-delay, 0ms);
+}
+@keyframes uxStaggerIn {
+  from { opacity: 0; transform: translateX(var(--ux-dx, 28px)); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* 团购券 / 核销明细 · 可展开卡片 */
+.tg-coupon-card.is-expandable,
+.order-card.is-expandable {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  transition: box-shadow 0.22s ease;
+}
+.tg-coupon-card__hit,
+.order-card__hit {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.order-card__hit {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+.tg-coupon-card.is-open,
+.order-card.is-open {
+  box-shadow: 1px 4px 16px rgba(0, 0, 0, 0.12);
+}
+/* 展开后隐藏配置摘要；仅保留「已配置」下一条划线 */
+.tg-coupon-card.is-open .tg-coupon-card__summary {
+  display: none !important;
+}
+.tg-coupon-card.is-open .tg-coupon-card__divider {
+  display: none;
+}
+.tg-coupon-card.is-open .tg-coupon-card__hit,
+.order-card.is-open .order-card__hit {
+  border-bottom: 1px solid #F0F0F0;
+}
+.tg-coupon-card__expand,
+.order-card__expand {
+  display: none;
+  padding: 0 16px 16px;
+  border-top: 0;
+}
+.tg-coupon-card.is-open .tg-coupon-card__expand,
+.order-card.is-open .order-card__expand {
+  display: block;
+  animation: uxExpandIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes uxExpandIn {
+  from { opacity: 0.4; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.tg-coupon-expand-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+}
+.tg-coupon-expand-actions .btn-ghost,
+.tg-coupon-expand-actions .btn-primary {
+  flex: 1;
+  margin: 0;
+  height: 44px;
+}
+.tg-coupon-card.is-open .tg-coupon-card__chev {
+  transform: rotate(90deg);
+  transition: transform 0.22s ease;
+}
+.order-expand-kv {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--card-divider, #F0F0F0);
+  font-size: 14px;
+}
+.order-expand-kv:first-child { border-top: 0; padding-top: 12px; }
+.order-expand-kv .k { color: #929292; flex-shrink: 0; }
+.order-expand-kv .v { color: #1a1a1a; text-align: right; word-break: break-all; }
+.order-expand-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 12px;
+}
+.order-expand-actions .btn-ghost {
+  flex: 1;
+  width: auto;
+  margin: 0;
+  height: 44px;
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+}
+.order-expand-actions .btn-danger {
+  flex: 1;
+  width: auto;
+  margin: 0;
+  height: 44px;
+  border-radius: 22px;
+  border: 0;
+  background: var(--brand);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+.order-expand-actions .btn-danger:disabled {
+  background: #EDEDED;
+  color: #B0B0B0;
+  cursor: not-allowed;
+}
+
+/* 内联默认配置：无卡头、无多余划线 */
+#tgConfigInlineSlot .info-card {
+  margin: 12px 0 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 0;
+}
+#tgConfigInlineSlot .info-card.info-card--order {
+  padding: 0;
+}
+#tgConfigInlineSlot .info-card:first-child { margin-top: 12px; }
+#tgConfigInlineSlot .kv-list .kv,
+#tgConfigInlineSlot .info-card--order .kv:first-child {
+  border-top: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+#tgConfigInlineSlot .tg-config-times-kv {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+#tgConfigInlineSlot .tg-config-times-kv .face {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+#tgConfigInlineSlot .tg-config-times-kv .face .k { color: #929292; }
+#tgConfigInlineSlot .tg-config-times-kv .face .v { color: #333; font-weight: 500; }
+#tgConfigInlineSlot .footer-actions {
+  position: static;
+  padding: 0;
+  margin-top: 16px;
+  background: transparent;
+  box-shadow: none;
+  border-top: 0 !important;
+}
+#tgConfigInlineSlot .match-ratio-box img {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  display: block;
+  object-fit: contain;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #screen-input.ux-sheet,
+  #screen-tg-deals.ux-push,
+  .ux-stagger--in,
+  .tg-coupon-card.is-open .tg-coupon-card__expand,
+  .order-card.is-open .order-card__expand {
+    transition: none !important;
+    animation: none !important;
+  }
 }
