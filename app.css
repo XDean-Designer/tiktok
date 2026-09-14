@@ -2000,6 +2000,26 @@
 }
 
 /* ===== 团购设置 ===== */
+.tg-set-tip {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 16px;
+  box-sizing: border-box;
+  width: 100%;
+  background: var(--info-soft);
+  color: var(--info);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.tg-set-tip__ico {
+  flex-shrink: 0;
+  display: block;
+  margin-top: 2px;
+}
+.tg-set-tip__txt { flex: 1; min-width: 0; }
 .tg-set-body { padding: 12px 16px 24px; }
 .tg-set-lead {
   margin: 0 0 16px; font-size: 13px; line-height: 1.5; color: var(--text-sec);
