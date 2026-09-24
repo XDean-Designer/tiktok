@@ -2265,11 +2265,12 @@
 .of-card__goods-main { flex: 1; min-width: 0; padding-left: 9px; display: flex; flex-direction: column; gap: 7px; }
 .of-card__goods-row { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .of-card__tuan {
-  width: 14px; height: 14px; flex-shrink: 0;
+  width: 17px; height: 17px; flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 2px; background: #C164FF;
-  font-size: 9px; font-weight: 700; line-height: 1; color: #fff;
+  border-radius: 2.2px; background: #C164FF;
+  font-size: 11px; font-weight: 700; line-height: 17px; color: #fff;
   font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  box-sizing: border-box;
 }
 .of-card__gname {
   font-size: 15px; color: #222; flex: 1; min-width: 0;
