@@ -3893,46 +3893,48 @@
         if (window.AuthOpen) { AuthOpen.open('dy'); AuthOpen.setDemoState('fallback'); }
         historyStack = ['account', 'auth-open'];
         showScreen('auth-open', false);
+        /* showScreen 会把 ao 面板重置回主态，覆盖层必须在其后切换 */
+        if (window.AuthOpen) AuthOpen.showAo('ao-fallback');
       },
       'ao-mt-login': function () {
         session.plat = 'meituan';
         if (window.AuthOpen) {
           AuthOpen.open('mt');
           AuthOpen.setDemoState('merchant');
-          AuthOpen.showAo('ao-mt-login');
         }
         historyStack = ['account', 'auth-open'];
         showScreen('auth-open', false);
+        if (window.AuthOpen) AuthOpen.showAo('ao-mt-login');
       },
       'ao-mt-grant': function () {
         session.plat = 'meituan';
         if (window.AuthOpen) {
           AuthOpen.open('mt');
           AuthOpen.setDemoState('merchant');
-          AuthOpen.showAo('ao-mt-grant');
         }
         historyStack = ['account', 'auth-open'];
         showScreen('auth-open', false);
+        if (window.AuthOpen) AuthOpen.showAo('ao-mt-grant');
       },
       'ao-dy-login': function () {
         session.plat = 'douyin';
         if (window.AuthOpen) {
           AuthOpen.open('dy');
           AuthOpen.setDemoState('merchant');
-          AuthOpen.showAo('ao-dy-login');
         }
         historyStack = ['account', 'auth-open'];
         showScreen('auth-open', false);
+        if (window.AuthOpen) AuthOpen.showAo('ao-dy-login');
       },
       'ao-dy-grant': function () {
         session.plat = 'douyin';
         if (window.AuthOpen) {
           AuthOpen.open('dy');
           AuthOpen.setDemoState('merchant');
-          AuthOpen.showAo('ao-dy-permission');
         }
         historyStack = ['account', 'auth-open'];
         showScreen('auth-open', false);
+        if (window.AuthOpen) AuthOpen.showAo('ao-dy-permission');
       },
       'ao-bind-sheet': function () {
         session.plat = 'douyin';
@@ -4015,6 +4017,78 @@
         }
         showScreen('tg-deals', false); seedHistoryFor('tg-deals');
         if (deal) requestAnimationFrame(function () { expandTgDeal(deal.id); });
+      },
+      /* --- Figma 导出补充屏（仅 ?capture= 生效，不影响正常交互） --- */
+      'order-flow': function () {
+        showScreen('order-flow', false);
+        historyStack = ['workbench', 'order-flow'];
+      },
+      'coupon-ph': function () {
+        showScreen('coupon-ph', false);
+        historyStack = ['scan', 'coupon-ph'];
+      },
+      'match-pick': function () {
+        /* Figma 导出态：铺满项目列表 + 预选 洗剪吹×1 / 头皮护理×2；跳过底部滑入动效以免抓半动画帧 */
+        applyCouponToResult('深层补水护理 · 单次体验', 268, 'dy9182-ABCD-7781', null, true);
+        session.selectedMatchIds = ['p3', 'p15'];
+        session.selectedMatchQty = { p3: 1, p15: 2 };
+        session.selectedProdId = 'p3';
+        session.mismatched = false;
+        session.matchPickFrom = 'confirm';
+        if (matchStaff) {
+          matchStaff.pickQty = { p3: 1, p15: 2 };
+          matchStaff.pickType = 'project';
+          matchStaff.pickGroup = 'g_proj_all';
+          matchStaff.renderMatchPick();
+        }
+        showScreen('match-pick', false);
+        historyStack = ['confirm', 'match-pick'];
+      },
+      'pick-member': function () {
+        showScreen('pick-member', false);
+        historyStack = ['confirm', 'pick-member'];
+      },
+      /* --- 弹层汇总（叠在对应底屏上） --- */
+      'mask-emp': function () {
+        showScreen('confirm', false);
+        historyStack = ['scan', 'confirm'];
+        if (matchStaff && matchStaff.syncStaffFromSession) {
+          matchStaff.syncStaffFromSession();
+          matchStaff.renderStaffInto($('#empPickRoot'));
+        }
+        openMask('empMask');
+      },
+      'mask-filter': function () {
+        showScreen('orders', false);
+        historyStack = ['scan', 'orders'];
+        filterDraft = { status: filterState.status, time: filterState.time };
+        syncFilterChips(filterDraft);
+        openMask('filterMask');
+      },
+      'mask-revoke': function () {
+        openDetail('o1');
+        historyStack = ['orders', 'detail'];
+        openMask('revokeMask');
+      },
+      'mask-dup': function () {
+        showScreen('scan', false);
+        historyStack = ['scan'];
+        openMask('dupMask');
+      },
+      'mask-offline': function () {
+        showScreen('scan', false);
+        historyStack = ['scan'];
+        openMask('offlineMask');
+      },
+      'mask-auth-need': function () {
+        showScreen('scan', false);
+        historyStack = ['scan'];
+        openAuthNeedMask('douyin');
+      },
+      'mask-map-need': function () {
+        showScreen('scan', false);
+        historyStack = ['scan'];
+        openMapNeedMask('douyin');
       }
     };
     var run = routes[key];
